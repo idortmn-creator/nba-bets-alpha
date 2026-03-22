@@ -1,4 +1,4 @@
-const CACHE = 'nba-bets-v3';
+const CACHE = 'nba-bets-v4';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
