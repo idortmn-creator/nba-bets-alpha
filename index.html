@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -960,8 +957,8 @@ function renderBetForm(){
     for(const m of matches){
       const t=getTeams(si,m.key),home=t.home||'ביתית',away=t.away||'אורחת';
       const lbl=t.home&&t.away?`${home} מול ${away}`:m.label;
-      const hOpts=GAPS.map(r=>`<button class="bet-opt" id="bo_${m.key}_h_${r.replace('-','')}" onclick="pickSeries('${m.key}','${home}','${r}',${si})"><span class="opt-team">${home}</span><span class="opt-res">${r}</span></button>`).join('');
-      const aOpts=GAPS.map(r=>`<button class="bet-opt" id="bo_${m.key}_a_${r.replace('-','')}" onclick="pickSeries('${m.key}','${away}','${r}',${si})"><span class="opt-team">${away}</span><span class="opt-res">${r}</span></button>`).join('');
+      const hOpts=GAPS.map(r=>`<button class="bet-opt" id="bo_${m.key}_h_${r.replace('-','')}" onclick="pickSeries('${m.key}','${home}','${r}',${typeof si==='string'?`'${si}'`:si})"><span class="opt-team">${home}</span><span class="opt-res">${r}</span></button>`).join('');
+      const aOpts=GAPS.map(r=>`<button class="bet-opt" id="bo_${m.key}_a_${r.replace('-','')}" onclick="pickSeries('${m.key}','${away}','${r}',${typeof si==='string'?`'${si}'`:si})"><span class="opt-team">${away}</span><span class="opt-res">${r}</span></button>`).join('');
       html+=`<div class="matchup-bet-card"><div class="match-label">🏀 ${lbl}</div>
         <div class="bet-options">${hOpts}${aOpts}</div>
         ${m.hasMvp?`<div class="form-group" style="margin-top:9px;margin-bottom:0"><label>🏅 MVP</label><input type="text" id="mvp_${m.key}" placeholder="שם שחקן..." oninput="CBD['${m.key}_mvp']=this.value"></div>`:''}
@@ -992,7 +989,8 @@ function renderBetForm(){
     }
   } // end else bonusLocked
   } // end if bonuses.length
-  html+=`<div style="margin-top:16px;display:flex;gap:9px;"><button class="btn btn-primary" style="width:auto" onclick="saveBet(${si})">💾 שמור הימורים</button><button class="btn btn-secondary btn-sm" onclick="CBD={};document.querySelectorAll('.bet-opt,.team-btn,.bonus-opt').forEach(b=>b.classList.remove('sel-home','sel-away','selected','sel-bonus'))">🔄 נקה</button></div>`;
+  const siStr=typeof si==='string'?`'${si}'`:si;
+  html+=`<div style="margin-top:16px;display:flex;gap:9px;"><button class="btn btn-primary" style="width:auto" onclick="saveBet(${siStr})">💾 שמור הימורים</button><button class="btn btn-secondary btn-sm" onclick="CBD={};document.querySelectorAll('.bet-opt,.team-btn,.bonus-opt').forEach(b=>b.classList.remove('sel-home','sel-away','selected','sel-bonus'))">🔄 נקה</button></div>`;
   content.innerHTML=html;
   // Load existing
   const existing=((currentLeagueData?.bets||{})[currentUser.uid]||{})['stage'+si]||{};
