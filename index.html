@@ -1201,7 +1201,10 @@ function renderResultForm(){
     for(const b of bonuses){
       const opts=b.answers||[];
       html+=`<div class="form-group"><label>${b.question} (${b.points} נק')</label>
-        <select id="bres_${b.id}"><option value="">בחר תשובה נכונה...</option>${opts.map(a=>`<option value="${a}" ${bonusResults[b.id]===a?'selected':''}>${a}</option>`).join('')}</select></div>`;
+        <select id="bres_${b.id}">
+          <option value="" ${!bonusResults[b.id]?'selected':''}>בחר תשובה נכונה...</option>
+          ${opts.map(a=>`<option value="${a}" ${bonusResults[b.id]===a&&bonusResults[b.id]!==''?'selected':''}>${a}</option>`).join('')}
+        </select></div>`;
     }
   }
   html+=`<button class="btn btn-secondary btn-sm" onclick="saveResults(${si})">💾 שמור תוצאות</button>`;
