@@ -1087,7 +1087,7 @@ function renderTeamSetupForm(){
         <input class="ts-inp" id="ts_${m.key}_away" value="${t.away}" placeholder="אורחת...">
       </div>`;
     }
-    html+=`<button class="btn btn-secondary btn-sm" style="margin-top:9px" onclick="saveTeamSetup(${si})">💾 שמור קבוצות</button>`;
+    html+=`<button class="btn btn-secondary btn-sm" style="margin-top:9px" onclick="saveTeamSetup(${typeof si==='string'?'\''+ si +'\''  :si})">💾 שמור קבוצות</button>`;
   }
   form.innerHTML=html;
 }
@@ -1121,10 +1121,10 @@ function renderBonusAdminList(si){
     const answers=b.answers||[];
     const ansHtml=answers.map((a,ai)=>`<div class="bonus-answer-row">
       <input type="text" value="${a}" placeholder="תשובה אפשרית..." onchange="bonusBetDraft[${si}][${i}].answers[${ai}]=this.value">
-      <button class="remove-ans" onclick="removeBonusAnswer(${si},${i},${ai})">✕</button>
+      <button class="remove-ans" onclick="removeBonusAnswer(${typeof si==='string'?'\''+ si +'\''  :si},${i},${ai})">✕</button>
     </div>`).join('');
     return`<div class="bonus-admin-card">
-      <button class="remove-btn" onclick="removeBonusBet(${si},${i})">✕ הסר</button>
+      <button class="remove-btn" onclick="removeBonusBet(${typeof si==='string'?'\''+ si +'\''  :si},${i})">✕ הסר</button>
       <div class="form-group" style="margin-bottom:8px"><label>שאלה</label>
         <input type="text" value="${b.question}" placeholder="השאלה..." style="background:var(--dark);border:1.5px solid rgba(255,215,0,0.3);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.84rem;padding:7px 10px;width:100%" onchange="bonusBetDraft[${si}][${i}].question=this.value">
       </div>
@@ -1133,10 +1133,11 @@ function renderBonusAdminList(si){
       </div>
       <label style="font-size:0.78rem;color:var(--text2);font-weight:600;display:block;margin-bottom:6px">תשובות אפשריות</label>
       <div class="bonus-answers">${ansHtml}</div>
-      <button class="btn-ghost" style="margin-top:8px;font-size:0.78rem" onclick="addBonusAnswer(${si},${i})">➕ הוסף תשובה</button>
+      <button class="btn-ghost" style="margin-top:8px;font-size:0.78rem" onclick="addBonusAnswer(${typeof si==='string'?'\''+ si +'\''  :si},${i})">➕ הוסף תשובה</button>
     </div>`;
   }).join('');
-  list.insertAdjacentHTML('beforeend',`<button class="btn btn-primary" style="margin-top:10px" onclick="saveBonusBets(${si})">💾 שמור הימורי בונוס</button>`);
+  const siB=typeof si==='string'?`'${si}'`:si;
+  list.insertAdjacentHTML('beforeend',`<button class="btn btn-primary" style="margin-top:10px" onclick="saveBonusBets(${siB})">💾 שמור הימורי בונוס</button>`);
 }
 
 function addBonusBet(){
@@ -1213,7 +1214,8 @@ function renderResultForm(){
         </select></div>`;
     }
   }
-  html+=`<button class="btn btn-secondary btn-sm" onclick="saveResults(${si})">💾 שמור תוצאות</button>`;
+  const siStrR=typeof si==='string'?`'${si}'`:si;
+  html+=`<button class="btn btn-secondary btn-sm" onclick="saveResults(${siStrR})">💾 שמור תוצאות</button>`;
   content.innerHTML=html;
 }
 
