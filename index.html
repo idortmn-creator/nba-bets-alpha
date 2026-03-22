@@ -1196,6 +1196,8 @@ function renderResultForm(){
   }
   // Bonus results
   const bonuses=getBonusBets(si),bonusResults=getBonusResults(si);
+  console.log('bonusResults from globalData:',JSON.stringify(bonusResults));
+  console.log('globalData.bonusResults:',JSON.stringify(globalData?.bonusResults));
   if(bonuses.length){
     html+=`<div class="separator"></div><div style="font-weight:700;color:var(--gold);margin-bottom:9px">⭐ תוצאות הימורי בונוס</div>`;
     for(const b of bonuses){
