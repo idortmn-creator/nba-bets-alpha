@@ -1221,7 +1221,7 @@ async function saveResults(si){
   }
   const bonusResults={};
   const bonuses=getBonusBets(si);
-  for(const b of bonuses){const el=document.getElementById('bres_'+b.id);if(el&&el.value)bonusResults[b.id]=el.value;}
+  for(const b of bonuses){const el=document.getElementById('bres_'+b.id);if(el){if(el.value)bonusResults[b.id]=el.value;else bonusResults[b.id]='';} }
   const bKey2=getBonusStageKey(si);
   await setDoc(doc(db,'global','settings'),{results:{['stage'+si]:result},bonusResults:{[bKey2]:bonusResults}},{merge:true});
   toast('✅ תוצאות נשמרו בכל הליגות!');
