@@ -773,7 +773,14 @@ function showLeagueTab(tab){
 }
 
 // ── SCORING ──
-function getTeams(si,mk){return((currentLeagueData?.teams||{})['stage'+si]||{})[mk]||{home:'',away:''}}
+function getTeams(si,mk){
+  // First try globalData (new storage)
+  const gt=getGlobal('teams',{});
+  const fromGlobal=(gt['stage'+si]||{})[mk];
+  if(fromGlobal&&(fromGlobal.home||fromGlobal.away))return fromGlobal;
+  // Fallback to leagueData
+  return((currentLeagueData?.teams||{})['stage'+si]||{})[mk]||{home:'',away:''};
+}
 function teamLabel(si,mk,fb){const t=getTeams(si,mk);return(t.home&&t.away)?`${t.home} מול ${t.away}`:fb;}
 function getBonusBets(si){return(getGlobal('bonusBets',{}))[getBonusStageKey(si)]||[];}
 function getBonusResults(si){return(getGlobal('bonusResults',{}))[getBonusStageKey(si)]||{};}
