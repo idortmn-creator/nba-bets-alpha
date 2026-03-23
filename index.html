@@ -124,7 +124,7 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
 .bet-item:last-child{border-bottom:none;}
 .bet-label{color:var(--text2);flex:1;line-height:1.3;}
 .bet-value{font-weight:600;}
-.correct{color:var(--green);} .wrong{color:var(--red);} .pending{color:var(--text2);}
+.correct{color:#00c853;} .correct-exact{color:#00e676;font-weight:800;} .wrong{color:var(--red);} .pending{color:var(--text2);}
 
 /* ── BET FORM ── */
 .matchup-bet-card{background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
@@ -311,6 +311,7 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
     <button class="nav-tab active" onclick="showLeagueTab('leaderboard')">🏆 טבלה</button>
     <button class="nav-tab" onclick="showLeagueTab('bets')">📋 הימורים</button>
     <button class="nav-tab" onclick="showLeagueTab('enter-bets')">✍️ הימורים שלי</button>
+    <button class="nav-tab" onclick="showLeagueTab('prebets')">🏆 הימורים מוקדמים</button>
     <button class="nav-tab" id="adminTabBtn" style="display:none" onclick="showLeagueTab('admin')">⚙️ ניהול</button>
   </nav>
 
@@ -764,8 +765,8 @@ function renderLeaguePage(){
 
 // ── LEAGUE TABS ──
 function showLeagueTab(tab){
-  ['leaderboard','bets','enter-bets','admin'].forEach(t=>document.getElementById('ltab-'+t).style.display=t===tab?'':'none');
-  document.querySelectorAll('#leagueNavTabs .nav-tab').forEach((b,i)=>b.classList.toggle('active',['leaderboard','bets','enter-bets','admin'][i]===tab));
+  ['leaderboard','bets','enter-bets','prebets','admin'].forEach(t=>document.getElementById('ltab-'+t).style.display=t===tab?'':'none');
+  document.querySelectorAll('#leagueNavTabs .nav-tab').forEach((b,i)=>b.classList.toggle('active',['leaderboard','bets','enter-bets','prebets','admin'][i]===tab));
   if(tab==='leaderboard')renderLeaderboard();
   if(tab==='bets'){renderViewStageTabs();const ci=currentLeagueData.currentStage;viewStage(ci>0?STAGE_KEYS[Math.max(0,STAGE_KEYS.indexOf(ci)-1)]:0);}
   if(tab==='enter-bets')renderBetForm();
@@ -938,9 +939,14 @@ function viewStage(idx){
     } else {
       for(const m of matches){
         const bW=bet[m.key+'_winner']||'-',bR=bet[m.key+'_result']||'-';
-        let wC='pending',rC='pending';
-        if(result[m.key+'_winner'])wC=bW.toLowerCase()===result[m.key+'_winner'].toLowerCase()?'correct':'wrong';
-        if(result[m.key+'_result'])rC=bR===result[m.key+'_result']?'correct':'wrong';
+        let wC='pending';
+        const winMatch=result[m.key+'_winner']&&bW.toLowerCase()===result[m.key+'_winner'].toLowerCase();
+        const resMatch=result[m.key+'_result']&&bR===result[m.key+'_result'];
+        if(result[m.key+'_winner']){
+          if(winMatch&&resMatch)wC='correct-exact';
+          else if(winMatch)wC='correct';
+          else wC='wrong';
+        }
         items+=`<div class="bet-item"><span class="bet-label">${teamLabel(idx,m.key,m.label)}</span><span class="bet-value ${wC}">${bW} <span style="opacity:0.65">(${bR})</span></span></div>`;
         if(m.hasMvp){const bM=bet[m.key+'_mvp']||'-';let mC='pending';if(result[m.key+'_mvp'])mC=bM.toLowerCase()===result[m.key+'_mvp'].toLowerCase()?'correct':'wrong';items+=`<div class="bet-item"><span class="bet-label">MVP</span><span class="bet-value ${mC}">${bM}</span></div>`;}
       }
@@ -955,7 +961,28 @@ function viewStage(idx){
     }
     return`<div class="bet-card"><div class="bet-header"><div><div class="bet-player-username">${info.username||uid}</div><div class="bet-player-name">${info.displayName||''}</div></div><div class="bet-pts">${(stageScore>0||result)?stageScore+' נק\'':'⏳'}</div></div>${items}</div>`;
   }).join('');
-  content.innerHTML=`<div class="bets-grid">${cards}</div>`;
+  // Build results display
+  let resultsHtml='';
+  if(Object.keys(result).length>0){
+    resultsHtml+='<div class="card" style="margin-top:14px;border-color:rgba(79,195,247,0.3)"><div class="card-title" style="color:var(--blue)">📊 תוצאות אמיתיות</div>';
+    if(idx===0||idx==='0b'){
+      for(const m of matches){
+        const rv=result[m.key]||'-';
+        const lbl=teamLabel(idx,m.key,m.label);
+        resultsHtml+=`<div class="bet-item"><span class="bet-label">${lbl}</span><span class="bet-value" style="color:var(--blue)">${rv}</span></div>`;
+      }
+    } else {
+      for(const m of matches){
+        const rW=result[m.key+'_winner']||'-';
+        const rR=result[m.key+'_result']||'-';
+        const lbl=teamLabel(idx,m.key,m.label);
+        resultsHtml+=`<div class="bet-item"><span class="bet-label">${lbl}</span><span class="bet-value" style="color:var(--blue)">${rW} (${rR})</span></div>`;
+        if(m.hasMvp&&result[m.key+'_mvp'])resultsHtml+=`<div class="bet-item"><span class="bet-label">MVP</span><span class="bet-value" style="color:var(--blue)">${result[m.key+'_mvp']}</span></div>`;
+      }
+    }
+    resultsHtml+='</div>';
+  }
+  content.innerHTML=`<div class="bets-grid">${cards}</div>${resultsHtml}`;
 }
 
 // ── BET FORM ──
@@ -1012,7 +1039,30 @@ function renderBetForm(){
     }
     if(si===1){
       html+=`<div class="separator"></div><div class="card-title" style="margin-bottom:10px">🏆 הימורים מראש</div>`;
-      for(const p of PREBETS)html+=`<div class="form-group"><label>${p.label}</label><input type="text" id="pre_${p.key}" placeholder="שם קבוצה..." oninput="CBD['${p.key}']=this.value"></div>`;
+      // Build team lists from stage1
+      const s1teams=STAGE_MATCHES[1];
+      const eastTeams=[],westTeams=[];
+      for(const m of s1teams){
+        const t=getTeams(1,m.key);
+        if(m.conf==='east'){if(t.home)eastTeams.push(t.home);if(t.away)eastTeams.push(t.away);}
+        else{if(t.home)westTeams.push(t.home);if(t.away)westTeams.push(t.away);}
+      }
+      const allTeams=[...eastTeams,...westTeams];
+      
+      const makeOpts=(teams,curVal)=>teams.map(t=>`<option value="${t}" ${curVal===t?'selected':''}>${t}</option>`).join('');
+      
+      html+=`<div class="form-group"><label>🏆 אלוף NBA</label>
+        <select id="pre_champion" onchange="CBD['champion']=this.value">
+          <option value="">בחר קבוצה...</option>${makeOpts(allTeams,CBD['champion']||'')}
+        </select></div>`;
+      html+=`<div class="form-group"><label>🔵 אלופת המזרח</label>
+        <select id="pre_east_champ" onchange="CBD['east_champ']=this.value">
+          <option value="">בחר קבוצה...</option>${makeOpts(eastTeams,CBD['east_champ']||'')}
+        </select></div>`;
+      html+=`<div class="form-group"><label>🔴 אלופת המערב</label>
+        <select id="pre_west_champ" onchange="CBD['west_champ']=this.value">
+          <option value="">בחר קבוצה...</option>${makeOpts(westTeams,CBD['west_champ']||'')}
+        </select></div>`;
     }
   }
   // Bonus bets in form — show one at a time, only if stage0 not locked
@@ -1268,7 +1318,7 @@ function renderResultForm(){
       html+=`<div class="form-group"><label>🏀 ${lbl}</label><select id="res_${m.key}"><option value="">בחר תוצאה...</option>${allOpts.map(o=>{const v=`${o.w}|${o.r}`;return`<option value="${v}" ${curV===v?'selected':''}>${o.l}</option>`;}).join('')}</select></div>`;
       if(m.hasMvp)html+=`<div class="form-group"><label>🏅 MVP</label><input type="text" id="res_${m.key}_mvp" value="${result[m.key+'_mvp']||''}" placeholder="שם שחקן..."></div>`;
     }
-    if(si===1){html+=`<div style="font-weight:700;color:var(--orange);margin:12px 0 9px">🏆 הימורי מראש</div>`;for(const p of PREBETS)html+=`<div class="form-group"><label>${p.label}</label><input type="text" id="res_${p.key}" value="${result[p.key]||''}" placeholder="שם קבוצה..."></div>`;}
+    // Pre-bets results moved to stage 4 (finals)
   }
   // Bonus results
   const bonuses=getBonusBets(si),bonusResults=getBonusResults(si);
@@ -1283,6 +1333,19 @@ function renderResultForm(){
           ${opts.map(a=>`<option value="${a}" ${bonusResults[b.id]===a&&bonusResults[b.id]!==''?'selected':''}>${a}</option>`).join('')}
         </select></div>`;
     }
+  }
+  // Add pre-bets results at stage 4
+  if(si===4){
+    const r1=(getGlobal('results',{}))['stage1']||{};
+    const allS1=[...STAGE_MATCHES[1]];
+    const eastT=[],westT=[];
+    for(const m of allS1){const t=getTeams(1,m.key);if(m.conf==='east'){if(t.home)eastT.push(t.home);if(t.away)eastT.push(t.away);}else{if(t.home)westT.push(t.home);if(t.away)westT.push(t.away);}}
+    const allT=[...eastT,...westT];
+    const mkS=(teams,cur)=>teams.map(t=>`<option value="${t}" ${cur===t?'selected':''}>${t}</option>`).join('');
+    html+=`<div class="separator"></div><div style="font-weight:700;color:var(--orange);margin:12px 0 9px">🏆 תוצאות הימורי מראש</div>`;
+    html+=`<div class="form-group"><label>🏆 אלוף NBA</label><select id="res_champion"><option value="">בחר...</option>${mkS(allT,r1.champion||'')}</select></div>`;
+    html+=`<div class="form-group"><label>🔵 אלופת המזרח</label><select id="res_east_champ"><option value="">בחר...</option>${mkS(eastT,r1.east_champ||'')}</select></div>`;
+    html+=`<div class="form-group"><label>🔴 אלופת המערב</label><select id="res_west_champ"><option value="">בחר...</option>${mkS(westT,r1.west_champ||'')}</select></div>`;
   }
   html+=`<button class="btn btn-secondary btn-sm" onclick="saveResults(this.dataset.si)" data-si="${si}">💾 שמור תוצאות</button>`;
   content.innerHTML=html;
@@ -1306,7 +1369,21 @@ async function saveResults(si){
       if(el&&el.value){const p=el.value.split('|');result[m.key+'_winner']=p[0];if(p[1]!==undefined)result[m.key+'_result']=p[1];}
       if(m.hasMvp){const e2=document.getElementById('res_'+m.key+'_mvp');if(e2)result[m.key+'_mvp']=e2.value.trim();}
     }
-    if(si===1){for(const p of PREBETS){const el=document.getElementById('res_'+p.key);if(el)result[p.key]=el.value.trim();}}
+    // Pre-bets now in stage 4
+    if(si===4){
+      // Save pre-bet results to stage1 results
+      const r1update={};
+      const champEl=document.getElementById('res_champion');
+      const eastEl=document.getElementById('res_east_champ');
+      const westEl=document.getElementById('res_west_champ');
+      if(champEl)r1update.champion=champEl.value;
+      if(eastEl)r1update.east_champ=eastEl.value;
+      if(westEl)r1update.west_champ=westEl.value;
+      if(Object.keys(r1update).length){
+        const existing1=(getGlobal('results',{}))['stage1']||{};
+        await setDoc(doc(db,'global','settings'),{results:{stage1:{...existing1,...r1update}}},{merge:true});
+      }
+    }
   }
   // If result is empty, save null to clear it
   const resultToSave=Object.keys(result).length>0?result:null;
@@ -1415,6 +1492,47 @@ function startAutoLockChecker(){
     if(document.getElementById('autoLockList'))renderAutoLockList();
   },30000);
 }
+
+function renderPrebetsTab(){
+  const ld=currentLeagueData;
+  const members=ld.members||[],memberInfo=ld.memberInfo||{};
+  const r1=(getGlobal('results',{}))['stage1']||{};
+  const content=document.getElementById('prebetsContent');
+  if(!members.length){content.innerHTML='<div class="empty-state"><p>אין משתתפים</p></div>';return;}
+  
+  const cards=members.map(uid=>{
+    const info=memberInfo[uid]||{username:uid};
+    const bet=((ld.bets||{})[uid]||{})['stage1']||{};
+    const bChamp=bet.champion||'-';
+    const bEast=bet.east_champ||'-';
+    const bWest=bet.west_champ||'-';
+    
+    const champCls=r1.champion?(bChamp.toLowerCase()===r1.champion.toLowerCase()?'correct':'wrong'):'pending';
+    const eastCls=r1.east_champ?(bEast.toLowerCase()===r1.east_champ.toLowerCase()?'correct':'wrong'):'pending';
+    const westCls=r1.west_champ?(bWest.toLowerCase()===r1.west_champ.toLowerCase()?'correct':'wrong'):'pending';
+    
+    return `<div class="bet-card">
+      <div class="bet-header">
+        <div><div class="bet-player-username">${info.username||uid}</div><div class="bet-player-name">${info.displayName||''}</div></div>
+      </div>
+      <div class="bet-item"><span class="bet-label">🏆 אלוף NBA</span><span class="bet-value ${champCls}">${bChamp}</span></div>
+      <div class="bet-item"><span class="bet-label">🔵 אלופת המזרח</span><span class="bet-value ${eastCls}">${bEast}</span></div>
+      <div class="bet-item"><span class="bet-label">🔴 אלופת המערב</span><span class="bet-value ${westCls}">${bWest}</span></div>
+    </div>`;
+  }).join('');
+  
+  let resultsHtml='';
+  if(r1.champion||r1.east_champ||r1.west_champ){
+    resultsHtml=`<div class="card" style="margin-top:14px;border-color:rgba(79,195,247,0.3)"><div class="card-title" style="color:var(--blue)">📊 תוצאות אמיתיות</div>
+      ${r1.champion?`<div class="bet-item"><span class="bet-label">🏆 אלוף NBA</span><span class="bet-value" style="color:var(--blue)">${r1.champion}</span></div>`:''}
+      ${r1.east_champ?`<div class="bet-item"><span class="bet-label">🔵 אלופת המזרח</span><span class="bet-value" style="color:var(--blue)">${r1.east_champ}</span></div>`:''}
+      ${r1.west_champ?`<div class="bet-item"><span class="bet-label">🔴 אלופת המערב</span><span class="bet-value" style="color:var(--blue)">${r1.west_champ}</span></div>`:''}
+    </div>`;
+  }
+  content.innerHTML=`<div class="bets-grid">${cards}</div>${resultsHtml}`;
+}
+
+window.renderPrebetsTab=renderPrebetsTab;
 
 function copyLink(){navigator.clipboard.writeText(document.getElementById('createdLeagueLink').value);toast('📋 הועתק!');}
 function copyAdminLink(){navigator.clipboard.writeText(document.getElementById('adminShareLink').value);toast('📋 הועתק!');}
