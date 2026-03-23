@@ -478,7 +478,12 @@ const PREBETS=[{key:'champion',label:'🏆 אלוף NBA'},{key:'east_champ',labe
 // ── STAGE KEYS (ordered) ──
 const STAGE_KEYS=[0,'0b',1,2,3,4];
 // Bonus is locked when stage 0 (first playin) is locked
-function isBonusLocked(){return (getGlobal('stageLocked',[]))[0]||false;}
+function isBonusLocked(si){
+  // Bonus for playin (stage0/0b) is locked with stage0
+  // Bonus for other stages is locked with their own stage
+  const lockIdx = (si===0||si==='0b') ? 0 : STAGE_KEYS.indexOf(si);
+  return (getGlobal('stageLocked',[]))[lockIdx]||false;
+}
 // Get auto-computed teams for 0b finals based on stage0 results
 function getPlayinFinalTeams(conf){
   const r0=(getGlobal('results',{}))['stage0']||{};
@@ -816,7 +821,7 @@ function scoreStage(uid,si){
       for(const m of matches){
         const bW=(bet[m.key+'_winner']||'').toLowerCase().trim(),rW=(result[m.key+'_winner']||'').toLowerCase().trim();
         const bR=bet[m.key+'_result']||'',rR=result[m.key+'_result']||'';
-        if(bW&&rW&&bW===rW){pts+=2;aW++;if(eK.includes(m.key))eW++;else wW++;if(bR&&rR&&bR===rR){pts+=4;aX++;if(eK.includes(m.key))eX++;else wX++;}}
+        if(bW&&rW&&bW===rW){if(bR&&rR&&bR===rR){pts+=4;aX++;if(eK.includes(m.key))eX++;else wX++;}else{pts+=2;}aW++;if(eK.includes(m.key))eW++;else wW++;}
       }
       if(eW===4)pts+=(eX===4?6:3);if(wW===4)pts+=(wX===4?6:3);if(aW===8)pts+=(aX===8?14:7);
       const bc=(bet.champion||'').toLowerCase(),rc=(result.champion||'').toLowerCase();if(bc&&rc&&bc===rc)pts+=10;
@@ -830,7 +835,7 @@ function scoreStage(uid,si){
       for(const m of matches){
         const bW=(bet[m.key+'_winner']||'').toLowerCase().trim(),rW=(result[m.key+'_winner']||'').toLowerCase().trim();
         const bR=bet[m.key+'_result']||'',rR=result[m.key+'_result']||'';
-        if(bW&&rW&&bW===rW){pts+=3;aW++;if(eK.includes(m.key))eW++;else wW++;if(bR&&rR&&bR===rR){pts+=6;aX++;if(eK.includes(m.key))eX++;else wX++;}}
+        if(bW&&rW&&bW===rW){if(bR&&rR&&bR===rR){pts+=6;aX++;if(eK.includes(m.key))eX++;else wX++;}else{pts+=3;}aW++;if(eK.includes(m.key))eW++;else wW++;}
       }
       pts+=(eX===2?6:eW===2?3:0)+(wX===2?6:wW===2?3:0);if(aW===4)pts+=(aX===4?14:7);
     } else if(si===3){
@@ -839,14 +844,15 @@ function scoreStage(uid,si){
         const bW=(bet[m.key+'_winner']||'').toLowerCase().trim(),rW=(result[m.key+'_winner']||'').toLowerCase().trim();
         const bR=bet[m.key+'_result']||'',rR=result[m.key+'_result']||'';
         const w=bW&&rW&&bW===rW,x=bR&&rR&&bR===rR;
-        if(w){pts+=4;if(x)pts+=8;}else bW2=false;if(!x)bX2=false;
+        if(w){if(x)pts+=8;else pts+=4;}else bW2=false;if(!x)bX2=false;
         const bM=(bet[m.key+'_mvp']||'').toLowerCase(),rM=(result[m.key+'_mvp']||'').toLowerCase();if(bM&&rM&&bM===rM)pts+=1;
       }
       if(bW2)pts+=(bX2?6:3);
     } else if(si===4){
       const m=matches[0];
       const bW=(bet[m.key+'_winner']||'').toLowerCase(),rW=(result[m.key+'_winner']||'').toLowerCase();
-      if(bW&&rW&&bW===rW){pts+=5;if((bet[m.key+'_result']||'')===(result[m.key+'_result']||''))pts+=10;}
+      const s4exact=(bet[m.key+'_result']||'')===(result[m.key+'_result']||'');
+      if(bW&&rW&&bW===rW){if(s4exact)pts+=10;else pts+=5;}
       const bM=(bet[m.key+'_mvp']||'').toLowerCase(),rM=(result[m.key+'_mvp']||'').toLowerCase();if(bM&&rM&&bM===rM)pts+=2;
     }
   }
@@ -1011,7 +1017,7 @@ function renderBetForm(){
   }
   // Bonus bets in form — show one at a time, only if stage0 not locked
   const bonuses=getBonusBets(si);
-  const bonusLocked=isBonusLocked();
+  const bonusLocked=isBonusLocked(si);
   if(bonuses.length>0){
     html+=`<div class="separator"></div><div class="card-title" style="margin-bottom:10px">⭐ הימורי בונוס</div>`;
     if(bonusLocked){html+=`<div class="info-box" style="color:var(--red);border-color:rgba(255,68,68,0.3)">🔒 הימורי הבונוס ננעלו עם שלב א' של הפליי-אין</div>`;}
