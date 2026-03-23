@@ -1502,7 +1502,9 @@ function startAutoLockChecker(){
 }
 
 function renderPrebetsTab(){
+  console.log('renderPrebetsTab called');
   const ld=currentLeagueData;
+  console.log('members:',ld?.members?.length,'bets:',JSON.stringify(Object.keys(ld?.bets||{})));
   const members=ld.members||[],memberInfo=ld.memberInfo||{};
   const r1=(getGlobal('results',{}))['stage1']||{};
   const content=document.getElementById('prebetsContent');
