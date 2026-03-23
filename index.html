@@ -1120,7 +1120,10 @@ async function saveTeamSetup(si){
   }
   console.log('stageTeams=',JSON.stringify(stageTeams));
   try {
-    await updateDoc(doc(db,'global','settings'),{[`teams.stage${si}`]:stageTeams});
+    // Read current teams, update the stage, write back
+    const currentTeams=getGlobal('teams',{});
+    const newTeams={...currentTeams,[`stage${si}`]:stageTeams};
+    await setDoc(doc(db,'global','settings'),{teams:newTeams},{merge:true});
     toast('✅ קבוצות נשמרו בכל הליגות!');
   } catch(e) {
     console.error('saveTeamSetup error:',e);
