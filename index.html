@@ -727,7 +727,17 @@ async function openLeague(lid){
   if(!globalUnsubscribe){
     globalUnsubscribe=onSnapshot(doc(db,'global','settings'),snap=>{
       globalData=snap.exists()?snap.data():{};
-      if(currentLeagueData)renderLeaguePage();
+      if(currentLeagueData){
+        // Only re-render tabs that don't have user input
+        const adminTab=document.getElementById('ltab-admin');
+        const adminVisible=adminTab&&adminTab.style.display!=='none';
+        if(!adminVisible){
+          renderLeaguePage();
+        } else {
+          // Just update leaderboard and stage info without rebuilding admin forms
+          renderLeaderboard();
+        }
+      }
     });
   }
 
