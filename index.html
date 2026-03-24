@@ -1506,8 +1506,14 @@ async function toggleSeriesLock(si,mk){
   const key=getSeriesLockedKey(si,mk);
   const cur=getGlobal('seriesLocked',{});
   const newVal=!cur[key];
-  await setDoc(doc(db,'global','settings'),{seriesLocked:{...cur,[key]:newVal}},{merge:true});
-  toast(newVal?'🔒 סדרה ננעלה':'🔓 סדרה נפתחה');
+  console.log('toggleSeriesLock key=',key,'newVal=',newVal,'cur=',JSON.stringify(cur));
+  try{
+    await updateDoc(doc(db,'global','settings'),{[`seriesLocked.${key}`]:newVal});
+    toast(newVal?'🔒 סדרה ננעלה':'🔓 סדרה נפתחה');
+  }catch(e){
+    console.error('toggleSeriesLock error:',e);
+    toast('❌ '+e.message);
+  }
 }
 window.toggleSeriesLock=toggleSeriesLock;
 
