@@ -324,7 +324,7 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
       </div>
       <div id="leaderboardList" class="leaderboard"></div>
     </div>
-    <div class="card"><div class="card-title">📊 מידע שלב</div><div id="stageInfoBox" class="info-box"></div></div>
+
   </div>
 
   <!-- Bets view -->
@@ -361,6 +361,7 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
     <div class="card">
       <div class="card-title">🔄 ניהול שלבים</div>
       <div class="info-box"><strong>שלב נוכחי:</strong> <span id="adminCurrentStage">-</span></div>
+      <div id="allStageLockStatus" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
       <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;">
         <select id="adminStageSelect" style="padding:8px 11px;background:var(--dark3);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.86rem;">
           <option value="0">פליי-אין סיבוב א</option><option value="0b">פליי-אין גמר</option>
@@ -1635,26 +1636,33 @@ async function removeAutoLock(stageKey){
 
 // Check auto-locks every 30 seconds
 function startAutoLockChecker(){
-  setInterval(async()=>{
+  // Run immediately on start, then every 30 seconds
+  async function checkLocks(){
     const locks=getGlobal('autoLocks',{});
+    if(!locks||!Object.keys(locks).length)return;
     const now=Date.now();
     const stageLocked=[...(getGlobal('stageLocked',[false,false,false,false,false,false]))];
     let changed=false;
     for(const [stageKey,ts] of Object.entries(locks)){
-      if(ts<=now){
-        const idx=STAGE_KEYS.indexOf(stageKey==='0b'?'0b':parseInt(stageKey));
+      const tsNum=typeof ts==='number'?ts:(ts?.seconds?ts.seconds*1000:0);
+      if(tsNum>0&&tsNum<=now){
+        const normKey=stageKey==='0b'?'0b':parseInt(stageKey);
+        const idx=STAGE_KEYS.indexOf(normKey);
         if(idx>=0&&!stageLocked[idx]){
           stageLocked[idx]=true;
           changed=true;
+          console.log('Auto-locking stage',stageKey,'at',new Date(tsNum).toLocaleString());
         }
       }
     }
     if(changed){
       await setDoc(doc(db,'global','settings'),{stageLocked},{merge:true});
+      toast('⏰ שלב ננעל אוטומטית!');
     }
-    // Re-render list if visible
     if(document.getElementById('autoLockList'))renderAutoLockList();
-  },30000);
+  }
+  checkLocks(); // run immediately
+  setInterval(checkLocks,30000);
 }
 
 function renderPrebetsTab(){
