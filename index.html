@@ -1628,16 +1628,20 @@ async function addAutoLock(){
   if(!timeVal){toast('⚠️ בחר תאריך ושעה');return;}
   const ts=new Date(timeVal).getTime();
   if(ts<=Date.now()){toast('⚠️ הזמן חייב להיות בעתיד');return;}
-  const updates={[`autoLocks.${stageVal}`]:ts};
-  await setDoc(doc(db,'global','settings'),updates,{merge:true});
+  // Save as nested object to avoid flat key issue
+  const curLocks=getGlobal('autoLocks',{});
+  const newLocks={...curLocks,[stageVal]:ts};
+  await setDoc(doc(db,'global','settings'),{autoLocks:newLocks},{merge:true});
   document.getElementById('autoLockTime').value='';
   toast('✅ נעילה אוטומטית נקבעה!');
 }
 
 async function removeAutoLock(stageKey){
   // Remove by setting to null (Firestore delete field)
-  const {deleteField} = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js");
-  await updateDoc(doc(db,'global','settings'),{[`autoLocks.${stageKey}`]:deleteField()});
+  const curLocks=getGlobal('autoLocks',{});
+  const newLocks={...curLocks};
+  delete newLocks[stageKey];
+  await setDoc(doc(db,'global','settings'),{autoLocks:newLocks},{merge:true});
   toast('🗑️ נעילה אוטומטית הוסרה');
 }
 
