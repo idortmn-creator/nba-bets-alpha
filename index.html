@@ -1262,6 +1262,13 @@ function renderAdmin(){
   const _locked=getGlobal('stageLocked',[false,false,false,false,false,false]);
   const _curIdx=STAGE_KEYS.indexOf(getGlobal('currentStage',0));
   document.getElementById('adminCurrentStage').textContent=(STAGE_NAMES[_curIdx]||'')+(_locked[_curIdx]?' 🔒':' 🟢');
+  const statusEl=document.getElementById('allStageLockStatus');
+  if(statusEl){
+    statusEl.innerHTML=STAGE_SHORT.map((s,i)=>{
+      const lk=_locked[i]||false;
+      return `<span style="padding:3px 8px;border-radius:6px;font-size:0.75rem;border:1px solid ${lk?'var(--green)':'var(--border)'};color:${lk?'var(--green)':'var(--text2)'};background:${lk?'rgba(0,230,118,0.1)':'transparent'}">${s} ${lk?'🔒':'🔓'}</span>`;
+    }).join('');
+  }
   document.getElementById('adminStageSelect').value=getGlobal('currentStage',0);
   const link=`${location.origin}${location.pathname}?code=${ld.code}`;
   document.getElementById('adminShareLink').value=link;
@@ -1639,6 +1646,7 @@ function startAutoLockChecker(){
   // Run immediately on start, then every 30 seconds
   async function checkLocks(){
     const locks=getGlobal('autoLocks',{});
+    console.log('AutoLock check, locks=',JSON.stringify(locks));
     if(!locks||!Object.keys(locks).length)return;
     const now=Date.now();
     const stageLocked=[...(getGlobal('stageLocked',[false,false,false,false,false,false]))];
