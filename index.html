@@ -1175,6 +1175,9 @@ function renderBetForm(){
       
       if(isPreBetsLocked()){
         html+=`<div class="info-box" style="color:var(--red);border-color:rgba(255,68,68,0.3)">🔒 הימורים מוקדמים ננעלו</div>`;
+      } else if(!Object.keys(getGlobal('seriesLocked',{})).some(k=>k.startsWith('1_'))){
+        // No stage 1 series has ever been locked - hide pre-bets until first lock
+        html+=`<div class="info-box" style="color:var(--text2)">⏳ הימורים מוקדמים יפתחו לאחר נעילת הסדרה הראשונה</div>`;
       } else {
       html+=`<div class="form-group"><label>🏆 אלוף NBA</label>
         <select id="pre_champion" onchange="CBD['champion']=this.value">
@@ -1202,7 +1205,11 @@ function renderBetForm(){
     // Only show bonuses that are NOT yet locked (user can still bet)
     // Bonuses with seriesKey: show only if that series is NOT locked yet
     // Bonuses without seriesKey: show only if stage is NOT locked
-    const availableBonuses=bonuses.filter(b=>!isSingleBonusLocked(si,b));
+    const availableBonuses=bonuses.filter(b=>{
+      if(isSingleBonusLocked(si,b))return false; // locked - can't bet
+      if(b.seriesKey&&!isSeriesLocked(si,b.seriesKey))return false; // series not locked yet - hide
+      return true;
+    });
     for(let bi=0;bi<availableBonuses.length;bi++){
       const b=availableBonuses[bi];
       const opts=b.answers.map(a=>`<button class="bonus-opt" id="bopt_${b.id}_${encodeURIComponent(a)}" onclick="pickBonus('${b.id}',this.getAttribute('data-val'))" data-val="${a}">${a}</button>`).join('');
