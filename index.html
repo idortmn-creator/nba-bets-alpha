@@ -212,6 +212,8 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
         <div class="menu-item" onclick="closeMenuAnd(()=>showLeagueTab('bets'))" id="menuViewBets" style="display:none"><span class="mi-icon">📋</span> הימורים</div>
         <div class="menu-item" onclick="closeMenuAnd(()=>showLeagueTab('admin'))" id="menuAdmin" style="display:none"><span class="mi-icon">⚙️</span> ניהול</div>
         <div class="menu-separator"></div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" onclick="closeMenuAnd(showProfile)"><span class="mi-icon">👤</span> פרופיל</div>
         <div class="menu-item danger" onclick="closeMenuAnd(doSignOut)"><span class="mi-icon">🚪</span> התנתק</div>
       </div>
     </div>
@@ -686,6 +688,56 @@ async function doResendVerification(){
     toast('📧 מייל אימות נשלח שוב! בדוק ספאם');
   }catch(e){toast('❌ '+(e.code==='auth/invalid-credential'?'אימייל או סיסמה שגויים':e.message));}
 }
+function showProfile(){
+  showPage('page-profile');
+  document.getElementById('profileName').value=currentUserDoc?.displayName||'';
+  document.getElementById('profileUsername').value=currentUserDoc?.username||'';
+  document.getElementById('profileNewPass').value='';
+  document.getElementById('profileConfirmPass').value='';
+}
+window.showProfile=showProfile;
+
+async function saveProfile(){
+  const name=document.getElementById('profileName').value.trim();
+  const username=document.getElementById('profileUsername').value.trim().replace(/\s/g,'');
+  if(!name||!username){toast('⚠️ מלא את כל השדות');return;}
+  try{
+    // Check username not taken by someone else
+    if(username!==currentUserDoc?.username){
+      const uQ=await getDocs(query(collection(db,'users'),where('username','==',username)));
+      if(!uQ.empty){toast('⚠️ שם המשתמש תפוס');return;}
+    }
+    await updateProfile(currentUser,{displayName:name});
+    await updateDoc(doc(db,'users',currentUser.uid),{displayName:name,username});
+    currentUserDoc={...currentUserDoc,displayName:name,username};
+    document.getElementById('menuUsername').textContent='👤 '+username;
+    toast('✅ פרופיל עודכן!');
+  }catch(e){toast('❌ '+e.message);}
+}
+window.saveProfile=saveProfile;
+
+async function changePassword(){
+  const newPass=document.getElementById('profileNewPass').value;
+  const confirm=document.getElementById('profileConfirmPass').value;
+  if(!newPass||!confirm){toast('⚠️ מלא את שני השדות');return;}
+  if(newPass.length<6){toast('⚠️ סיסמה חייבת להיות לפחות 6 תווים');return;}
+  if(newPass!==confirm){toast('⚠️ הסיסמאות אינן תואמות');return;}
+  try{
+    const {updatePassword}=await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js");
+    await updatePassword(currentUser,newPass);
+    document.getElementById('profileNewPass').value='';
+    document.getElementById('profileConfirmPass').value='';
+    toast('✅ סיסמה שונתה בהצלחה!');
+  }catch(e){
+    if(e.code==='auth/requires-recent-login'){
+      toast('⚠️ יש להתנתק ולהתחבר מחדש לפני שינוי סיסמה');
+    }else{
+      toast('❌ '+e.message);
+    }
+  }
+}
+window.changePassword=changePassword;
+
 async function doSignOut(){
   if(leagueUnsubscribe){leagueUnsubscribe();leagueUnsubscribe=null;}
   currentLeague=null;currentLeagueData=null;
@@ -1233,7 +1285,11 @@ function renderBetForm(){
     }
   } // end else bonusLocked
   } // end if bonuses.length
-  html+=`<div style="margin-top:16px;display:flex;gap:9px;"><button class="btn btn-primary" style="width:auto" onclick="saveBet(this.dataset.si)" data-si="${si}">💾 שמור הימורים</button><button class="btn btn-secondary btn-sm" onclick="clearBets(this.dataset.si)" data-si="${si}">🔄 נקה ושמור</button></div>`;
+  html+=`<div style="margin-top:16px;display:flex;gap:9px;flex-wrap:wrap;">
+    <button class="btn btn-primary" style="width:auto" onclick="saveBet(this.dataset.si)" data-si="${si}">💾 שמור הימורים</button>
+    <button class="btn btn-secondary btn-sm" onclick="autoFillBets(this.dataset.si)" data-si="${si}" style="background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3);color:var(--gold)">🎲 מילוי אוטומטי</button>
+    <button class="btn btn-secondary btn-sm" onclick="clearBets(this.dataset.si)" data-si="${si}">🔄 נקה ושמור</button>
+  </div>`;
   content.innerHTML=html;
   // Load existing
   const existing=((currentLeagueData?.bets||{})[currentUser.uid]||{})['stage'+si]||{};
@@ -1274,6 +1330,69 @@ function pickBonus(bonusId,val){
   CBD['bonus_'+bonusId]=val;
   document.querySelectorAll(`[id^="bopt_${bonusId}_"]`).forEach(b=>b.classList.toggle('selected',b.getAttribute('data-val')===val));
 }
+
+function autoFillBets(si){
+  if(si!=='0b')si=isNaN(parseInt(si))?si:parseInt(si);
+  const matches=STAGE_MATCHES[si]||[];
+  
+  if(si===0||si==='0b'){
+    // Playin: pick random winner for each match
+    for(const m of matches){
+      const t=getTeams(si,m.key);
+      const teams=[t.home,t.away].filter(Boolean);
+      if(!teams.length)continue;
+      const pick=teams[Math.floor(Math.random()*teams.length)];
+      pickPlayin(m.key,pick,si);
+    }
+  } else {
+    // Series: pick random team + random result for unlocked series
+    for(const m of matches){
+      if(isSeriesLocked(si,m.key))continue; // skip locked series
+      const t=getTeams(si,m.key);
+      const teams=[t.home,t.away].filter(Boolean);
+      if(!teams.length)continue;
+      const pick=teams[Math.floor(Math.random()*teams.length)];
+      const result=GAPS[Math.floor(Math.random()*GAPS.length)];
+      pickSeries(m.key,pick,result,si);
+      if(m.hasMvp){
+        // Leave MVP empty for user to fill
+      }
+    }
+    // Pre-bets for stage 1
+    if(si===1&&!isPreBetsLocked()){
+      const s1teams=[];
+      const eastT=[],westT=[];
+      for(const m of matches){
+        const t=getTeams(1,m.key);
+        if(m.conf==='east'){if(t.home)eastT.push(t.home);if(t.away)eastT.push(t.away);}
+        else{if(t.home)westT.push(t.home);if(t.away)westT.push(t.away);}
+      }
+      const allT=[...eastT,...westT];
+      if(allT.length){
+        const rChamp=allT[Math.floor(Math.random()*allT.length)];
+        const rEast=eastT.length?eastT[Math.floor(Math.random()*eastT.length)]:'';
+        const rWest=westT.length?westT[Math.floor(Math.random()*westT.length)]:'';
+        CBD['champion']=rChamp;CBD['east_champ']=rEast;CBD['west_champ']=rWest;
+        const ec=document.getElementById('pre_champion');
+        const ee=document.getElementById('pre_east_champ');
+        const ew=document.getElementById('pre_west_champ');
+        if(ec)ec.value=rChamp;if(ee)ee.value=rEast;if(ew)ew.value=rWest;
+      }
+    }
+  }
+  
+  // Auto-fill bonus bets
+  const bonuses=getBonusBets(si).filter(b=>!isSingleBonusLocked(si,b));
+  for(const b of bonuses){
+    if(b.answers&&b.answers.length){
+      const pick=b.answers[Math.floor(Math.random()*b.answers.length)];
+      pickBonus(b.id,pick);
+    }
+  }
+  
+  toast('🎲 מילוי אוטומטי הושלם — תוכל לשנות לפני השמירה');
+}
+window.autoFillBets=autoFillBets;
 
 async function clearBets(si){
   if(si!=='0b')si=isNaN(parseInt(si))?si:parseInt(si);
@@ -1838,6 +1957,29 @@ function renderPrebetsTab(){
 }
 
 window.renderPrebetsTab=renderPrebetsTab;
+
+function sendReminderEmail(){
+  const ld=currentLeagueData;
+  if(!ld){toast('⚠️ אין ליגה פעילה');return;}
+  const members=ld.members||[];
+  const memberInfo=ld.memberInfo||{};
+  // Collect emails from users collection - we only have displayName/username
+  // So we'll use the league link instead
+  const link=`${location.origin}${location.pathname}?code=${ld.code}`;
+  const cs=getGlobal('currentStage',0);
+  const stageName=STAGE_NAMES[STAGE_KEYS.indexOf(cs)]||'';
+  const subject=encodeURIComponent(`תזכורת: הזן הימורים — ${ld.name}`);
+  const body=encodeURIComponent(`שלום,
+
+תזכורת להזין את הימוריך עבור ${stageName} בליגה "${ld.name}".
+
+כניסה לאתר:
+${link}
+
+בהצלחה!`);
+  window.open(`mailto:?subject=${subject}&body=${body}`);
+}
+window.sendReminderEmail=sendReminderEmail;
 
 function copyLink(){navigator.clipboard.writeText(document.getElementById('createdLeagueLink').value);toast('📋 הועתק!');}
 function copyAdminLink(){navigator.clipboard.writeText(document.getElementById('adminShareLink').value);toast('📋 הועתק!');}
