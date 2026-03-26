@@ -693,6 +693,16 @@ onAuthStateChanged(auth, async user=>{
     const params=new URLSearchParams(location.search);
     const code=params.get('code');
     startAutoLockChecker();
+    // Start global listener immediately at login and wait for first load
+    if(!globalUnsubscribe){
+      await new Promise(resolve=>{
+        globalUnsubscribe=onSnapshot(doc(db,'global','settings'),snap=>{
+          globalData=snap.exists()?snap.data():{};
+          if(currentLeagueData)renderLeaguePage();
+          resolve(); // resolve on first load
+        });
+      });
+    }
     if(code){await autoJoinLeague(code);}else{goHome();}
   } else {
     currentUser=null;currentUserDoc=null;
@@ -1011,10 +1021,11 @@ async function gaSaveResults(){
     if(el){bonusResults[b.id]=el.value||'';}
   }
   await setDoc(doc(db,'global','settings'),{results:{['stage'+si]:resultToSave}},{merge:true});
-  if(Object.keys(bonusResults).length){
+  if(bonuses.length){
     const bonusUpdates={};
     for(const b of bonuses){
       if(bonusResults[b.id])bonusUpdates[`bonusResults.${bKey2}.${b.id}`]=bonusResults[b.id];
+      else bonusUpdates[`bonusResults.${bKey2}.${b.id}`]=deleteField();
     }
     if(Object.keys(bonusUpdates).length)await updateDoc(doc(db,'global','settings'),bonusUpdates);
   }
@@ -1271,6 +1282,13 @@ async function saveProfile(){
     await updateDoc(doc(db,'users',currentUser.uid),{displayName:name,username:username});
     currentUserDoc={...currentUserDoc,displayName:name,username:username};
     document.getElementById('menuUsername').textContent='👤 '+username;
+    // Update memberInfo in all leagues
+    try{
+      const leaguesSnap=await getDocs(query(collection(db,'leagues'),where('members','array-contains',currentUser.uid)));
+      for(const ldoc of leaguesSnap.docs){
+        await updateDoc(ldoc.ref,{[`memberInfo.${currentUser.uid}.username`]:username,[`memberInfo.${currentUser.uid}.displayName`]:name});
+      }
+    }catch(e2){console.warn('Could not update league memberInfo:',e2);}
     toast('✅ פרופיל עודכן!');
   }catch(e){console.error('saveProfile error:',e);toast('❌ '+e.message);}
 }
@@ -1399,24 +1417,6 @@ async function openLeague(lid){
   document.getElementById('leaderboardList').innerHTML='<div class="loader"><div class="spinner"></div></div>';
   if(leagueUnsubscribe)leagueUnsubscribe();
   
-  // Listen to global settings
-  if(!globalUnsubscribe){
-    globalUnsubscribe=onSnapshot(doc(db,'global','settings'),snap=>{
-      globalData=snap.exists()?snap.data():{};
-      if(currentLeagueData){
-        // Only re-render tabs that don't have user input
-        const adminTab=document.getElementById('ltab-admin');
-        const adminVisible=adminTab&&adminTab.style.display!=='none';
-        if(!adminVisible){
-          renderLeaguePage();
-        } else {
-          // Just update leaderboard and stage info without rebuilding admin forms
-          renderLeaderboard();
-        }
-      }
-    });
-  }
-
   leagueUnsubscribe=onSnapshot(doc(db,'leagues',lid),snap=>{
     if(!snap.exists()){toast('❌ ליגה לא נמצאה');goHome();return;}
     currentLeague=lid;currentLeagueData=snap.data();
@@ -1639,12 +1639,20 @@ function viewStage(idx){
   const locked=stageLocks[idxNum]||false;
   const currentStageIdx=STAGE_KEYS.indexOf(getGlobal('currentStage',0));
   const content=document.getElementById('betsContent');
-  // For playin stages, still require stage lock
-  // For series stages (1-4), show per-series - no stage lock needed
+  // For playin stages (0 and 0b), require stage lock to view
+  // For series stages (1-4), show per-series even without stage lock
   const isSeriesStage=idx!==0&&idx!=='0b';
   if(!locked&&!isSeriesStage){
     content.innerHTML='<div class="card"><div class="empty-state"><div class="icon">🔒</div><p>ניתן לצפות לאחר נעילת השלב</p></div></div>';
     return;
+  }
+  // For series stages with no stage lock - check if ANY series is locked
+  if(isSeriesStage&&!locked){
+    const anySeriesLocked=STAGE_MATCHES[idx]?.some(m=>isSeriesLocked(idx,m.key));
+    if(!anySeriesLocked){
+      content.innerHTML='<div class="card"><div class="empty-state"><div class="icon">🔒</div><p>ניתן לצפות לאחר נעילת סדרה</p></div></div>';
+      return;
+    }
   }
   const ld=currentLeagueData;
   const result=(getGlobal('results',{}))['stage'+idx]||{},matches=STAGE_MATCHES[idx];
@@ -1721,7 +1729,24 @@ function renderBetForm(){
   const locked=(getGlobal('stageLocked',[]))[siIdx]||false;
   const content=document.getElementById('betFormContent');
   CBD={};
-  if(locked){content.innerHTML='<div class="info-box" style="color:var(--red);border-color:rgba(255,68,68,0.3)">🔒 שלב זה נעול</div>';return;}
+  if(locked){
+    // Show read-only view of own bets
+    const myBet=(currentLeagueData?.bets||{})[currentUser.uid]?.['stage'+si]||{};
+    if(Object.keys(myBet).length===0){
+      content.innerHTML='<div class="info-box" style="color:var(--red);border-color:rgba(255,68,68,0.3)">🔒 שלב זה נעול ולא הזנת הימורים</div>';
+    } else {
+      const matches2=STAGE_MATCHES[si]||[];
+      let roHtml='<div class="info-box" style="color:var(--red);border-color:rgba(255,68,68,0.3);margin-bottom:12px">🔒 שלב זה נעול — ההימורים שלך:</div>';
+      if(si===0||si==='0b'){
+        for(const m of matches2){const v=myBet[m.key]||'-';roHtml+=`<div class="bet-item"><span class="bet-label">${teamLabel(si,m.key,m.label)}</span><span class="bet-value pending">${v}</span></div>`;}
+      } else {
+        for(const m of matches2){const bW=myBet[m.key+'_winner']||'-',bR=myBet[m.key+'_result']||'-';roHtml+=`<div class="bet-item"><span class="bet-label">${teamLabel(si,m.key,m.label)}</span><span class="bet-value pending">${bW} (${bR})</span></div>`;}
+        if(si===1){for(const p of PREBETS){roHtml+=`<div class="bet-item"><span class="bet-label">${p.label}</span><span class="bet-value pending">${myBet[p.key]||'-'}</span></div>`;}}
+      }
+      content.innerHTML=roHtml;
+    }
+    return;
+  }
   if(!canBetOnStage(si)){
     const prevNames={'0b':'פליי-אין סיבוב א',1:'פליי-אין גמר',2:'סיבוב ראשון',3:'סיבוב שני',4:'גמר איזורי'};
     const prevName=prevNames[si]||'השלב הקודם';
