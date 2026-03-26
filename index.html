@@ -273,6 +273,10 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
           <div class="card" style="margin-top:16px">
             <div class="card-title">🔑 שינוי סיסמה</div>
             <div class="form-group">
+              <label>סיסמה נוכחית</label>
+              <input type="password" id="profileOldPass" placeholder="הכנס סיסמה נוכחית...">
+            </div>
+            <div class="form-group">
               <label>סיסמה חדשה</label>
               <input type="password" id="profileNewPass" placeholder="לפחות 6 תווים...">
             </div>
@@ -1144,10 +1148,9 @@ window.showProfile=showProfile;
 
 async function saveProfile(){
   const name=document.getElementById('profileName').value.trim();
-  const username=document.getElementById('profileUsername').value.trim().replace(/\s/g,'');
+  const username=document.getElementById('profileUsername').value.trim().replace(/\s+/g,'');
   if(!name||!username){toast('⚠️ מלא את כל השדות');return;}
   try{
-    // Check username not taken by someone else
     if(username!==currentUserDoc?.username){
       const uQ=await getDocs(query(collection(db,'users'),where('username','==',username)));
       if(!uQ.empty){toast('⚠️ שם המשתמש תפוס');return;}
@@ -1162,20 +1165,25 @@ async function saveProfile(){
 window.saveProfile=saveProfile;
 
 async function changePassword(){
+  const oldPass=document.getElementById('profileOldPass').value;
   const newPass=document.getElementById('profileNewPass').value;
   const confirm=document.getElementById('profileConfirmPass').value;
-  if(!newPass||!confirm){toast('⚠️ מלא את שני השדות');return;}
+  if(!oldPass||!newPass||!confirm){toast('⚠️ מלא את כל השדות');return;}
   if(newPass.length<6){toast('⚠️ סיסמה חייבת להיות לפחות 6 תווים');return;}
   if(newPass!==confirm){toast('⚠️ הסיסמאות אינן תואמות');return;}
+  if(oldPass===newPass){toast('⚠️ הסיסמה החדשה חייבת להיות שונה מהישנה');return;}
   try{
-    const {updatePassword}=await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js");
+    const {updatePassword,reauthenticateWithCredential,EmailAuthProvider}=await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js");
+    const credential=EmailAuthProvider.credential(currentUser.email,oldPass);
+    await reauthenticateWithCredential(currentUser,credential);
     await updatePassword(currentUser,newPass);
+    document.getElementById('profileOldPass').value='';
     document.getElementById('profileNewPass').value='';
     document.getElementById('profileConfirmPass').value='';
     toast('✅ סיסמה שונתה בהצלחה!');
   }catch(e){
-    if(e.code==='auth/requires-recent-login'){
-      toast('⚠️ יש להתנתק ולהתחבר מחדש לפני שינוי סיסמה');
+    if(e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'){
+      toast('❌ סיסמה ישנה שגויה');
     }else{
       toast('❌ '+e.message);
     }
@@ -1496,16 +1504,6 @@ function renderLeaderboard(){
   document.getElementById('lb-stage-badge').textContent=STAGE_NAMES[csIdx]||'';
   const cs=getGlobal('currentStage',0);
   document.getElementById('lb-stage-badge').className='badge '+(locked?'badge-locked':'badge-open');
-  const stageInfoMap={
-    0:"4 משחקים | 1נק' לניחוש נכון",
-    '0b':"2 משחקי גמר פליי-אין | 1נק' לניחוש | בונוסים: קונפרנס מלא +1 | כל 6 +3",
-    1:"8 סדרות | 2נק' מנצחת + 4נק' תוצאה | בונוסי קונפרנס + הימורי מראש",
-    2:"4 סדרות | 3נק' מנצחת + 6נק' תוצאה | בונוסי קונפרנס",
-    3:"2 סדרות | 4נק' מנצחת + 8נק' תוצאה + 1נק' MVP | בונוס +3",
-    4:"5נק' מנצחת + 10נק' תוצאה + 2נק' MVP"
-  };
-  // cs already set above
-  document.getElementById('stageInfoBox').innerHTML=`<strong>${STAGE_NAMES[csIdx]}</strong><br>${stageInfoMap[cs]||''}<br><br>סטטוס: ${locked?'🔒 נעול':'🟢 פתוח'}`;
 }
 
 // ── BETS VIEW ──
