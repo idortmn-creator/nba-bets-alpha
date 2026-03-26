@@ -1156,11 +1156,11 @@ async function saveProfile(){
       if(!uQ.empty){toast('⚠️ שם המשתמש תפוס');return;}
     }
     await updateProfile(currentUser,{displayName:name});
-    await updateDoc(doc(db,'users',currentUser.uid),{displayName:name,username});
-    currentUserDoc={...currentUserDoc,displayName:name,username};
+    await updateDoc(doc(db,'users',currentUser.uid),{displayName:name,username:username});
+    currentUserDoc={...currentUserDoc,displayName:name,username:username};
     document.getElementById('menuUsername').textContent='👤 '+username;
     toast('✅ פרופיל עודכן!');
-  }catch(e){toast('❌ '+e.message);}
+  }catch(e){console.error('saveProfile error:',e);toast('❌ '+e.message);}
 }
 window.saveProfile=saveProfile;
 
@@ -1205,6 +1205,11 @@ function goHome(){
   currentLeague=null;currentLeagueData=null;
   updateMenuForLeague(false);
   document.getElementById('homeUsername').textContent=currentUserDoc?.username||'';
+  // Show admin button if super admin
+  if(isSuperAdmin()){
+    const saBtn=document.getElementById('superAdminHomeBtn');
+    if(saBtn)saBtn.style.display='';
+  }
   showPage('page-home');
 }
 function updateMenuForLeague(inLeague,isAdmin=false){
@@ -1310,9 +1315,7 @@ function renderLeaguePage(){
   const ld=currentLeagueData;
   document.getElementById('leaguePageTitle').textContent=ld.name;
   document.getElementById('leaguePageCode').textContent=ld.code;
-  const isAdmin=ld.adminUid===currentUser.uid;
-  document.getElementById('adminTabBtn').style.display=isAdmin?'':'none';
-  updateMenuForLeague(true,isAdmin);
+  updateMenuForLeague(true,false);
   showLeagueTab('leaderboard');
 }
 
