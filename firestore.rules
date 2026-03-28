@@ -1,0 +1,191 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────
+//  NBA Bets 2026 — Firestore Security Rules
+//  Generated from source analysis of index.html v2.5
+//
+//  Architecture:
+//    users/{uid}         — one doc per registered user
+//    leagues/{lid}       — one doc per league (members[], bets nested)
+//    global/settings     — single global doc (stages, locks, teams, results)
+//
+//  Admin tiers:
+//    Super Admin  — hardcoded UID, controls global/settings
+//    League Admin — league.adminUid === request.auth.uid
+// ─────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── HELPERS ────────────────────────────────────────────────────
+
+    // Is the caller authenticated at all?
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // Is the caller the super admin?
+    function isSuperAdmin() {
+      return isAuth() && request.auth.uid == 'aPgbjXex6lbB7N4X5j62Y4qqECV2';
+    }
+
+    // Is the caller the admin of a given league document?
+    function isLeagueAdmin(leagueData) {
+      return isAuth() && request.auth.uid == leagueData.adminUid;
+    }
+
+    // Is the caller a member of a given league document?
+    function isLeagueMember(leagueData) {
+      return isAuth() && request.auth.uid in leagueData.members;
+    }
+
+    // Only fields in the allowed set are being written
+    function onlyFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ── USERS ──────────────────────────────────────────────────────
+    //
+    //  users/{uid}
+    //    Fields: uid, displayName, username, email, leagues[], createdAt
+    //
+    match /users/{uid} {
+
+      // Any authenticated user can read any user doc.
+      // (Needed to check username uniqueness on registration and
+      //  to load memberInfo — only public fields are stored.)
+      allow read: if isAuth();
+
+      // A user can only create their own document, and only with
+      // the correct uid field. Super admin can create any.
+      allow create: if (isAuth() && request.auth.uid == uid
+                        && request.resource.data.uid == uid)
+                    || isSuperAdmin();
+
+      // A user can update only their own document.
+      // They may NOT change uid, email, or createdAt.
+      // Super admin may update any.
+      allow update: if (isAuth() && request.auth.uid == uid
+                        && !('uid'       in request.resource.data.diff(resource.data).affectedKeys())
+                        && !('createdAt' in request.resource.data.diff(resource.data).affectedKeys()))
+                    || isSuperAdmin();
+
+      // Nobody can delete user documents (not needed in the app).
+      allow delete: if false;
+    }
+
+    // ── LEAGUES ────────────────────────────────────────────────────
+    //
+    //  leagues/{lid}
+    //    Fields: id, name, code, adminUid, members[], memberInfo{},
+    //            currentStage, stageLocked[], seriesLocked{},
+    //            teams{}, results{}, bonusBets{}, bonusResults{},
+    //            bets{uid: {stageN: {...}}}, createdAt
+    //
+    match /leagues/{lid} {
+
+      // Any authenticated user may read any league.
+      // (Needed for join-by-code query and leaderboard.)
+      allow read: if isAuth();
+
+      // Any authenticated user may create a league.
+      // They must be the adminUid and the first (only) member.
+      allow create: if isAuth()
+                    && request.resource.data.adminUid == request.auth.uid
+                    && request.resource.data.members.hasOnly([request.auth.uid]);
+
+      // ── League updates — split by who is writing ──
+      allow update: if isAuth() && (
+          // ① Super admin can do anything
+          isSuperAdmin()
+
+          // ② League admin can manage the league
+          // (stage, locks, teams, results, bonuses, members, memberInfo)
+          || isLeagueAdmin(resource.data)
+
+          // ③ A member (including the admin) can write their own bets
+          // and update their own memberInfo entry.
+          // Crucially they CANNOT change: adminUid, members list (except
+          // joining — handled below), results, teams, stage locks.
+          || (isLeagueMember(resource.data)
+              && onlyMemberWritableFields())
+
+          // ④ A non-member (joining) may add themselves to members[]
+          // and write their memberInfo entry — nothing else.
+          || isJoiningLeague()
+      );
+
+      // Nobody deletes leagues from the client.
+      allow delete: if isSuperAdmin();
+    }
+
+    // ── What a regular member is allowed to update ─────────────────
+    // They may only touch:
+    //   bets.{their uid}.*   — their own bets
+    //   memberInfo.{their uid}  — their own display info
+    //
+    // Everything else (adminUid, members, results, teams, locks...)
+    // must stay identical to the existing value.
+    function onlyMemberWritableFields() {
+      let uid = request.auth.uid;
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+
+      // The only top-level keys that are allowed to change
+      // are 'bets' and 'memberInfo'.
+      return changed.hasOnly(['bets', 'memberInfo'])
+          // adminUid must not change
+          && request.resource.data.adminUid == resource.data.adminUid
+          // members array must not change
+          && request.resource.data.members == resource.data.members
+          // results must not change
+          && request.resource.data.results == resource.data.results
+          // stage locks must not change
+          && request.resource.data.stageLocked == resource.data.stageLocked;
+    }
+
+    // ── Joining a league ─────────────────────────────────────────
+    // A non-member may add exactly themselves to members[]
+    // and write their memberInfo entry — nothing else changes.
+    function isJoiningLeague() {
+      let uid = request.auth.uid;
+      let before = resource.data;
+      let after  = request.resource.data;
+      let changed = after.diff(before).affectedKeys();
+
+      return !(uid in before.members)                     // was not a member
+          && uid in after.members                         // is now a member
+          && changed.hasOnly(['members', 'memberInfo'])   // only these changed
+          && after.adminUid    == before.adminUid
+          && after.results     == before.results
+          && after.stageLocked == before.stageLocked
+          && after.teams       == before.teams;
+    }
+
+    // ── GLOBAL SETTINGS ────────────────────────────────────────────
+    //
+    //  global/settings  (single document)
+    //    Fields: currentStage, stageLocked[], seriesLocked{},
+    //            teams{}, results{}, bonusBets{}, bonusResults{},
+    //            autoLocks{}
+    //
+    match /global/{docId} {
+
+      // All authenticated users may read global settings.
+      // (Needed to render stage info, team names, locks, etc.)
+      allow read: if isAuth();
+
+      // ONLY the super admin may write global settings.
+      // This covers: updating stage, locking stages/series,
+      // setting teams, entering results, managing bonus bets,
+      // and auto-lock configuration.
+      allow write: if isSuperAdmin();
+    }
+
+    // ── DENY EVERYTHING ELSE ───────────────────────────────────────
+    // Any collection or document not matched above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+  }
+}
