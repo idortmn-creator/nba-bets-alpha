@@ -1,7 +1,5 @@
-
-
-
 <!DOCTYPE html>
+<!-- v2.5 -->
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -10,186 +8,7 @@
 <meta name="description" content="הימורי פלייאוף NBA 2026">
 <meta name="theme-color" content="#FF6B00">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;900&family=Oswald:wght@700&display=swap" rel="stylesheet">
-<style>
-:root{--orange:#FF6B00;--orange-light:#FF8C33;--dark:#0a0a0f;--dark2:#13131f;--dark3:#1c1c2e;--card:#1e1e30;--card2:#252540;--text:#e8e8f0;--text2:#9999bb;--gold:#FFD700;--green:#00e676;--red:#ff4444;--blue:#4fc3f7;--border:rgba(255,107,0,0.2);}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Heebo',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;direction:rtl;}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 20%,rgba(255,107,0,0.06),transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(79,195,247,0.04),transparent 60%);pointer-events:none;z-index:0;}
-.container{max-width:1100px;margin:0 auto;padding:0 16px;position:relative;z-index:1;}
-
-/* ── HEADER ── */
-header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-bottom:2px solid var(--orange);padding:12px 0;position:sticky;top:0;z-index:300;box-shadow:0 4px 30px rgba(255,107,0,0.2);}
-.header-inner{display:flex;justify-content:space-between;align-items:center;}
-.logo{font-family:'Oswald',sans-serif;font-size:1.4rem;color:var(--orange);letter-spacing:2px;cursor:pointer;user-select:none;}
-.logo span{color:var(--text);}
-
-/* ── HAMBURGER MENU ── */
-.menu-wrap{position:relative;}
-.menu-btn{width:42px;height:42px;border-radius:50%;background:var(--card2);border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.3rem;transition:all 0.2s;flex-shrink:0;}
-.menu-btn:hover{border-color:var(--orange);background:rgba(255,107,0,0.1);}
-.menu-dropdown{position:absolute;top:52px;left:0;background:var(--card);border:1px solid var(--border);border-radius:14px;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,0.5);z-index:400;overflow:hidden;display:none;animation:fadeIn 0.15s ease;}
-.menu-dropdown.open{display:block;}
-.menu-item{display:flex;align-items:center;gap:10px;padding:13px 18px;cursor:pointer;transition:background 0.15s;font-size:0.92rem;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.04);}
-.menu-item:last-child{border-bottom:none;}
-.menu-item:hover{background:rgba(255,107,0,0.1);}
-.menu-item.danger{color:var(--red);}
-.menu-item .mi-icon{font-size:1.1rem;width:22px;text-align:center;}
-.menu-separator{height:1px;background:var(--border);margin:4px 0;}
-.menu-username{padding:12px 18px;font-size:0.78rem;color:var(--text2);border-bottom:1px solid var(--border);}
-
-/* ── PAGES ── */
-.page{display:none;padding:24px 0;animation:fadeIn 0.22s ease;}
-.page.active{display:block;}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-
-/* ── CARDS ── */
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;}
-.card-title{font-family:'Oswald',sans-serif;font-size:1.15rem;color:var(--orange);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-
-/* ── AUTH ── */
-.auth-wrap{max-width:400px;margin:50px auto;}
-.auth-tabs{display:flex;margin-bottom:22px;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
-.auth-tab{flex:1;padding:10px;background:transparent;border:none;color:var(--text2);cursor:pointer;font-family:'Heebo',sans-serif;font-size:0.92rem;font-weight:700;transition:all 0.2s;}
-.auth-tab.active{background:var(--orange);color:#fff;}
-.auth-logo{text-align:center;margin-bottom:26px;}
-.auth-logo .big{font-family:'Oswald',sans-serif;font-size:2rem;color:var(--orange);}
-.auth-logo .sub{color:var(--text2);font-size:0.86rem;margin-top:4px;}
-
-/* ── FORMS ── */
-.form-group{margin-bottom:13px;}
-.form-group label{display:block;font-size:0.79rem;color:var(--text2);margin-bottom:5px;font-weight:600;}
-.form-group input,.form-group select{width:100%;background:var(--dark3);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.9rem;padding:9px 12px;transition:border-color 0.2s;}
-.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--orange);}
-.form-group select option{background:var(--dark3);}
-.btn{padding:9px 20px;border-radius:8px;border:none;cursor:pointer;font-family:'Heebo',sans-serif;font-size:0.9rem;font-weight:700;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
-.btn-primary{background:var(--orange);color:#fff;width:100%;justify-content:center;}
-.btn-primary:hover{background:var(--orange-light);}
-.btn-secondary{background:var(--card2);color:var(--text);border:1px solid var(--border);}
-.btn-secondary:hover{border-color:var(--orange);color:var(--orange);}
-.btn-sm{padding:5px 11px;font-size:0.76rem;width:auto;}
-.btn-danger{background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.3);}
-.btn-danger:hover{background:rgba(255,68,68,0.3);}
-.btn-ghost{background:transparent;color:var(--orange);font-size:0.8rem;padding:4px 0;border:none;cursor:pointer;font-family:'Heebo',sans-serif;text-decoration:underline;}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-@media(max-width:560px){.grid-2{grid-template-columns:1fr;}}
-
-/* ── TOAST ── */
-.toast{position:fixed;top:68px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card);border:1px solid var(--orange);border-radius:10px;padding:10px 20px;font-weight:700;z-index:9999;opacity:0;transition:all 0.3s;white-space:nowrap;font-size:0.88rem;}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* ── LOADER ── */
-.loader{display:flex;align-items:center;justify-content:center;padding:50px;flex-direction:column;gap:12px;color:var(--text2);}
-.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin 0.7s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── HOME ── */
-.home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:6px;}
-.home-card{background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:22px;cursor:pointer;transition:all 0.2s;text-align:center;}
-.home-card:hover{border-color:var(--orange);transform:translateY(-3px);box-shadow:0 8px 24px rgba(255,107,0,0.15);}
-.home-card .hc-icon{font-size:2.2rem;margin-bottom:8px;}
-.home-card .hc-title{font-family:'Oswald',sans-serif;font-size:1rem;margin-bottom:4px;}
-.home-card .hc-sub{color:var(--text2);font-size:0.78rem;}
-
-/* ── LEAGUES ── */
-.league-row{display:flex;align-items:center;justify-content:space-between;background:var(--card2);border-radius:12px;padding:13px 16px;border:1px solid var(--border);cursor:pointer;transition:all 0.2s;margin-bottom:9px;}
-.league-row:hover{border-color:var(--orange);}
-.league-row .lr-name{font-weight:700;font-size:0.95rem;}
-.league-row .lr-meta{font-size:0.75rem;color:var(--text2);margin-top:2px;}
-
-/* ── LEADERBOARD ── */
-.leaderboard{display:flex;flex-direction:column;gap:7px;}
-.lb-row{display:flex;align-items:center;gap:12px;background:var(--card2);border-radius:12px;padding:11px 15px;position:relative;overflow:hidden;}
-.lb-row::before{content:'';position:absolute;right:0;top:0;bottom:0;width:4px;background:var(--border);border-radius:0 12px 12px 0;}
-.lb-row.rank-1::before{background:var(--gold);} .lb-row.rank-2::before{background:#C0C0C0;} .lb-row.rank-3::before{background:#CD7F32;}
-.lb-rank{font-family:'Oswald',sans-serif;font-size:1.15rem;width:28px;text-align:center;color:var(--text2);}
-.rank-1 .lb-rank{color:var(--gold);} .rank-2 .lb-rank{color:#C0C0C0;} .rank-3 .lb-rank{color:#CD7F32;}
-.lb-info{flex:1;}
-.lb-username{font-weight:700;font-size:0.92rem;}
-.lb-displayname{font-size:0.7rem;color:var(--text2);}
-.lb-score{font-family:'Oswald',sans-serif;font-size:1.35rem;color:var(--orange);}
-.lb-breakdown{font-size:0.68rem;color:var(--text2);}
-
-/* ── STAGE TABS ── */
-.stage-tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px;}
-.stage-tab{padding:6px 11px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:'Heebo',sans-serif;font-size:0.78rem;transition:all 0.2s;}
-.stage-tab:hover{border-color:var(--orange);color:var(--orange);}
-.stage-tab.active{background:rgba(255,107,0,0.15);border-color:var(--orange);color:var(--orange);font-weight:700;}
-
-/* ── BET CARDS VIEW ── */
-.bets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:11px;}
-.bet-card{background:var(--card2);border-radius:12px;padding:12px;border:1px solid var(--border);}
-.bet-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid var(--border);}
-.bet-player-username{font-weight:700;color:var(--orange);font-size:0.88rem;}
-.bet-player-name{font-size:0.68rem;color:var(--text2);}
-.bet-pts{font-family:'Oswald',sans-serif;font-size:0.95rem;}
-.bet-item{display:flex;justify-content:space-between;align-items:flex-start;padding:4px 0;font-size:0.78rem;border-bottom:1px solid rgba(255,255,255,0.04);gap:8px;}
-.bet-item:last-child{border-bottom:none;}
-.bet-label{color:var(--text2);flex:1;line-height:1.3;}
-.bet-value{font-weight:600;}
-.correct{color:var(--green);} .wrong{color:var(--red);} .pending{color:var(--text2);}
-
-/* ── BET FORM ── */
-.matchup-bet-card{background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
-.match-label{font-size:0.76rem;color:var(--text2);font-weight:700;margin-bottom:8px;}
-.bet-options{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:7px;}
-.bet-opt{padding:7px 5px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-family:'Heebo',sans-serif;font-size:0.74rem;transition:all 0.15s;text-align:center;line-height:1.3;}
-.bet-opt:hover{border-color:var(--orange);background:rgba(255,107,0,0.06);}
-.bet-opt.sel-home{background:rgba(79,195,247,0.18);border-color:var(--blue);color:var(--blue);font-weight:700;}
-.bet-opt.sel-away{background:rgba(255,107,0,0.18);border-color:var(--orange);color:var(--orange);font-weight:700;}
-.bet-opt.sel-bonus{background:rgba(255,215,0,0.18);border-color:var(--gold);color:var(--gold);font-weight:700;}
-.opt-team{font-weight:700;display:block;font-size:0.78rem;}
-.opt-res{font-size:0.66rem;opacity:0.75;}
-.playin-card{background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:9px;}
-.team-btns{display:flex;gap:7px;margin-top:7px;flex-wrap:wrap;}
-.team-btn{flex:1;min-width:80px;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-family:'Heebo',sans-serif;font-size:0.86rem;font-weight:600;transition:all 0.15s;}
-.team-btn:hover{border-color:var(--orange);}
-.team-btn.selected{background:rgba(255,107,0,0.2);border-color:var(--orange);color:var(--orange);font-weight:700;}
-
-/* ── BONUS BET ── */
-.bonus-bet-card{background:var(--dark3);border:1px solid rgba(255,215,0,0.25);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
-.bonus-label{font-size:0.76rem;color:var(--gold);font-weight:700;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;}
-.bonus-pts-badge{background:rgba(255,215,0,0.15);color:var(--gold);padding:2px 8px;border-radius:20px;font-size:0.7rem;}
-.bonus-q{font-size:0.9rem;font-weight:700;margin-bottom:10px;color:var(--text);}
-.bonus-opts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
-.bonus-opt{padding:7px 14px;border-radius:8px;border:1.5px solid rgba(255,215,0,0.3);background:transparent;color:var(--text);cursor:pointer;font-family:'Heebo',sans-serif;font-size:0.82rem;transition:all 0.15s;}
-.bonus-opt:hover{border-color:var(--gold);background:rgba(255,215,0,0.08);}
-.bonus-opt.selected{background:rgba(255,215,0,0.18);border-color:var(--gold);color:var(--gold);font-weight:700;}
-
-/* ── ADMIN ── */
-.ts-row{display:flex;align-items:center;gap:7px;background:var(--dark3);border-radius:10px;padding:8px 11px;margin-bottom:7px;border:1px solid var(--border);flex-wrap:wrap;}
-.ts-label{color:var(--text2);font-size:0.74rem;font-weight:700;min-width:110px;}
-.ts-inp{flex:1;min-width:90px;background:var(--dark);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.82rem;padding:6px 9px;}
-.ts-inp:focus{outline:none;border-color:var(--orange);}
-.vs-badge{color:var(--text2);font-size:0.68rem;font-weight:900;flex-shrink:0;}
-
-/* ── BONUS ADMIN ── */
-.bonus-admin-card{background:var(--dark3);border:1px dashed rgba(255,215,0,0.4);border-radius:12px;padding:14px;margin-bottom:12px;position:relative;}
-.bonus-admin-card .remove-btn{position:absolute;top:10px;left:10px;background:rgba(255,68,68,0.15);border:none;color:var(--red);border-radius:6px;padding:3px 8px;font-size:0.75rem;cursor:pointer;font-family:'Heebo',sans-serif;}
-.bonus-answers{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
-.bonus-answer-row{display:flex;gap:6px;align-items:center;}
-.bonus-answer-row input{flex:1;background:var(--dark);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.82rem;padding:6px 9px;}
-.bonus-answer-row input:focus{outline:none;border-color:var(--gold);}
-.remove-ans{background:transparent;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:0 4px;}
-
-/* ── MISC ── */
-.badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:0.68rem;font-weight:700;}
-.badge-open{background:rgba(0,230,118,0.15);color:var(--green);}
-.badge-locked{background:rgba(255,107,0,0.15);color:var(--orange);}
-.nav-tab{padding:7px 14px;border-radius:30px;border:1.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:'Heebo',sans-serif;font-size:0.82rem;transition:all 0.2s;white-space:nowrap;}
-.nav-tab:hover{border-color:var(--orange);color:var(--orange);}
-.nav-tab.active{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:700;}
-.info-box{background:rgba(255,107,0,0.07);border:1px solid rgba(255,107,0,0.25);border-radius:10px;padding:10px 14px;font-size:0.81rem;line-height:1.7;margin-bottom:12px;color:var(--text2);}
-.info-box strong{color:var(--orange);}
-.separator{height:1px;background:var(--border);margin:14px 0;}
-.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
-.section-title{font-family:'Oswald',sans-serif;font-size:1.35rem;}
-.empty-state{text-align:center;padding:30px;color:var(--text2);}
-.empty-state .icon{font-size:2.2rem;margin-bottom:8px;}
-.share-box{background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:9px;margin-bottom:11px;}
-.share-box input{flex:1;background:transparent;border:none;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.86rem;}
-.share-box input:focus{outline:none;}
-.code-display{font-family:'Oswald',sans-serif;font-size:2.3rem;letter-spacing:8px;color:var(--orange);text-align:center;padding:14px;background:var(--dark3);border-radius:12px;margin-bottom:11px;border:1px solid var(--border);}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -209,6 +28,9 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
         <div class="menu-item" onclick="closeMenuAnd(()=>showLeagueTab('bets'))" id="menuViewBets" style="display:none"><span class="mi-icon">📋</span> הימורים</div>
         <div class="menu-item" onclick="closeMenuAnd(()=>showLeagueTab('admin'))" id="menuAdmin" style="display:none"><span class="mi-icon">⚙️</span> ניהול</div>
         <div class="menu-separator"></div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" onclick="closeMenuAnd(showProfile)"><span class="mi-icon">👤</span> פרופיל</div>
+        <div class="menu-item" id="menuGlobalAdmin" style="display:none" onclick="closeMenuAnd(openGlobalAdmin)"><span class="mi-icon">⚙️</span> ניהול גלובלי</div>
         <div class="menu-item danger" onclick="closeMenuAnd(doSignOut)"><span class="mi-icon">🚪</span> התנתק</div>
       </div>
     </div>
@@ -248,6 +70,52 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
   </div>
 </div>
 
+<!-- PROFILE -->
+      <div id="page-profile" class="page">
+        <div style="max-width:480px;margin:0 auto;padding:24px 0">
+          <button class="btn btn-secondary btn-sm" onclick="showPage('page-home')" style="margin-bottom:18px">← חזור</button>
+          <div class="card">
+            <div class="card-title">👤 פרופיל</div>
+            <div class="form-group">
+              <label>שם מלא</label>
+              <input type="text" id="profileName" placeholder="שם מלא...">
+            </div>
+            <div class="form-group">
+              <label>שם משתמש</label>
+              <input type="text" id="profileUsername" placeholder="שם משתמש...">
+            </div>
+            <button class="btn btn-primary" onclick="saveProfile()" style="margin-top:4px">💾 שמור שינויים</button>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <div class="card-title">🔑 שינוי סיסמה</div>
+            <div class="form-group">
+              <label>סיסמה נוכחית</label>
+              <input type="password" id="profileOldPass" placeholder="הכנס סיסמה נוכחית...">
+            </div>
+            <div class="form-group">
+              <label>סיסמה חדשה</label>
+              <input type="password" id="profileNewPass" placeholder="לפחות 6 תווים...">
+            </div>
+            <div class="form-group">
+              <label>אימות סיסמה</label>
+              <input type="password" id="profileConfirmPass" placeholder="הכנס שוב...">
+            </div>
+            <button class="btn btn-secondary" onclick="changePassword()" style="margin-top:4px">🔑 שנה סיסמה</button>
+          </div>
+        </div>
+      </div>
+
+<!-- GLOBAL ADMIN -->
+      <div id="page-global-admin" class="page">
+        <div style="max-width:700px;margin:0 auto;padding:24px 0">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+            <button class="btn btn-secondary btn-sm" onclick="showPage('page-home')">← חזור</button>
+            <div style="font-size:1.2rem;font-weight:700;color:var(--orange)">⚙️ ניהול גלובלי</div>
+          </div>
+          <div id="global-admin-content"></div>
+        </div>
+      </div>
+
 <!-- HOME -->
 <div id="page-home" class="page">
   <div class="section-header"><div class="section-title">שלום, <span id="homeUsername" style="color:var(--orange)"></span> 👋</div></div>
@@ -255,6 +123,7 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
     <div class="home-card" onclick="showPage('page-create-league')"><div class="hc-icon">➕</div><div class="hc-title">צור ליגה חדשה</div><div class="hc-sub">פתח ליגה ושלח לחברים</div></div>
     <div class="home-card" onclick="showPage('page-join-league')"><div class="hc-icon">🔗</div><div class="hc-title">הצטרף לליגה</div><div class="hc-sub">הכנס קוד ליגה</div></div>
     <div class="home-card" onclick="loadMyLeagues()"><div class="hc-icon">🏆</div><div class="hc-title">הליגות שלי</div><div class="hc-sub">כל הליגות שלך</div></div>
+    <div class="home-card" id="superAdminHomeBtn" style="display:none;border-color:var(--orange)" onclick="openGlobalAdmin()"><div class="hc-icon">⚙️</div><div class="hc-title">ניהול גלובלי</div><div class="hc-sub">ניהול שלבים ותוצאות</div></div>
   </div>
 </div>
 
@@ -308,7 +177,8 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
     <button class="nav-tab active" onclick="showLeagueTab('leaderboard')">🏆 טבלה</button>
     <button class="nav-tab" onclick="showLeagueTab('bets')">📋 הימורים</button>
     <button class="nav-tab" onclick="showLeagueTab('enter-bets')">✍️ הימורים שלי</button>
-    <button class="nav-tab" id="adminTabBtn" style="display:none" onclick="showLeagueTab('admin')">⚙️ ניהול</button>
+    <button class="nav-tab" onclick="showLeagueTab('prebets')">🏆 הימורים מוקדמים</button>
+
   </nav>
 
   <!-- Leaderboard -->
@@ -320,7 +190,7 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
       </div>
       <div id="leaderboardList" class="leaderboard"></div>
     </div>
-    <div class="card"><div class="card-title">📊 מידע שלב</div><div id="stageInfoBox" class="info-box"></div></div>
+
   </div>
 
   <!-- Bets view -->
@@ -345,10 +215,19 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
   </div>
 
   <!-- Admin -->
+  <!-- Pre-bets tab -->
+  <div id="ltab-prebets" style="display:none">
+    <div class="card">
+      <div class="card-title">🏆 הימורים מוקדמים</div>
+      <div id="prebetsContent"></div>
+    </div>
+  </div>
+
   <div id="ltab-admin" style="display:none">
     <div class="card">
       <div class="card-title">🔄 ניהול שלבים</div>
       <div class="info-box"><strong>שלב נוכחי:</strong> <span id="adminCurrentStage">-</span></div>
+      <div id="allStageLockStatus" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
       <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;">
         <select id="adminStageSelect" style="padding:8px 11px;background:var(--dark3);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.86rem;">
           <option value="0">פליי-אין סיבוב א</option><option value="0b">פליי-אין גמר</option>
@@ -363,8 +242,15 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
         <div id="autoLockList" style="margin-bottom:10px"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
           <div>
-            <div style="font-size:0.75rem;color:var(--text2);margin-bottom:4px">שלב לנעילה</div>
-            <select id="autoLockStage" style="padding:7px 10px;background:var(--dark);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.82rem;">
+            <div style="font-size:0.75rem;color:var(--text2);margin-bottom:4px">סוג נעילה</div>
+            <select id="autoLockType" onchange="updateAutoLockTargets()" style="padding:7px 10px;background:var(--dark);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.82rem;">
+              <option value="stage">נעילת שלב</option>
+              <option value="series">נעילת סדרה</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;color:var(--text2);margin-bottom:4px">יעד</div>
+            <select id="autoLockTarget" style="padding:7px 10px;background:var(--dark);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.82rem;">
               <option value="0">פליי-אין א</option><option value="0b">פליי-אין גמר</option>
               <option value="1">סיבוב ראשון</option><option value="2">סיבוב שני</option>
               <option value="3">גמר איזורי</option><option value="4">גמר NBA</option>
@@ -418,6 +304,12 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
     </div>
 
     <div class="card">
+      <div class="card-title">📧 שליחת תזכורת</div>
+      <div style="color:var(--text2);font-size:0.82rem;margin-bottom:10px">שלח מייל תזכורת לכל המשתתפים להזין הימורים</div>
+      <button class="btn btn-secondary btn-sm" onclick="sendReminderEmail()" style="background:rgba(79,195,247,0.1);border-color:rgba(79,195,247,0.3);color:var(--blue)">📧 פתח מייל תזכורת</button>
+    </div>
+
+    <div class="card">
       <div class="card-title">📋 קישור שיתוף</div>
       <div class="share-box"><input type="text" id="adminShareLink" readonly><button class="btn btn-secondary btn-sm" onclick="copyAdminLink()">📋 העתק</button></div>
       <div class="code-display" id="adminLeagueCode"></div>
@@ -427,954 +319,6 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
 
 </div><!-- /container -->
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-         sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut as fbSignOut,
-         updateProfile } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, query,
-         where, getDocs, arrayUnion, serverTimestamp, onSnapshot, deleteField }
-  from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-// Mark Firebase as ready
-window._fbReady = false;
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCcemQInrgqkR28eNnDe0P-cJNnWBeNTJw",
-  authDomain: "nba-bets-2026.firebaseapp.com",
-  projectId: "nba-bets-2026",
-  storageBucket: "nba-bets-2026.firebasestorage.app",
-  messagingSenderId: "543075338360",
-  appId: "1:543075338360:web:f9c378431cbf4305ba858d",
-  measurementId: "G-49JMG7P5EY"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-let currentUser=null,currentUserDoc=null,currentLeague=null,currentLeagueData=null,leagueUnsubscribe=null,CBD={};
-// bonusBetDraft: temp storage while admin edits bonus bets
-let bonusBetDraft = {};
-
-const STAGE_MATCHES={
-  0:[{key:'e78',label:'מזרח: #7 מול #8',conf:'east'},{key:'e910',label:'מזרח: #9 מול #10',conf:'east'},
-     {key:'w78',label:'מערב: #7 מול #8',conf:'west'},{key:'w910',label:'מערב: #9 מול #10',conf:'west'}],
-  '0b':[{key:'e_final',label:'מזרח: גמר פליי-אין',conf:'east',singleGame:true},{key:'w_final',label:'מערב: גמר פליי-אין',conf:'west',singleGame:true}],
-  1:[{key:'e1',label:"מזרח ס'1",conf:'east'},{key:'e2',label:"מזרח ס'2",conf:'east'},{key:'e3',label:"מזרח ס'3",conf:'east'},{key:'e4',label:"מזרח ס'4",conf:'east'},
-     {key:'w1',label:"מערב ס'1",conf:'west'},{key:'w2',label:"מערב ס'2",conf:'west'},{key:'w3',label:"מערב ס'3",conf:'west'},{key:'w4',label:"מערב ס'4",conf:'west'}],
-  2:[{key:'e1',label:"מזרח ס'1",conf:'east'},{key:'e2',label:"מזרח ס'2",conf:'east'},{key:'w1',label:"מערב ס'1",conf:'west'},{key:'w2',label:"מערב ס'2",conf:'west'}],
-  3:[{key:'east',label:'גמר מזרח',conf:'east',hasMvp:true},{key:'west',label:'גמר מערב',conf:'west',hasMvp:true}],
-  4:[{key:'finals',label:'גמר NBA',conf:'',hasMvp:true}]
-};
-const STAGE_NAMES=['פליי-אין סיבוב א (4 משחקים)','פליי-אין גמר (2 משחקים)','סיבוב ראשון','סיבוב שני','גמר איזורי','גמר NBA'];
-const STAGE_SHORT=['פליי-אין א','פליי-אין ב','סיבוב 1','סיבוב 2','גמר איזורי','גמר'];
-const GAPS=['4-0','4-1','4-2','4-3'];
-const PREBETS=[{key:'champion',label:'🏆 אלוף NBA'},{key:'east_champ',label:'🔵 אלופת המזרח'},{key:'west_champ',label:'🔴 אלופת המערב'}];
-
-// ── STAGE KEYS (ordered) ──
-const STAGE_KEYS=[0,'0b',1,2,3,4];
-// Bonus is locked when stage 0 (first playin) is locked
-function isBonusLocked(){return (getGlobal('stageLocked',[]))[0]||false;}
-// Get auto-computed teams for 0b finals based on stage0 results
-function getPlayinFinalTeams(conf){
-  const r0=(getGlobal('results',{}))['stage0']||{};
-  // Try to get teams from globalData - handle both nested and flat storage
-  const teamsGlobal=getGlobal('teams',{});
-  const t0=teamsGlobal['stage0']||teamsGlobal||{};
-  const k78=conf==='east'?'e78':'w78';
-  const k910=conf==='east'?'e910':'w910';
-  // Get team names - try nested first, then flat
-  const match78=t0[k78]||{};
-  const home78=match78.home||'', away78=match78.away||'';
-  const winner78=(r0[k78]||'').toLowerCase().trim();
-  let loser78='';
-  if(winner78&&home78&&away78){
-    loser78=winner78===home78.toLowerCase().trim()?away78:home78;
-  } else if(winner78&&home78){
-    // If we have winner and one team name, try to figure out loser
-    loser78=winner78===home78.toLowerCase().trim()?away78:home78;
-  }
-  // winner of 9v10
-  const winner910=r0[k910]||'';
-  return {home: loser78||'מפסידת #7מול8', away: winner910||'מנצחת #9מול10'};
-}
-// bonus bets for playin use key 'stage0bonus' (shared for both playin stages)
-function getBonusStageKey(si){return(si===0||si==='0b')?'stage0':('stage'+si);}
-function getResultsKey(si){return 'stage'+si;}
-
-// ── EXPOSE ALL FUNCTIONS TO WINDOW ──
-window.switchAuthTab=switchAuthTab;
-window.doLogin=doLogin;
-window.doRegister=doRegister;
-window.doResetPassword=doResetPassword;
-window.doResendVerification=doResendVerification;
-window.doSignOut=doSignOut;
-window.goHome=goHome;
-window.showPage=showPage;
-window.createLeague=createLeague;
-window.joinLeague=joinLeague;
-window.loadMyLeagues=loadMyLeagues;
-window.enterCreatedLeague=enterCreatedLeague;
-window.copyLink=copyLink;
-window.copyAdminLink=copyAdminLink;
-window.showLeagueTab=showLeagueTab;
-window.viewStage=viewStage;
-window.renderBetForm=renderBetForm;
-window.pickPlayin=pickPlayin;
-window.pickSeries=pickSeries;
-window.pickBonus=pickBonus;
-window.saveBet=saveBet;
-window.renderTeamSetupForm=renderTeamSetupForm;
-window.saveTeamSetup=saveTeamSetup;
-window.renderResultForm=renderResultForm;
-window.saveResults=saveResults;
-window.setCurrentStage=setCurrentStage;
-window.toggleStageLock=toggleStageLock;
-window.openLeague=openLeague;
-window.toggleMenu=toggleMenu;
-window.closeMenu=closeMenu;
-window.addBonusBet=addBonusBet;
-window.removeBonusBet=removeBonusBet;
-window.addBonusAnswer=addBonusAnswer;
-window.removeBonusAnswer=removeBonusAnswer;
-window.saveBonusBets=saveBonusBets;
-window.renderBonusAdmin=renderBonusAdmin;
-window.closeMenuAnd=closeMenuAnd;
-window.showNextBonus=showNextBonus;
-window.addAutoLock=addAutoLock;
-window.removeAutoLock=removeAutoLock;
-window._fbReady=true;
-// Trigger pending calls
-if(window._pendingCalls){window._pendingCalls.forEach(fn=>fn());window._pendingCalls=[];}
-
-// ── MENU ──
-function toggleMenu(){document.getElementById('menuDropdown').classList.toggle('open');}
-function closeMenu(){document.getElementById('menuDropdown').classList.remove('open');}
-function closeMenuAnd(fn){closeMenu();if(currentLeague&&fn===loadMyLeagues){fn();}else{fn();}}
-document.addEventListener('click',e=>{
-  if(!document.getElementById('menuBtn').contains(e.target)&&!document.getElementById('menuDropdown').contains(e.target))closeMenu();
-});
-
-// ── AUTH STATE ──
-onAuthStateChanged(auth, async user=>{
-  if(user){
-    currentUser=user;
-    const uSnap=await getDoc(doc(db,'users',user.uid));
-    currentUserDoc=uSnap.exists()?uSnap.data():{displayName:user.displayName,username:user.email};
-    const uname=currentUserDoc.username||user.email;
-    document.getElementById('menuUsername').textContent='👤 '+uname;
-    document.getElementById('mainHeader').style.display='';
-    const params=new URLSearchParams(location.search);
-    const code=params.get('code');
-    startAutoLockChecker();
-    if(code){await autoJoinLeague(code);}else{goHome();}
-  } else {
-    currentUser=null;currentUserDoc=null;
-    document.getElementById('mainHeader').style.display='none';
-    showPage('page-auth');
-  }
-});
-
-// ── AUTH ──
-function switchAuthTab(t){
-  document.querySelectorAll('.auth-tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register')));
-  document.getElementById('authLogin').style.display=t==='login'?'':'none';
-  document.getElementById('authRegister').style.display=t==='register'?'':'none';
-}
-async function doLogin(){
-  const email=document.getElementById('loginEmail').value.trim(),pw=document.getElementById('loginPassword').value;
-  if(!email||!pw){toast('⚠️ מלא את כל השדות');return;}
-  try{
-    const cred=await signInWithEmailAndPassword(auth,email,pw);
-    if(!cred.user.emailVerified){await fbSignOut(auth);toast('📧 יש לאמת את האימייל תחילה');return;}
-  }catch(e){toast('❌ '+(e.code==='auth/invalid-credential'?'אימייל או סיסמה שגויים':e.message));}
-}
-async function doRegister(){
-  const name=document.getElementById('regName').value.trim();
-  const username=document.getElementById('regUsername').value.trim().replace(/\s/g,'');
-  const email=document.getElementById('regEmail').value.trim();
-  const pw=document.getElementById('regPassword').value;
-  if(!name||!username||!email||!pw){toast('⚠️ מלא את כל השדות');return;}
-  if(pw.length<6){toast('⚠️ סיסמה חייבת להיות לפחות 6 תווים');return;}
-  try{
-    const uQ=await getDocs(query(collection(db,'users'),where('username','==',username)));
-    if(!uQ.empty){toast('⚠️ שם המשתמש תפוס');return;}
-    const cred=await createUserWithEmailAndPassword(auth,email,pw);
-    await updateProfile(cred.user,{displayName:name});
-    await setDoc(doc(db,'users',cred.user.uid),{uid:cred.user.uid,displayName:name,username,email,createdAt:serverTimestamp()});
-    await sendEmailVerification(cred.user);
-    await fbSignOut(auth);
-    toast('📧 נשלח מייל אימות! אמת ואז התחבר');
-    switchAuthTab('login');
-  }catch(e){toast('❌ '+(e.code==='auth/email-already-in-use'?'אימייל כבר קיים':e.message));}
-}
-async function doResetPassword(){
-  const email=document.getElementById('loginEmail').value.trim();
-  if(!email){toast('⚠️ הכנס אימייל תחילה');return;}
-  try{await sendPasswordResetEmail(auth,email);toast('📧 קישור לאיפוס נשלח! בדוק גם ספאם');}
-  catch(e){toast('❌ '+e.message);}
-}
-async function doResendVerification(){
-  const email=document.getElementById('regEmail').value.trim(),pw=document.getElementById('regPassword').value;
-  if(!email||!pw){toast('⚠️ הכנס אימייל וסיסמה');return;}
-  try{
-    const cred=await signInWithEmailAndPassword(auth,email,pw);
-    if(cred.user.emailVerified){toast('✅ האימייל כבר מאומת!');await fbSignOut(auth);return;}
-    await sendEmailVerification(cred.user);await fbSignOut(auth);
-    toast('📧 מייל אימות נשלח שוב! בדוק ספאם');
-  }catch(e){toast('❌ '+(e.code==='auth/invalid-credential'?'אימייל או סיסמה שגויים':e.message));}
-}
-async function doSignOut(){
-  if(leagueUnsubscribe){leagueUnsubscribe();leagueUnsubscribe=null;}
-  currentLeague=null;currentLeagueData=null;
-  updateMenuForLeague(false);
-  await fbSignOut(auth);
-}
-
-// ── NAV ──
-function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function goHome(){
-  if(leagueUnsubscribe){leagueUnsubscribe();leagueUnsubscribe=null;}
-  currentLeague=null;currentLeagueData=null;
-  updateMenuForLeague(false);
-  document.getElementById('homeUsername').textContent=currentUserDoc?.username||'';
-  showPage('page-home');
-}
-function updateMenuForLeague(inLeague,isAdmin=false){
-  ['menuLeaderboard','menuEnterBets','menuViewBets'].forEach(id=>document.getElementById(id).style.display=inLeague?'':'none');
-  document.getElementById('menuAdmin').style.display=(inLeague&&isAdmin)?'':'none';
-}
-
-// ── LEAGUES ──
-function generateCode(){return Math.floor(100000+Math.random()*900000).toString();}
-async function createLeague(){
-  const name=document.getElementById('newLeagueName').value.trim();
-  if(!name){toast('⚠️ הכנס שם ליגה');return;}
-  let code,tries=0;
-  do{code=generateCode();const s=await getDocs(query(collection(db,'leagues'),where('code','==',code)));if(s.empty)break;tries++;}while(tries<10);
-  const lid=`league_${Date.now()}_${currentUser.uid.slice(0,6)}`;
-  const ld={id:lid,name,code,adminUid:currentUser.uid,members:[currentUser.uid],
-    memberInfo:{[currentUser.uid]:{username:currentUserDoc.username,displayName:currentUserDoc.displayName}},
-    currentStage:0,stageLocked:[false,false,false,false,false,false],
-    teams:{stage0:{},stage0b:{},stage1:{},stage2:{},stage3:{},stage4:{}},
-    results:{stage0:null,stage0b:null,stage1:null,stage2:null,stage3:null,stage4:null},
-    bonusBets:{stage0:[]},
-    bonusResults:{stage0:{}},
-    bets:{},createdAt:serverTimestamp()};
-  await setDoc(doc(db,'leagues',lid),ld);
-  await updateDoc(doc(db,'users',currentUser.uid),{leagues:arrayUnion(lid)});
-  const link=`${location.origin}${location.pathname}?code=${code}`;
-  document.getElementById('createdLeagueCode').textContent=code;
-  document.getElementById('createdLeagueLink').value=link;
-  document.getElementById('leagueCreatedInfo').style.display='';
-  currentLeague=lid;toast('✅ ליגה נוצרה!');
-}
-function enterCreatedLeague(){if(currentLeague)openLeague(currentLeague);}
-async function joinLeague(){
-  const code=document.getElementById('joinCode').value.trim();
-  if(code.length!==6){toast('⚠️ קוד בן 6 ספרות');return;}
-  await autoJoinLeague(code);
-}
-async function autoJoinLeague(code){
-  try{
-    const snap=await getDocs(query(collection(db,'leagues'),where('code','==',code)));
-    if(snap.empty){toast('❌ קוד לא נמצא');return;}
-    const leagueDoc=snap.docs[0],ld=leagueDoc.data(),lid=leagueDoc.id;
-    if(!ld.members.includes(currentUser.uid)){
-      await updateDoc(doc(db,'leagues',lid),{members:arrayUnion(currentUser.uid),[`memberInfo.${currentUser.uid}`]:{username:currentUserDoc.username,displayName:currentUserDoc.displayName}});
-      await updateDoc(doc(db,'users',currentUser.uid),{leagues:arrayUnion(lid)});
-      toast('✅ הצטרפת לליגה!');
-    }
-    history.replaceState({},'',location.pathname);
-    openLeague(lid);
-  }catch(e){toast('❌ שגיאה: '+e.message);}
-}
-async function loadMyLeagues(){
-  showPage('page-my-leagues');
-  const list=document.getElementById('myLeaguesList');
-  list.innerHTML='<div class="loader"><div class="spinner"></div><span>טוען...</span></div>';
-  try{
-    const uSnap=await getDoc(doc(db,'users',currentUser.uid));
-    const ids=uSnap.data()?.leagues||[];
-    if(!ids.length){list.innerHTML='<div class="empty-state"><div class="icon">🏀</div><p>אין ליגות עדיין</p></div>';return;}
-    const docs=await Promise.all(ids.map(id=>getDoc(doc(db,'leagues',id))));
-    list.innerHTML=docs.filter(d=>d.exists()).map(d=>{
-      const ld=d.data(),isAdmin=ld.adminUid===currentUser.uid;
-      return`<div class="league-row" onclick="openLeague('${d.id}')">
-        <div><div class="lr-name">${ld.name} ${isAdmin?'👑':''}</div>
-        <div class="lr-meta">${ld.members.length} משתתפים | קוד: ${ld.code} | ${STAGE_NAMES[STAGE_KEYS.indexOf(getGlobal('currentStage',0))]||''}</div></div>
-        <span style="color:var(--orange);font-size:1.1rem">←</span></div>`;
-    }).join('');
-  }catch(e){list.innerHTML='<div class="empty-state"><p>שגיאה בטעינה</p></div>';}
-}
-let globalUnsubscribe=null;
-let globalData={};
-function getGlobal(field,fallback){return globalData[field]!==undefined?globalData[field]:fallback;}
-
-async function openLeague(lid){
-  showPage('page-league');
-  document.getElementById('leaderboardList').innerHTML='<div class="loader"><div class="spinner"></div></div>';
-  if(leagueUnsubscribe)leagueUnsubscribe();
-  
-  // Listen to global settings
-  if(!globalUnsubscribe){
-    globalUnsubscribe=onSnapshot(doc(db,'global','settings'),snap=>{
-      globalData=snap.exists()?snap.data():{};
-      if(currentLeagueData)renderLeaguePage();
-    });
-  }
-
-  leagueUnsubscribe=onSnapshot(doc(db,'leagues',lid),snap=>{
-    if(!snap.exists()){toast('❌ ליגה לא נמצאה');goHome();return;}
-    currentLeague=lid;currentLeagueData=snap.data();
-    renderLeaguePage();
-  });
-}
-function renderLeaguePage(){
-  const ld=currentLeagueData;
-  document.getElementById('leaguePageTitle').textContent=ld.name;
-  document.getElementById('leaguePageCode').textContent=ld.code;
-  const isAdmin=ld.adminUid===currentUser.uid;
-  document.getElementById('adminTabBtn').style.display=isAdmin?'':'none';
-  updateMenuForLeague(true,isAdmin);
-  showLeagueTab('leaderboard');
-}
-
-// ── LEAGUE TABS ──
-function showLeagueTab(tab){
-  ['leaderboard','bets','enter-bets','admin'].forEach(t=>document.getElementById('ltab-'+t).style.display=t===tab?'':'none');
-  document.querySelectorAll('#leagueNavTabs .nav-tab').forEach((b,i)=>b.classList.toggle('active',['leaderboard','bets','enter-bets','admin'][i]===tab));
-  if(tab==='leaderboard')renderLeaderboard();
-  if(tab==='bets'){renderViewStageTabs();const ci=currentLeagueData.currentStage;viewStage(ci>0?STAGE_KEYS[Math.max(0,STAGE_KEYS.indexOf(ci)-1)]:0);}
-  if(tab==='enter-bets')renderBetForm();
-  if(tab==='admin'){initGlobalSettingsIfNeeded().then(()=>renderAdmin());}
-}
-
-// ── SCORING ──
-function getTeams(si,mk){return((currentLeagueData?.teams||{})['stage'+si]||{})[mk]||{home:'',away:''}}
-function teamLabel(si,mk,fb){const t=getTeams(si,mk);return(t.home&&t.away)?`${t.home} מול ${t.away}`:fb;}
-function getBonusBets(si){return(getGlobal('bonusBets',{}))[getBonusStageKey(si)]||[];}
-function getBonusResults(si){return(getGlobal('bonusResults',{}))[getBonusStageKey(si)]||{};}
-
-function scoreStage(uid,si){
-  const siKey=String(si);
-  const bet=(currentLeagueData?.bets||{})[uid]?.['stage'+siKey]||{};
-  const result=(getGlobal('results',{}))['stage'+siKey];
-  let pts=0;
-  if(result){
-    const matches=STAGE_MATCHES[si];
-    if(si===0||si==='0b'){
-      // stage0: 4 games (east/west 7v8, 9v10), stage0b: 2 finals
-      let eC=0,wC=0,tot=0;
-      for(const m of matches){const b=(bet[m.key]||'').toLowerCase().trim(),r=(result[m.key]||'').toLowerCase().trim();if(b&&r&&b===r){pts++;tot++;if(m.conf==='east')eC++;else wC++;}}
-      // Bonuses only on stage0b (final 2 games) since bonuses cover full playin
-      if(si==='0b'){
-        // Check full playin bonus: need stage0 bets too
-        const bet0=(currentLeagueData?.bets||{})[uid]?.['stage0']||{};
-        const result0=(getGlobal('results',{}))['stage0']||{};
-        const allMatches=[...STAGE_MATCHES[0],...STAGE_MATCHES['0b']];
-        let eCAll=0,wCAll=0,totAll=0;
-        for(const m of allMatches){
-          const bSrc=STAGE_MATCHES[0].find(x=>x.key===m.key)?bet0:bet;
-          const rSrc=STAGE_MATCHES[0].find(x=>x.key===m.key)?result0:result;
-          const b=(bSrc[m.key]||'').toLowerCase().trim(),r=(rSrc[m.key]||'').toLowerCase().trim();
-          if(b&&r&&b===r){totAll++;if(m.conf==='east')eCAll++;else wCAll++;}
-        }
-        if(eCAll===3)pts+=1;if(wCAll===3)pts+=1;if(totAll===6)pts+=3;
-      }
-    } else if(si===1){
-      const eK=['e1','e2','e3','e4'];let eW=0,wW=0,aW=0,eX=0,wX=0,aX=0;
-      for(const m of matches){
-        const bW=(bet[m.key+'_winner']||'').toLowerCase().trim(),rW=(result[m.key+'_winner']||'').toLowerCase().trim();
-        const bR=bet[m.key+'_result']||'',rR=result[m.key+'_result']||'';
-        if(bW&&rW&&bW===rW){pts+=2;aW++;if(eK.includes(m.key))eW++;else wW++;if(bR&&rR&&bR===rR){pts+=4;aX++;if(eK.includes(m.key))eX++;else wX++;}}
-      }
-      if(eW===4)pts+=(eX===4?6:3);if(wW===4)pts+=(wX===4?6:3);if(aW===8)pts+=(aX===8?14:7);
-      const bc=(bet.champion||'').toLowerCase(),rc=(result.champion||'').toLowerCase();if(bc&&rc&&bc===rc)pts+=10;
-      const be=(bet.east_champ||'').toLowerCase(),re=(result.east_champ||'').toLowerCase();if(be&&re&&be===re)pts+=3;
-      const bw=(bet.west_champ||'').toLowerCase(),rw=(result.west_champ||'').toLowerCase();if(bw&&rw&&bw===rw)pts+=3;
-      const bF=[bet.east_champ,bet.west_champ].filter(Boolean).map(x=>x.toLowerCase()).sort().join('|');
-      const rF=[result.east_champ,result.west_champ].filter(Boolean).map(x=>x.toLowerCase()).sort().join('|');
-      if(bF&&rF&&bF===rF)pts+=3;
-    } else if(si===2){
-      const eK=['e1','e2'];let eW=0,wW=0,aW=0,eX=0,wX=0,aX=0;
-      for(const m of matches){
-        const bW=(bet[m.key+'_winner']||'').toLowerCase().trim(),rW=(result[m.key+'_winner']||'').toLowerCase().trim();
-        const bR=bet[m.key+'_result']||'',rR=result[m.key+'_result']||'';
-        if(bW&&rW&&bW===rW){pts+=3;aW++;if(eK.includes(m.key))eW++;else wW++;if(bR&&rR&&bR===rR){pts+=6;aX++;if(eK.includes(m.key))eX++;else wX++;}}
-      }
-      pts+=(eX===2?6:eW===2?3:0)+(wX===2?6:wW===2?3:0);if(aW===4)pts+=(aX===4?14:7);
-    } else if(si===3){
-      let bW2=true,bX2=true;
-      for(const m of matches){
-        const bW=(bet[m.key+'_winner']||'').toLowerCase().trim(),rW=(result[m.key+'_winner']||'').toLowerCase().trim();
-        const bR=bet[m.key+'_result']||'',rR=result[m.key+'_result']||'';
-        const w=bW&&rW&&bW===rW,x=bR&&rR&&bR===rR;
-        if(w){pts+=4;if(x)pts+=8;}else bW2=false;if(!x)bX2=false;
-        const bM=(bet[m.key+'_mvp']||'').toLowerCase(),rM=(result[m.key+'_mvp']||'').toLowerCase();if(bM&&rM&&bM===rM)pts+=1;
-      }
-      if(bW2)pts+=(bX2?6:3);
-    } else if(si===4){
-      const m=matches[0];
-      const bW=(bet[m.key+'_winner']||'').toLowerCase(),rW=(result[m.key+'_winner']||'').toLowerCase();
-      if(bW&&rW&&bW===rW){pts+=5;if((bet[m.key+'_result']||'')===(result[m.key+'_result']||''))pts+=10;}
-      const bM=(bet[m.key+'_mvp']||'').toLowerCase(),rM=(result[m.key+'_mvp']||'').toLowerCase();if(bM&&rM&&bM===rM)pts+=2;
-    }
-  }
-  // Bonus bets scoring - only score on stage '0b' (end of playin) using shared bonus key
-  if(si==='0b'){
-    const bonuses=getBonusBets(0),bonusResults=getBonusResults(0);
-    // use stage0 bets for bonus answers (bonus was entered in stage0)
-    const bet0=(currentLeagueData?.bets||{})[uid]?.['stage0']||{};
-    for(const b of bonuses){
-      const userAns=(bet0['bonus_'+b.id]||bet['bonus_'+b.id]||'').toLowerCase().trim();
-      const correctAns=(bonusResults[b.id]||'').toLowerCase().trim();
-      if(userAns&&correctAns&&userAns===correctAns)pts+=b.points;
-    }
-  }
-  return pts;
-}
-
-// ── LEADERBOARD ──
-function renderLeaderboard(){
-  const ld=currentLeagueData,members=ld.members||[],memberInfo=ld.memberInfo||{};
-  const scores=members.map(uid=>{
-    let total=0,bd={};
-    for(const sk of STAGE_KEYS){const p=scoreStage(uid,sk);bd['s'+String(sk)]=p;total+=p;}
-    return{uid,total,bd,info:memberInfo[uid]||{username:uid,displayName:''}};
-  }).sort((a,b)=>b.total-a.total);
-  const el=document.getElementById('leaderboardList');
-  if(!scores.length){el.innerHTML='<div class="empty-state"><div class="icon">🏀</div><p>אין משתתפים</p></div>';return;}
-  el.innerHTML=scores.map(({uid,total,bd,info},i)=>{
-    const rank=i+1,medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank;
-    const breakdown=STAGE_SHORT.map((s,i)=>{const k=String(STAGE_KEYS[i]);return bd['s'+k]>0?`${s}: ${bd['s'+k]}`:null;}).filter(Boolean).join(' | ');
-    return`<div class="lb-row rank-${rank}"><div class="lb-rank">${medal}</div>
-      <div class="lb-info"><div class="lb-username">${info.username||uid}</div><div class="lb-displayname">${info.displayName||''}</div>${breakdown?`<div class="lb-breakdown">${breakdown}</div>`:''}</div>
-      <div class="lb-score">${total} נק'</div></div>`;
-  }).join('');
-  const csIdx=STAGE_KEYS.indexOf(getGlobal('currentStage',0));
-  const locked=(getGlobal('stageLocked',[]))[csIdx]||false;
-  document.getElementById('lb-stage-badge').textContent=STAGE_NAMES[csIdx]||'';
-  const cs=getGlobal('currentStage',0);
-  document.getElementById('lb-stage-badge').className='badge '+(locked?'badge-locked':'badge-open');
-  const stageInfoMap={
-    0:"4 משחקים | 1נק' לניחוש נכון",
-    '0b':"2 משחקי גמר פליי-אין | 1נק' לניחוש | בונוסים: קונפרנס מלא +1 | כל 6 +3",
-    1:"8 סדרות | 2נק' מנצחת + 4נק' תוצאה | בונוסי קונפרנס + הימורי מראש",
-    2:"4 סדרות | 3נק' מנצחת + 6נק' תוצאה | בונוסי קונפרנס",
-    3:"2 סדרות | 4נק' מנצחת + 8נק' תוצאה + 1נק' MVP | בונוס +3",
-    4:"5נק' מנצחת + 10נק' תוצאה + 2נק' MVP"
-  };
-  // cs already set above
-  document.getElementById('stageInfoBox').innerHTML=`<strong>${STAGE_NAMES[csIdx]}</strong><br>${stageInfoMap[cs]||''}<br><br>סטטוס: ${locked?'🔒 נעול':'🟢 פתוח'}`;
-}
-
-// ── BETS VIEW ──
-function renderViewStageTabs(){
-  document.getElementById('viewStageTabs').innerHTML=STAGE_SHORT.map((s,i)=>{
-    const k=STAGE_KEYS[i];
-    const kStr=typeof k==='string'?`'${k}'`:k;
-    return `<button class="stage-tab ${i===0?'active':''}" onclick="viewStage(${kStr})">${s}</button>`;
-  }).join('');
-}
-function viewStage(idx){
-  const idxStr=String(idx);
-  document.querySelectorAll('.stage-tab').forEach((t,i)=>t.classList.toggle('active',String(STAGE_KEYS[i])===idxStr));
-  // Normalize idx - could be number or string '0b'
-  const idxNorm=(idx==='0b'||idx===0||idx==='0')?idx:(typeof idx==='string'?parseInt(idx):idx);
-  const idxNum=STAGE_KEYS.indexOf(idxNorm);
-  const stageLocks=getGlobal('stageLocked',[false,false,false,false,false,false]);
-  const locked=stageLocks[idxNum]||false;
-  const currentStageIdx=STAGE_KEYS.indexOf(getGlobal('currentStage',0));
-  const content=document.getElementById('betsContent');
-  // Show bets only if: stage is locked OR stage has already passed
-  if(!locked){content.innerHTML='<div class="card"><div class="empty-state"><div class="icon">🔒</div><p>ניתן לצפות לאחר נעילת השלב</p></div></div>';return;}
-  const ld=currentLeagueData;
-  const result=(getGlobal('results',{}))['stage'+idx]||{},matches=STAGE_MATCHES[idx];
-  const members=ld.members||[],memberInfo=ld.memberInfo||{};
-  const bonuses=getBonusBets(idx),bonusResults=getBonusResults(idx);
-  const cards=members.map(uid=>{
-    const info=memberInfo[uid]||{username:uid};
-    const bet=((ld.bets||{})[uid]||{})['stage'+idx]||{};
-    const stageScore=scoreStage(uid,idx);
-    let items='';
-    if(idx===0){
-      for(const m of matches){const bv=bet[m.key]||'-';let cls='pending';if(result[m.key])cls=bv.toLowerCase()===result[m.key].toLowerCase()?'correct':'wrong';items+=`<div class="bet-item"><span class="bet-label">${teamLabel(idx,m.key,m.label)}</span><span class="bet-value ${cls}">${bv}</span></div>`;}
-    } else {
-      for(const m of matches){
-        const bW=bet[m.key+'_winner']||'-',bR=bet[m.key+'_result']||'-';
-        let wC='pending',rC='pending';
-        if(result[m.key+'_winner'])wC=bW.toLowerCase()===result[m.key+'_winner'].toLowerCase()?'correct':'wrong';
-        if(result[m.key+'_result'])rC=bR===result[m.key+'_result']?'correct':'wrong';
-        items+=`<div class="bet-item"><span class="bet-label">${teamLabel(idx,m.key,m.label)}</span><span class="bet-value ${wC}">${bW} <span style="opacity:0.65">(${bR})</span></span></div>`;
-        if(m.hasMvp){const bM=bet[m.key+'_mvp']||'-';let mC='pending';if(result[m.key+'_mvp'])mC=bM.toLowerCase()===result[m.key+'_mvp'].toLowerCase()?'correct':'wrong';items+=`<div class="bet-item"><span class="bet-label">MVP</span><span class="bet-value ${mC}">${bM}</span></div>`;}
-      }
-      if(idx===1){for(const p of PREBETS){const bv=bet[p.key]||'-';let cls='pending';if(result[p.key])cls=bv.toLowerCase()===(result[p.key]||'').toLowerCase()?'correct':'wrong';items+=`<div class="bet-item"><span class="bet-label">${p.label}</span><span class="bet-value ${cls}">${bv}</span></div>`;}}
-    }
-    // Bonus bets in view
-    for(const b of bonuses){
-      const bv=bet['bonus_'+b.id]||'-';let cls='pending';
-      const correctAns=bonusResults[b.id]||'';
-      if(correctAns)cls=bv.toLowerCase()===correctAns.toLowerCase()?'correct':'wrong';
-      items+=`<div class="bet-item"><span class="bet-label" style="color:var(--gold)">⭐ ${b.question}</span><span class="bet-value ${cls}">${bv}</span></div>`;
-    }
-    return`<div class="bet-card"><div class="bet-header"><div><div class="bet-player-username">${info.username||uid}</div><div class="bet-player-name">${info.displayName||''}</div></div><div class="bet-pts">${(stageScore>0||result)?stageScore+' נק\'':'⏳'}</div></div>${items}</div>`;
-  }).join('');
-  content.innerHTML=`<div class="bets-grid">${cards}</div>`;
-}
-
-// ── BET FORM ──
-function renderBetForm(){
-  const siRaw=document.getElementById('betStageSelect').value;
-  const si=siRaw==='0b'?'0b':parseInt(siRaw);
-  const siIdx=STAGE_KEYS.indexOf(si);
-  const locked=(getGlobal('stageLocked',[]))[siIdx]||false;
-  const content=document.getElementById('betFormContent');
-  CBD={};
-  if(locked){content.innerHTML='<div class="info-box" style="color:var(--red);border-color:rgba(255,68,68,0.3)">🔒 שלב זה נעול</div>';return;}
-  const matches=STAGE_MATCHES[si];
-  let html='<div class="separator"></div>';
-  if(si===0||si==='0b'){
-    html+='<div class="card-title" style="margin-bottom:10px">🎯 בחר מנצחת</div>';
-    for(const m of matches){
-      let t1,t2,lbl;
-      if(si==='0b'){
-        // Auto-compute from stage0 results
-        const ft=getPlayinFinalTeams(m.conf);
-        t1=ft.home; t2=ft.away;
-        lbl=m.label;
-      } else {
-        const t=getTeams(si,m.key);
-        t1=t.home||'קבוצה 1'; t2=t.away||'קבוצה 2';
-        lbl=t.home&&t.away?`${t1} מול ${t2}`:m.label;
-      }
-      html+=`<div class="playin-card"><div class="match-label">🏀 ${lbl}</div>
-        <div class="team-btns">
-          <button class="team-btn" id="pb_${m.key}_0" onclick="pickPlayin('${m.key}',this.textContent.trim(),${typeof si==='string'?`'${si}'`:si})">${t1||'?'}</button>
-          <button class="team-btn" id="pb_${m.key}_1" onclick="pickPlayin('${m.key}',this.textContent.trim(),${typeof si==='string'?`'${si}'`:si})">${t2||'?'}</button>
-        </div></div>`;
-    }
-  } else {
-    html+=`<div class="card-title" style="margin-bottom:10px">🎯 בחר תוצאה</div>`;
-    for(const m of matches){
-      const t=getTeams(si,m.key),home=t.home||'ביתית',away=t.away||'אורחת';
-      const lbl=t.home&&t.away?`${home} מול ${away}`:m.label;
-      const hOpts=GAPS.map(r=>`<button class="bet-opt" id="bo_${m.key}_h_${r.replace('-','')}" onclick="pickSeries('${m.key}','${home}','${r}',${si})"><span class="opt-team">${home}</span><span class="opt-res">${r}</span></button>`).join('');
-      const aOpts=GAPS.map(r=>`<button class="bet-opt" id="bo_${m.key}_a_${r.replace('-','')}" onclick="pickSeries('${m.key}','${away}','${r}',${si})"><span class="opt-team">${away}</span><span class="opt-res">${r}</span></button>`).join('');
-      html+=`<div class="matchup-bet-card"><div class="match-label">🏀 ${lbl}</div>
-        <div class="bet-options">${hOpts}${aOpts}</div>
-        ${m.hasMvp?`<div class="form-group" style="margin-top:9px;margin-bottom:0"><label>🏅 MVP</label><input type="text" id="mvp_${m.key}" placeholder="שם שחקן..." oninput="CBD['${m.key}_mvp']=this.value"></div>`:''}
-      </div>`;
-    }
-    if(si===1){
-      html+=`<div class="separator"></div><div class="card-title" style="margin-bottom:10px">🏆 הימורים מראש</div>`;
-      for(const p of PREBETS)html+=`<div class="form-group"><label>${p.label}</label><input type="text" id="pre_${p.key}" placeholder="שם קבוצה..." oninput="CBD['${p.key}']=this.value"></div>`;
-    }
-  }
-  // Bonus bets in form — show one at a time, only if stage0 not locked
-  const bonuses=getBonusBets(si);
-  const bonusLocked=isBonusLocked();
-  if(bonuses.length>0){
-    html+=`<div class="separator"></div><div class="card-title" style="margin-bottom:10px">⭐ הימורי בונוס</div>`;
-    if(bonusLocked){html+=`<div class="info-box" style="color:var(--red);border-color:rgba(255,68,68,0.3)">🔒 הימורי הבונוס ננעלו עם שלב א' של הפליי-אין</div>`;}
-    else{
-    // Show first bonus, rest hidden; user reveals with button
-    for(let bi=0;bi<bonuses.length;bi++){
-      const b=bonuses[bi];
-      const opts=b.answers.map(a=>`<button class="bonus-opt" id="bopt_${b.id}_${encodeURIComponent(a)}" onclick="pickBonus('${b.id}',this.getAttribute('data-val'))" data-val="${a}">${a}</button>`).join('');
-      html+=`<div class="bonus-bet-card" id="bbc_${bi}" style="${bi>0?'display:none':''}">
-        <div class="bonus-label"><span>⭐ הימור בונוס ${bi+1}/${bonuses.length}</span><span class="bonus-pts-badge">${b.points} נק'</span></div>
-        <div class="bonus-q">${b.question}</div>
-        <div class="bonus-opts">${opts}</div>
-        ${bi<bonuses.length-1?`<div style="margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="showNextBonus(${bi})">הימור בונוס הבא ←</button></div>`:''}
-      </div>`;
-    }
-  } // end else bonusLocked
-  } // end if bonuses.length
-  html+=`<div style="margin-top:16px;display:flex;gap:9px;"><button class="btn btn-primary" style="width:auto" onclick="saveBet(${si})">💾 שמור הימורים</button><button class="btn btn-secondary btn-sm" onclick="CBD={};document.querySelectorAll('.bet-opt,.team-btn,.bonus-opt').forEach(b=>b.classList.remove('sel-home','sel-away','selected','sel-bonus'))">🔄 נקה</button></div>`;
-  content.innerHTML=html;
-  // Load existing
-  const existing=((currentLeagueData?.bets||{})[currentUser.uid]||{})['stage'+si]||{};
-  if(Object.keys(existing).length){
-    CBD={...existing};
-    if(si===0||si==='0b'){for(const m of matches){if(existing[m.key])pickPlayin(m.key,existing[m.key],si);}}
-    else{
-      for(const m of matches){
-        if(existing[m.key+'_winner']&&existing[m.key+'_result'])pickSeries(m.key,existing[m.key+'_winner'],existing[m.key+'_result'],si);
-        if(m.hasMvp){const el=document.getElementById('mvp_'+m.key);if(el&&existing[m.key+'_mvp'])el.value=existing[m.key+'_mvp'];}
-      }
-      if(si===1){for(const p of PREBETS){const el=document.getElementById('pre_'+p.key);if(el&&existing[p.key])el.value=existing[p.key];}}
-    }
-    for(const b of bonuses){if(existing['bonus_'+b.id])pickBonus(b.id,existing['bonus_'+b.id]);}
-  }
-}
-
-function showNextBonus(currentIdx){
-  document.getElementById('bbc_'+currentIdx).style.display='none';
-  const next=document.getElementById('bbc_'+(currentIdx+1));
-  if(next)next.style.display='';
-}
-
-function pickPlayin(mk,teamName,si){
-  CBD[mk]=teamName;
-  document.querySelectorAll(`[id^="pb_${mk}_"]`).forEach(b=>b.classList.toggle('selected',b.textContent.trim()===teamName));
-}
-function pickSeries(mk,teamName,result,si){
-  CBD[mk+'_winner']=teamName;CBD[mk+'_result']=result;
-  document.querySelectorAll(`[id^="bo_${mk}_"]`).forEach(b=>b.classList.remove('sel-home','sel-away'));
-  const t=getTeams(si,mk),isHome=teamName===(t.home||'ביתית');
-  const btn=document.getElementById(`bo_${mk}_${isHome?'h':'a'}_${result.replace('-','')}`);
-  if(btn)btn.classList.add(isHome?'sel-home':'sel-away');
-}
-function pickBonus(bonusId,val){
-  CBD['bonus_'+bonusId]=val;
-  document.querySelectorAll(`[id^="bopt_${bonusId}_"]`).forEach(b=>b.classList.toggle('selected',b.getAttribute('data-val')===val));
-}
-
-async function saveBet(si){
-  const matches=STAGE_MATCHES[si];
-  for(const m of matches){if(m.hasMvp){const el=document.getElementById('mvp_'+m.key);if(el)CBD[m.key+'_mvp']=el.value.trim();}}
-  if(si===1){for(const p of PREBETS){const el=document.getElementById('pre_'+p.key);if(el)CBD[p.key]=el.value.trim();}}
-  try{
-    await updateDoc(doc(db,'leagues',currentLeague),{[`bets.${currentUser.uid}.stage${si}`]:CBD});
-    toast('✅ הימורים נשמרו!');
-  }catch(e){toast('❌ שגיאה: '+e.message);}
-}
-
-// ── ADMIN ──
-async function initGlobalSettingsIfNeeded(){
-  if(!globalData.stageLocked){
-    await setDoc(doc(db,'global','settings'),{
-      currentStage: 0,
-      stageLocked: [false,false,false,false,false,false],
-      teams: {stage0:{},stage0b:{},stage1:{},stage2:{},stage3:{},stage4:{}},
-      results: {stage0:null,stage0b:null,stage1:null,stage2:null,stage3:null,stage4:null},
-      bonusBets: {stage0:[]},
-      bonusResults: {stage0:{}}
-    },{merge:true});
-  }
-}
-
-function renderAdmin(){
-  const ld=currentLeagueData;
-  const _sv=document.getElementById('adminStageSelect').value;
-  const _s=_sv==='0b'?'0b':parseInt(_sv);
-  const acsIdx=STAGE_KEYS.indexOf(getGlobal('currentStage',_s));
-  const _locked=getGlobal('stageLocked',[false,false,false,false,false,false]);
-  const _curIdx=STAGE_KEYS.indexOf(getGlobal('currentStage',0));
-  document.getElementById('adminCurrentStage').textContent=(STAGE_NAMES[_curIdx]||'')+(_locked[_curIdx]?' 🔒':' 🟢');
-  document.getElementById('adminStageSelect').value=getGlobal('currentStage',0);
-  const link=`${location.origin}${location.pathname}?code=${ld.code}`;
-  document.getElementById('adminShareLink').value=link;
-  document.getElementById('adminLeagueCode').textContent=ld.code;
-  renderTeamSetupForm();renderBonusAdmin();renderResultForm();renderAutoLockList();
-}
-
-// TEAM SETUP
-function renderTeamSetupForm(){
-  const tsiRaw=document.getElementById('teamSetupStageSelect').value;
-  const si=tsiRaw==='0b'?'0b':parseInt(tsiRaw);
-  const matches=STAGE_MATCHES[si],form=document.getElementById('teamSetupForm');
-  let html='';
-  if(si==='0b'){
-    html+=`<div class="info-box">🔄 הקבוצות בגמר הפליי-אין מחושבות <strong>אוטומטית</strong> מתוצאות שלב א של הפליי-אין:<br>• <strong>מזרח:</strong> מפסידת #7מול8 נגד מנצחת #9מול10<br>• <strong>מערב:</strong> מפסידת #7מול8 נגד מנצחת #9מול10</div>`;
-  } else {
-    for(const m of matches){
-      const t=getTeams(si,m.key);
-      html+=`<div class="ts-row"><span class="ts-label">${m.label}</span>
-        <input class="ts-inp" id="ts_${m.key}_home" value="${t.home}" placeholder="ביתית...">
-        <span class="vs-badge">מול</span>
-        <input class="ts-inp" id="ts_${m.key}_away" value="${t.away}" placeholder="אורחת...">
-      </div>`;
-    }
-    html+=`<button class="btn btn-secondary btn-sm" style="margin-top:9px" onclick="saveTeamSetup(${si})">💾 שמור קבוצות</button>`;
-  }
-  form.innerHTML=html;
-}
-async function saveTeamSetup(si){
-  if(si==='0b'){toast("ℹ️ הקבוצות בגמר הפליי-אין מחושבות אוטומטית מתוצאות שלב א של הפליי-אין");return;}
-  // Build nested object for proper Firestore storage
-  const stageTeams={};
-  for(const m of STAGE_MATCHES[si]||[]){
-    const h=document.getElementById('ts_'+m.key+'_home'),a=document.getElementById('ts_'+m.key+'_away');
-    stageTeams[m.key]={home:h?h.value.trim():'',away:a?a.value.trim():''};
-  }
-  // Use updateDoc with nested path to preserve other stages
-  await updateDoc(doc(db,'global','settings'),{[`teams.stage${si}`]:stageTeams});
-  toast('✅ קבוצות נשמרו בכל הליגות!');
-}
-
-// ── BONUS BETS ADMIN ──
-function renderBonusAdmin(){
-  const bsiRaw=document.getElementById('bonusStageSelect').value;
-  const si=bsiRaw==='0b'?'0b':parseInt(bsiRaw);
-  const bonuses=getBonusBets(si);
-  bonusBetDraft[si]=JSON.parse(JSON.stringify(bonuses)); // deep copy
-  renderBonusAdminList(si);
-}
-
-function renderBonusAdminList(si){
-  const bonuses=bonusBetDraft[si]||[];
-  const list=document.getElementById('bonusAdminList');
-  if(!bonuses.length){list.innerHTML='<div style="color:var(--text2);font-size:0.82rem;padding:8px 0">אין הימורי בונוס לשלב זה</div>';return;}
-  list.innerHTML=bonuses.map((b,i)=>{
-    const answers=b.answers||[];
-    const ansHtml=answers.map((a,ai)=>`<div class="bonus-answer-row">
-      <input type="text" value="${a}" placeholder="תשובה אפשרית..." onchange="bonusBetDraft[${si}][${i}].answers[${ai}]=this.value">
-      <button class="remove-ans" onclick="removeBonusAnswer(${si},${i},${ai})">✕</button>
-    </div>`).join('');
-    return`<div class="bonus-admin-card">
-      <button class="remove-btn" onclick="removeBonusBet(${si},${i})">✕ הסר</button>
-      <div class="form-group" style="margin-bottom:8px"><label>שאלה</label>
-        <input type="text" value="${b.question}" placeholder="השאלה..." style="background:var(--dark);border:1.5px solid rgba(255,215,0,0.3);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.84rem;padding:7px 10px;width:100%" onchange="bonusBetDraft[${si}][${i}].question=this.value">
-      </div>
-      <div class="form-group" style="margin-bottom:8px"><label>נקודות</label>
-        <input type="number" value="${b.points}" min="0.5" step="0.5" style="background:var(--dark);border:1.5px solid rgba(255,215,0,0.3);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.84rem;padding:7px 10px;width:100px" onchange="bonusBetDraft[${si}][${i}].points=parseFloat(this.value)||1">
-      </div>
-      <label style="font-size:0.78rem;color:var(--text2);font-weight:600;display:block;margin-bottom:6px">תשובות אפשריות</label>
-      <div class="bonus-answers">${ansHtml}</div>
-      <button class="btn-ghost" style="margin-top:8px;font-size:0.78rem" onclick="addBonusAnswer(${si},${i})">➕ הוסף תשובה</button>
-    </div>`;
-  }).join('');
-  list.insertAdjacentHTML('beforeend',`<button class="btn btn-primary" style="margin-top:10px" onclick="saveBonusBets(${si})">💾 שמור הימורי בונוס</button>`);
-}
-
-function addBonusBet(){
-  const bsiRaw2=document.getElementById('bonusStageSelect').value;const si=bsiRaw2==='0b'?'0b':parseInt(bsiRaw2);
-  if(!bonusBetDraft[si])bonusBetDraft[si]=[];
-  bonusBetDraft[si].push({id:'b'+Date.now(),question:'',points:1,answers:['','']});
-  renderBonusAdminList(si);
-}
-function removeBonusBet(si,i){bonusBetDraft[si].splice(i,1);renderBonusAdminList(si);}
-function addBonusAnswer(si,i){bonusBetDraft[si][i].answers.push('');renderBonusAdminList(si);}
-function removeBonusAnswer(si,i,ai){bonusBetDraft[si][i].answers.splice(ai,1);renderBonusAdminList(si);}
-async function saveBonusBets(si){
-  const bonuses=bonusBetDraft[si]||[];
-  // collect latest values from DOM
-  const list=document.querySelectorAll(`#bonusAdminList .bonus-admin-card`);
-  list.forEach((card,i)=>{
-    const qEl=card.querySelector('input[type=text]');
-    const pEl=card.querySelector('input[type=number]');
-    const aEls=card.querySelectorAll('.bonus-answer-row input');
-    if(bonuses[i]){
-      if(qEl)bonuses[i].question=qEl.value.trim();
-      if(pEl)bonuses[i].points=parseFloat(pEl.value)||1;
-      bonuses[i].answers=Array.from(aEls).map(el=>el.value.trim()).filter(Boolean);
-    }
-  });
-  const bKey=getBonusStageKey(si);
-  await setDoc(doc(db,'global','settings'),{bonusBets:{[bKey]:bonuses}},{merge:true});
-  toast('✅ הימורי בונוס נשמרו בכל הליגות!');
-}
-
-// RESULTS
-function renderResultForm(){
-  const siRaw2=document.getElementById('resultStageSelect').value;
-  const si=siRaw2==='0b'?'0b':parseInt(siRaw2);
-  const matches=STAGE_MATCHES[si],result=(getGlobal('results',{}))['stage'+si]||{};
-  const content=document.getElementById('resultFormContent');let html='';
-  if(si===0||si==='0b'){
-    for(const m of matches){
-      let lbl,opts;
-      if(si==='0b'){
-        const ft=getPlayinFinalTeams(m.conf);
-        lbl=m.label;
-        opts=[ft.home,ft.away].filter(Boolean);
-        if(!opts.length)opts=['מפסידת #7מול8','מנצחת #9מול10'];
-      } else {
-        const t=getTeams(si,m.key);
-        lbl=t.home&&t.away?`${t.home} מול ${t.away}`:m.label;
-        opts=[t.home||'קבוצה 1',t.away||'קבוצה 2'];
-      }
-      html+=`<div class="form-group"><label>🏀 ${lbl}</label><select id="res_${m.key}"><option value="">בחר מנצחת...</option>${opts.map(o=>`<option value="${o}" ${result[m.key]===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
-    }
-  } else {
-    for(const m of matches){
-      const t=getTeams(si,m.key),home=t.home||'ביתית',away=t.away||'אורחת';
-      const lbl=t.home&&t.away?`${home} מול ${away}`:m.label;
-      const allOpts=[...GAPS.map(r=>({w:home,r,l:`${home} ${r}`})),...GAPS.map(r=>({w:away,r,l:`${away} ${r}`}))];
-      const curV=result[m.key+'_winner']&&result[m.key+'_result']?`${result[m.key+'_winner']}|${result[m.key+'_result']}`:'';
-      html+=`<div class="form-group"><label>🏀 ${lbl}</label><select id="res_${m.key}"><option value="">בחר תוצאה...</option>${allOpts.map(o=>{const v=`${o.w}|${o.r}`;return`<option value="${v}" ${curV===v?'selected':''}>${o.l}</option>`;}).join('')}</select></div>`;
-      if(m.hasMvp)html+=`<div class="form-group"><label>🏅 MVP</label><input type="text" id="res_${m.key}_mvp" value="${result[m.key+'_mvp']||''}" placeholder="שם שחקן..."></div>`;
-    }
-    if(si===1){html+=`<div style="font-weight:700;color:var(--orange);margin:12px 0 9px">🏆 הימורי מראש</div>`;for(const p of PREBETS)html+=`<div class="form-group"><label>${p.label}</label><input type="text" id="res_${p.key}" value="${result[p.key]||''}" placeholder="שם קבוצה..."></div>`;}
-  }
-  // Bonus results
-  const bonuses=getBonusBets(si),bonusResults=getBonusResults(si);
-
-  if(bonuses.length){
-    html+=`<div class="separator"></div><div style="font-weight:700;color:var(--gold);margin-bottom:9px">⭐ תוצאות הימורי בונוס</div>`;
-    for(const b of bonuses){
-      const opts=b.answers||[];
-      html+=`<div class="form-group"><label>${b.question} (${b.points} נק')</label>
-        <select id="bres_${b.id}">
-          <option value="" ${!bonusResults[b.id]?'selected':''}>בחר תשובה נכונה...</option>
-          ${opts.map(a=>`<option value="${a}" ${bonusResults[b.id]===a&&bonusResults[b.id]!==''?'selected':''}>${a}</option>`).join('')}
-        </select></div>`;
-    }
-  }
-  html+=`<button class="btn btn-secondary btn-sm" onclick="saveResults(${si})">💾 שמור תוצאות</button>`;
-  content.innerHTML=html;
-}
-
-async function saveResults(si){
-  const matches=STAGE_MATCHES[si],result={};
-  if(si===0){for(const m of matches){const el=document.getElementById('res_'+m.key);if(el)result[m.key]=el.value;}}
-  else{
-    for(const m of matches){
-      const el=document.getElementById('res_'+m.key);
-      if(el&&el.value){const p=el.value.split('|');result[m.key+'_winner']=p[0];result[m.key+'_result']=p[1];}
-      if(m.hasMvp){const e2=document.getElementById('res_'+m.key+'_mvp');if(e2)result[m.key+'_mvp']=e2.value.trim();}
-    }
-    if(si===1){for(const p of PREBETS){const el=document.getElementById('res_'+p.key);if(el)result[p.key]=el.value.trim();}}
-  }
-  const bonusResults={};
-  const bonuses=getBonusBets(si);
-  for(const b of bonuses){const el=document.getElementById('bres_'+b.id);if(el){if(el.value)bonusResults[b.id]=el.value;else bonusResults[b.id]='';} }
-  const bKey2=getBonusStageKey(si);
-  await setDoc(doc(db,'global','settings'),{results:{['stage'+si]:result},bonusResults:{[bKey2]:bonusResults}},{merge:true});
-  toast('✅ תוצאות נשמרו בכל הליגות!');
-}
-
-async function setCurrentStage(){
-  const sv=document.getElementById('adminStageSelect').value;
-  const s=sv==='0b'?'0b':parseInt(sv);
-  const updates={currentStage:s};
-  // Initialize stageLocked if not set
-  if(!globalData.stageLocked){
-    updates.stageLocked=[false,false,false,false,false,false];
-  }
-  await setDoc(doc(db,'global','settings'),updates,{merge:true});
-  toast('✅ שלב עודכן בכל הליגות!');
-}
-async function toggleStageLock(){
-  const sv=document.getElementById('adminStageSelect').value;
-  const s=sv==='0b'?'0b':parseInt(sv);
-  const sIdx=STAGE_KEYS.indexOf(s);
-  if(sIdx<0){toast('שגיאה');return;}
-  const currentLocked=getGlobal('stageLocked',[false,false,false,false,false,false]);
-  const newLocked=[...currentLocked];
-  while(newLocked.length<6)newLocked.push(false);
-  newLocked[sIdx]=!newLocked[sIdx];
-  await setDoc(doc(db,'global','settings'),{stageLocked:newLocked},{merge:true});
-  toast(newLocked[sIdx]?'🔒 שלב ננעל בכל הליגות':'🔓 שלב נפתח בכל הליגות');
-}
-
-// ── UTILS ──
-// ── AUTO LOCK ──
-function renderAutoLockList(){
-  const locks=getGlobal('autoLocks',{});
-  const list=document.getElementById('autoLockList');
-  if(!list)return;
-  const entries=Object.entries(locks);
-  if(!entries.length){list.innerHTML='<div style="color:var(--text2);font-size:0.78rem">אין נעילות אוטומטיות מוגדרות</div>';return;}
-  list.innerHTML=entries.map(([stageKey,ts])=>{
-    const stageName=STAGE_NAMES[STAGE_KEYS.indexOf(stageKey==='0b'?'0b':parseInt(stageKey))]||stageKey;
-    const d=new Date(ts);
-    const locked=(getGlobal('stageLocked',[]))[STAGE_KEYS.indexOf(stageKey==='0b'?'0b':parseInt(stageKey))]||false;
-    const now=Date.now();
-    const status=locked?'<span style="color:var(--green);font-size:0.7rem">✅ ננעל</span>':
-                 ts<now?'<span style="color:var(--red);font-size:0.7rem">⚡ פג תוקף</span>':
-                 '<span style="color:var(--gold);font-size:0.7rem">⏳ ממתין</span>';
-    return `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--dark);border-radius:8px;padding:7px 10px;margin-bottom:6px;font-size:0.8rem;">
-      <span style="font-weight:700">${stageName}</span>
-      <span style="color:var(--text2)">${d.toLocaleString('he-IL')}</span>
-      ${status}
-      <button onclick="removeAutoLock('${stageKey}')" style="background:transparent;border:none;color:var(--red);cursor:pointer;font-size:0.8rem;padding:0 4px">✕</button>
-    </div>`;
-  }).join('');
-}
-
-async function addAutoLock(){
-  const stageVal=document.getElementById('autoLockStage').value;
-  const timeVal=document.getElementById('autoLockTime').value;
-  if(!timeVal){toast('⚠️ בחר תאריך ושעה');return;}
-  const ts=new Date(timeVal).getTime();
-  if(ts<=Date.now()){toast('⚠️ הזמן חייב להיות בעתיד');return;}
-  const updates={[`autoLocks.${stageVal}`]:ts};
-  await setDoc(doc(db,'global','settings'),updates,{merge:true});
-  document.getElementById('autoLockTime').value='';
-  toast('✅ נעילה אוטומטית נקבעה!');
-}
-
-async function removeAutoLock(stageKey){
-  // Remove by setting to null (Firestore delete field)
-  const {deleteField} = await import("https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js");
-  await updateDoc(doc(db,'global','settings'),{[`autoLocks.${stageKey}`]:deleteField()});
-  toast('🗑️ נעילה אוטומטית הוסרה');
-}
-
-// Check auto-locks every 30 seconds
-function startAutoLockChecker(){
-  setInterval(async()=>{
-    const locks=getGlobal('autoLocks',{});
-    const now=Date.now();
-    const stageLocked=[...(getGlobal('stageLocked',[false,false,false,false,false,false]))];
-    let changed=false;
-    for(const [stageKey,ts] of Object.entries(locks)){
-      if(ts<=now){
-        const idx=STAGE_KEYS.indexOf(stageKey==='0b'?'0b':parseInt(stageKey));
-        if(idx>=0&&!stageLocked[idx]){
-          stageLocked[idx]=true;
-          changed=true;
-        }
-      }
-    }
-    if(changed){
-      await setDoc(doc(db,'global','settings'),{stageLocked},{merge:true});
-    }
-    // Re-render list if visible
-    if(document.getElementById('autoLockList'))renderAutoLockList();
-  },30000);
-}
-
-function copyLink(){navigator.clipboard.writeText(document.getElementById('createdLeagueLink').value);toast('📋 הועתק!');}
-function copyAdminLink(){navigator.clipboard.writeText(document.getElementById('adminShareLink').value);toast('📋 הועתק!');}
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
-
-</script>
-<script>
-// Wire auth tabs immediately (before module loads)
-// Safe caller - works whether Firebase is ready or not yet
-function _call(fn) {
-  return function() {
-    if(window[fn]) { window[fn](); }
-    else {
-      if(!window._pendingCalls) window._pendingCalls=[];
-      window._pendingCalls.push(function(){ if(window[fn]) window[fn](); });
-    }
-  };
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  // Auth tabs - work immediately
-  function switchTabLocal(t) {
-    document.querySelectorAll('.auth-tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register')));
-    document.getElementById('authLogin').style.display=t==='login'?'':'none';
-    document.getElementById('authRegister').style.display=t==='register'?'':'none';
-  }
-  var tl=document.getElementById('authTabLogin');
-  var tr=document.getElementById('authTabRegister');
-  if(tl) tl.onclick=function(){ if(window.switchAuthTab) window.switchAuthTab('login'); else switchTabLocal('login'); };
-  if(tr) tr.onclick=function(){ if(window.switchAuthTab) window.switchAuthTab('register'); else switchTabLocal('register'); };
-
-  // Auth buttons
-  var lb=document.getElementById('loginBtn');
-  var rb=document.getElementById('registerBtn');
-  var rst=document.getElementById('resetBtn');
-  var rsnd=document.getElementById('resendBtn');
-  if(lb) lb.onclick=function(){ if(window.doLogin) window.doLogin(); };
-  if(rb) rb.onclick=function(){ if(window.doRegister) window.doRegister(); };
-  if(rst) rst.onclick=function(){ if(window.doResetPassword) window.doResetPassword(); };
-  if(rsnd) rsnd.onclick=function(){ if(window.doResendVerification) window.doResendVerification(); };
-
-  // Enter key
-  document.getElementById('loginPassword').addEventListener('keydown',function(e){
-    if(e.key==='Enter'&&window.doLogin) window.doLogin();
-  });
-});
-
-</script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
