@@ -327,8 +327,8 @@ function renderGlobalAdmin(){
         <option value="1">סיבוב ראשון</option><option value="2">סיבוב שני</option>
         <option value="3">גמר איזורי</option><option value="4">גמר NBA</option>
       </select>
-      <button class="btn btn-secondary btn-sm" onclick="gaSetCurrentStage()">עדכן שלב</button>
-      <button class="btn btn-secondary btn-sm" onclick="gaToggleStageLock()">🔒 נעל/פתח</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.gaSetCurrentStage()">עדכן שלב</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.gaToggleStageLock()">🔒 נעל/פתח</button>
     </div>
   </div>
 
@@ -360,7 +360,7 @@ function renderGlobalAdmin(){
       <option value="3">גמר איזורי</option><option value="4">גמר NBA</option>
     </select>
     <div id="gaBonusAdminList"></div>
-    <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="gaAddBonusBet()">➕ הוסף הימור בונוס</button>
+    <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="window.gaAddBonusBet()">➕ הוסף הימור בונוס</button>
   </div>
 
   <div class="card">
@@ -385,14 +385,14 @@ function renderGlobalAdmin(){
         <div style="font-size:0.75rem;color:var(--text2);margin-bottom:4px">תאריך ושעה</div>
         <input type="datetime-local" id="gaAutoLockTime" style="padding:7px 10px;background:var(--dark);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.82rem;">
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="gaAddAutoLock()" style="background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3);color:var(--gold)">➕ הוסף</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.gaAddAutoLock()" style="background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3);color:var(--gold)">➕ הוסף</button>
     </div>
   </div>
 
   <div class="card">
     <div class="card-title">📧 שליחת תזכורת</div>
     <div style="color:var(--text2);font-size:0.82rem;margin-bottom:10px">שלח מייל תזכורת לכל המשתתפים</div>
-    <button class="btn btn-secondary btn-sm" onclick="sendReminderEmailGA()" style="background:rgba(79,195,247,0.1);border-color:rgba(79,195,247,0.3);color:var(--blue)">📧 פתח מייל תזכורת</button>
+    <button class="btn btn-secondary btn-sm" onclick="window.sendReminderEmailGA()" style="background:rgba(79,195,247,0.1);border-color:rgba(79,195,247,0.3);color:var(--blue)">📧 פתח מייל תזכורת</button>
   </div>
 
   <div class="card">
@@ -400,7 +400,7 @@ function renderGlobalAdmin(){
     <div style="color:var(--text2);font-size:0.82rem;margin-bottom:10px">שלוף תוצאות ממשחקים שהסתיימו ולחץ להחיל</div>
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
       <input type="date" id="espnDatePicker" style="padding:7px 10px;background:var(--dark);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.82rem;">
-      <button class="btn btn-secondary btn-sm" onclick="fetchESPNScores()" style="background:rgba(79,195,247,0.1);border-color:rgba(79,195,247,0.3);color:var(--blue)">📡 שלוף תוצאות</button>
+      <button class="btn btn-secondary btn-sm" onclick="window.fetchESPNScores()" style="background:rgba(79,195,247,0.1);border-color:rgba(79,195,247,0.3);color:var(--blue)">📡 שלוף תוצאות</button>
     </div>
     <div id="espnScoresList"><div style="color:var(--text2);font-size:0.82rem">בחר תאריך ולחץ שלוף</div></div>
   </div>`;
@@ -448,7 +448,7 @@ function gaRenderTeamSetup(){
       html+=`<div style="border:1px solid ${sLk?'rgba(0,230,118,0.25)':'var(--border)'};border-radius:8px;padding:8px;margin-bottom:6px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span style="font-size:0.82rem;color:var(--text2)">${m.label}</span>
-          <button data-si="${si}" data-mk="${m.key}" onclick="toggleSeriesLock(this.dataset.si,this.dataset.mk);setTimeout(gaRenderTeamSetup,500)"
+          <button data-si="${si}" data-mk="${m.key}" onclick="window.toggleSeriesLock(this.dataset.si,this.dataset.mk);setTimeout(gaRenderTeamSetup,500)"
             style="padding:3px 10px;border-radius:6px;border:1px solid ${sLk?'var(--green)':'var(--border)'};background:${sLk?'rgba(0,230,118,0.15)':'transparent'};color:${sLk?'var(--green)':'var(--text2)'};cursor:pointer;font-size:0.75rem">
             ${sLk?'🔒 נעול':'🔓 נעל'}
           </button>
@@ -460,7 +460,7 @@ function gaRenderTeamSetup(){
         </div>
       </div>`;
     }
-    html+=`<button class="btn btn-secondary btn-sm" style="margin-top:9px" onclick="gaSaveTeamSetup()">💾 שמור קבוצות</button>`;
+    html+=`<button class="btn btn-secondary btn-sm" style="margin-top:9px" onclick="window.gaSaveTeamSetup()">💾 שמור קבוצות</button>`;
   }
   form.innerHTML=html;
 }
@@ -532,7 +532,7 @@ function gaRenderResultForm(){
         </select></div>`;
     }
   }
-  html+=`<button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="gaSaveResults()">💾 שמור תוצאות</button>`;
+  html+=`<button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="window.gaSaveResults()">💾 שמור תוצאות</button>`;
   content.innerHTML=html;
 }
 window.gaRenderResultForm=gaRenderResultForm;
@@ -610,10 +610,10 @@ function gaRenderBonusAdmin(){
     const answers=b.answers||[];
     const ansHtml=answers.map((a,ai)=>`<div class="bonus-answer-row">
       <input type="text" value="${a}" placeholder="תשובה..." data-si="ga_${si}" data-idx="${i}" data-aidx="${ai}" onchange="updateBonusAnswer(this.dataset.si,this.dataset.idx,this.dataset.aidx,this.value)">
-      <button class="remove-ans" onclick="gaRemoveBonusAnswer(${i},${ai})">✕</button>
+      <button class="remove-ans" onclick="window.gaRemoveBonusAnswer(${i},${ai})">✕</button>
     </div>`).join('');
     return`<div class="bonus-admin-card">
-      <button class="remove-btn" onclick="gaRemoveBonusBet(${i})">✕ הסר</button>
+      <button class="remove-btn" onclick="window.gaRemoveBonusBet(${i})">✕ הסר</button>
       <div class="form-group" style="margin-bottom:8px"><label>שאלה</label>
         <input type="text" value="${b.question}" placeholder="השאלה..." style="background:var(--dark);border:1.5px solid rgba(255,215,0,0.3);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.84rem;padding:7px 10px;width:100%" data-si="ga_${si}" data-idx="${i}" onchange="updateBonusQuestion(this.dataset.si,this.dataset.idx,this.value)">
       </div>
@@ -622,10 +622,10 @@ function gaRenderBonusAdmin(){
       </div>
       <label style="font-size:0.78rem;color:var(--text2);font-weight:600;display:block;margin-bottom:6px">תשובות אפשריות</label>
       <div class="bonus-answers">${ansHtml}</div>
-      <button class="btn-ghost" style="margin-top:8px;font-size:0.78rem" onclick="gaAddBonusAnswer(${i})">➕ הוסף תשובה</button>
+      <button class="btn-ghost" style="margin-top:8px;font-size:0.78rem" onclick="window.gaAddBonusAnswer(${i})">➕ הוסף תשובה</button>
     </div>`;
   }).join('');
-  list.insertAdjacentHTML('beforeend',`<button class="btn btn-primary" style="margin-top:10px" onclick="gaSaveBonusBets()">💾 שמור הימורי בונוס</button>`);
+  list.insertAdjacentHTML('beforeend',`<button class="btn btn-primary" style="margin-top:10px" onclick="window.gaSaveBonusBets()">💾 שמור הימורי בונוס</button>`);
 }
 window.gaRenderBonusAdmin=gaRenderBonusAdmin;
 function gaGetSi(){const r=document.getElementById('gaBonusStageSelect')?.value;return r==='0b'?'0b':parseInt(r);}
@@ -659,7 +659,7 @@ function gaRenderAutoLockList(){
     const status=locked?'<span style="color:var(--green);font-size:0.7rem">✅</span>':ts<now?'<span style="color:var(--red);font-size:0.7rem">⚡</span>':'<span style="color:var(--gold);font-size:0.7rem">⏳</span>';
     return`<div style="display:flex;align-items:center;justify-content:space-between;background:var(--dark);border-radius:8px;padding:7px 10px;margin-bottom:6px;font-size:0.8rem;">
       <span style="font-weight:700">${name}</span><span style="color:var(--text2)">${d.toLocaleString('he-IL')}</span>${status}
-      <button onclick="removeAutoLock('${key}')" style="background:transparent;border:none;color:var(--red);cursor:pointer;font-size:0.8rem;padding:0 4px">✕</button>
+      <button onclick="window.removeAutoLock('${key}')" style="background:transparent;border:none;color:var(--red);cursor:pointer;font-size:0.8rem;padding:0 4px">✕</button>
     </div>`;
   }).join('');
 }
@@ -741,7 +741,7 @@ async function fetchESPNScores(){
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-secondary btn-sm" style="font-size:0.75rem"
-            onclick="applyESPNResult('${winner.replace(/'/g,"\'")}','${homeName.replace(/'/g,"\'")}','${awayName.replace(/'/g,"\'")}')">
+            onclick="window.applyESPNResult('${winner.replace(/'/g,"\'")}','${homeName.replace(/'/g,"\'")}','${awayName.replace(/'/g,"\'")}')">
             ✅ החל תוצאה זו
           </button>
         </div>
@@ -971,7 +971,7 @@ async function loadMyLeagues(){
     const docs=await Promise.all(ids.map(id=>getDoc(doc(db,'leagues',id))));
     list.innerHTML=docs.filter(d=>d.exists()).map(d=>{
       const ld=d.data(),isAdmin=ld.adminUid===currentUser.uid;
-      return`<div class="league-row" onclick="openLeague('${d.id}')">
+      return`<div class="league-row" onclick="window.openLeague('${d.id}')">
         <div><div class="lr-name">${ld.name} ${isAdmin?'👑':''}</div>
         <div class="lr-meta">${ld.members.length} משתתפים | קוד: ${ld.code} | ${STAGE_NAMES[STAGE_KEYS.indexOf(getGlobal('currentStage',0))]||''}</div></div>
         <span style="color:var(--orange);font-size:1.1rem">←</span></div>`;
@@ -1229,7 +1229,7 @@ function renderViewStageTabs(){
   document.getElementById('viewStageTabs').innerHTML=STAGE_SHORT.map((s,i)=>{
     const k=STAGE_KEYS[i];
     const kStr=typeof k==='string'?`'${k}'`:k;
-    return `<button class="stage-tab ${i===0?'active':''}" onclick="viewStage(${kStr})">${s}</button>`;
+    return `<button class="stage-tab ${i===0?'active':''}" onclick="window.viewStage(${kStr})">${s}</button>`;
   }).join('');
 }
 async function viewStage(idx){
@@ -1379,8 +1379,8 @@ async function renderBetForm(){
       }
       html+=`<div class="playin-card">${subLabel?`<div style="font-size:0.72rem;color:var(--text2);text-align:center;margin-bottom:4px">${subLabel}</div>`:''}<div class="match-label">🏀 ${lbl}</div>
         <div class="team-btns">
-          <button class="team-btn" id="pb_${m.key}_0" data-mk="${m.key}" data-si="${si}" onclick="pickPlayin(this.dataset.mk,this.textContent.trim(),this.dataset.si)">${t1||'?'}</button>
-          <button class="team-btn" id="pb_${m.key}_1" data-mk="${m.key}" data-si="${si}" onclick="pickPlayin(this.dataset.mk,this.textContent.trim(),this.dataset.si)">${t2||'?'}</button>
+          <button class="team-btn" id="pb_${m.key}_0" data-mk="${m.key}" data-si="${si}" onclick="window.pickPlayin(this.dataset.mk,this.textContent.trim(),this.dataset.si)">${t1||'?'}</button>
+          <button class="team-btn" id="pb_${m.key}_1" data-mk="${m.key}" data-si="${si}" onclick="window.pickPlayin(this.dataset.mk,this.textContent.trim(),this.dataset.si)">${t2||'?'}</button>
         </div></div>`;
     }
   } else {
@@ -1388,8 +1388,8 @@ async function renderBetForm(){
     for(const m of matches){
       const t=getTeams(si,m.key),home=t.home||'ביתית',away=t.away||'אורחת';
       const lbl=t.home&&t.away?`${home} מול ${away}`:m.label;
-      const hOpts=GAPS.map(r=>`<button class="bet-opt home-opt" id="bo_${m.key}_h_${r.replace('-','')}" data-mk="${m.key}" data-team="${home}" data-res="${r}" data-si="${si}" onclick="pickSeries(this.dataset.mk,this.dataset.team,this.dataset.res,this.dataset.si)" style="width:100%"><span class="opt-res">${r}</span></button>`).join('');
-      const aOpts=GAPS.map(r=>`<button class="bet-opt away-opt" id="bo_${m.key}_a_${r.replace('-','')}" data-mk="${m.key}" data-team="${away}" data-res="${r}" data-si="${si}" onclick="pickSeries(this.dataset.mk,this.dataset.team,this.dataset.res,this.dataset.si)" style="width:100%"><span class="opt-res">${r}</span></button>`).join('');
+      const hOpts=GAPS.map(r=>`<button class="bet-opt home-opt" id="bo_${m.key}_h_${r.replace('-','')}" data-mk="${m.key}" data-team="${home}" data-res="${r}" data-si="${si}" onclick="window.pickSeries(this.dataset.mk,this.dataset.team,this.dataset.res,this.dataset.si)" style="width:100%"><span class="opt-res">${r}</span></button>`).join('');
+      const aOpts=GAPS.map(r=>`<button class="bet-opt away-opt" id="bo_${m.key}_a_${r.replace('-','')}" data-mk="${m.key}" data-team="${away}" data-res="${r}" data-si="${si}" onclick="window.pickSeries(this.dataset.mk,this.dataset.team,this.dataset.res,this.dataset.si)" style="width:100%"><span class="opt-res">${r}</span></button>`).join('');
       const mSerLocked=isSeriesLocked(si,m.key);
       if(mSerLocked){
         html+=`<div class="matchup-bet-card" style="opacity:0.5;pointer-events:none"><div class="match-label">🏀 ${lbl} 🔒</div><div style="color:var(--text2);font-size:0.8rem;text-align:center;padding:8px">סדרה זו ננעלה</div>`;
@@ -1462,12 +1462,12 @@ async function renderBetForm(){
     });
     for(let bi=0;bi<availableBonuses.length;bi++){
       const b=availableBonuses[bi];
-      const opts=b.answers.map(a=>`<button class="bonus-opt" id="bopt_${b.id}_${encodeURIComponent(a)}" onclick="pickBonus('${b.id}',this.getAttribute('data-val'))" data-val="${a}">${a}</button>`).join('');
+      const opts=b.answers.map(a=>`<button class="bonus-opt" id="bopt_${b.id}_${encodeURIComponent(a)}" onclick="window.pickBonus('${b.id}',this.getAttribute('data-val'))" data-val="${a}">${a}</button>`).join('');
       html+=`<div class="bonus-bet-card" id="bbc_${bi}" style="${bi>0?'display:none':''}">
         <div class="bonus-label"><span>⭐ הימור בונוס ${bi+1}/${availableBonuses.length}</span><span class="bonus-pts-badge">${b.points} נק'</span></div>
         <div class="bonus-q">${b.question}</div>
         <div class="bonus-opts">${opts}</div>
-        ${bi<availableBonuses.length-1?`<div style="margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="showNextBonus(${bi})">הימור בונוס הבא ←</button></div>`:''}
+        ${bi<availableBonuses.length-1?`<div style="margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="window.showNextBonus(${bi})">הימור בונוס הבא ←</button></div>`:''}
       </div>`;
     }
     if(availableBonuses.length===0&&bonuses.length>0){
@@ -1476,9 +1476,9 @@ async function renderBetForm(){
   } // end else bonusLocked
   } // end if bonuses.length
   html+=`<div style="margin-top:16px;display:flex;gap:9px;flex-wrap:wrap;">
-    <button class="btn btn-primary" style="width:auto" onclick="saveBet(this.dataset.si)" data-si="${si}">💾 שמור הימורים</button>
-    <button class="btn btn-secondary btn-sm" onclick="autoFillBets(this.dataset.si)" data-si="${si}" style="background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3);color:var(--gold)">🎲 מילוי אוטומטי</button>
-    <button class="btn btn-secondary btn-sm" onclick="clearBets(this.dataset.si)" data-si="${si}">🔄 נקה ושמור</button>
+    <button class="btn btn-primary" style="width:auto" onclick="window.saveBet(this.dataset.si)" data-si="${si}">💾 שמור הימורים</button>
+    <button class="btn btn-secondary btn-sm" onclick="window.autoFillBets(this.dataset.si)" data-si="${si}" style="background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3);color:var(--gold)">🎲 מילוי אוטומטי</button>
+    <button class="btn btn-secondary btn-sm" onclick="window.clearBets(this.dataset.si)" data-si="${si}">🔄 נקה ושמור</button>
   </div>`;
   content.innerHTML=html;
   // Load existing
@@ -1660,7 +1660,7 @@ function renderTeamSetupForm(){
       html+=`<div class="ts-row" style="border:1px solid ${sLk?'rgba(0,230,118,0.25)':'var(--border)'};border-radius:8px;padding:8px;margin-bottom:6px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span class="ts-label" style="margin:0">${m.label}</span>
-          <button data-si="${si}" data-mk="${m.key}" onclick="toggleSeriesLock(this.dataset.si,this.dataset.mk)"
+          <button data-si="${si}" data-mk="${m.key}" onclick="window.toggleSeriesLock(this.dataset.si,this.dataset.mk)"
             style="padding:3px 10px;border-radius:6px;border:1px solid ${sLk?'var(--green)':'var(--border)'};background:${sLk?'rgba(0,230,118,0.15)':'transparent'};color:${sLk?'var(--green)':'var(--text2)'};cursor:pointer;font-size:0.75rem">
             ${sLk?'🔒 נעול':'🔓 נעל סדרה'}
           </button>
@@ -1672,7 +1672,7 @@ function renderTeamSetupForm(){
         </div>
       </div>`;
     }
-    html+=`<button class="btn btn-secondary btn-sm" style="margin-top:9px" onclick="saveTeamSetup(this.dataset.si)" data-si="${si}">💾 שמור קבוצות</button>`;
+    html+=`<button class="btn btn-secondary btn-sm" style="margin-top:9px" onclick="window.saveTeamSetup(this.dataset.si)" data-si="${si}">💾 שמור קבוצות</button>`;
   }
   form.innerHTML=html;
 }
@@ -1733,14 +1733,14 @@ function renderBonusAdminList(si){
     const answers=b.answers||[];
     const ansHtml=answers.map((a,ai)=>`<div class="bonus-answer-row">
       <input type="text" value="${a}" placeholder="תשובה אפשרית..." data-si="${si}" data-idx="${i}" data-aidx="${ai}" onchange="updateBonusAnswer(this.dataset.si,this.dataset.idx,this.dataset.aidx,this.value)">
-      <button class="remove-ans" onclick="removeBonusAnswer(this.dataset.si,this.dataset.idx,this.dataset.aidx)" data-si="${si}" data-idx="${i}" data-aidx="${ai}">✕</button>
+      <button class="remove-ans" onclick="window.removeBonusAnswer(this.dataset.si,this.dataset.idx,this.dataset.aidx)" data-si="${si}" data-idx="${i}" data-aidx="${ai}">✕</button>
     </div>`).join('');
     // Build series options for this stage
     const stageMatches=STAGE_MATCHES[typeof si==='string'&&si!=='0b'?parseInt(si):si]||[];
     const seriesOpts=stageMatches.map(m=>{const t=getTeams(si,m.key);const lbl=t.home&&t.away?`${t.home} מול ${t.away}`:m.label;return`<option value="${m.key}" ${b.seriesKey===m.key?'selected':''}>${lbl}</option>`;}).join('');
     
     return`<div class="bonus-admin-card">
-      <button class="remove-btn" onclick="removeBonusBet(this.dataset.si,this.dataset.idx)" data-si="${si}" data-idx="${i}">✕ הסר</button>
+      <button class="remove-btn" onclick="window.removeBonusBet(this.dataset.si,this.dataset.idx)" data-si="${si}" data-idx="${i}">✕ הסר</button>
       <div class="form-group" style="margin-bottom:8px"><label>שאלה</label>
         <input type="text" value="${b.question}" placeholder="השאלה..." style="background:var(--dark);border:1.5px solid rgba(255,215,0,0.3);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.84rem;padding:7px 10px;width:100%" data-si="${si}" data-idx="${i}" onchange="updateBonusQuestion(this.dataset.si,this.dataset.idx,this.value)">
       </div>
@@ -1753,10 +1753,10 @@ function renderBonusAdminList(si){
         </select></div>`:''}
       <label style="font-size:0.78rem;color:var(--text2);font-weight:600;display:block;margin-bottom:6px">תשובות אפשריות</label>
       <div class="bonus-answers">${ansHtml}</div>
-      <button class="btn-ghost" style="margin-top:8px;font-size:0.78rem" onclick="addBonusAnswer(this.dataset.si,this.dataset.idx)" data-si="${si}" data-idx="${i}">➕ הוסף תשובה</button>
+      <button class="btn-ghost" style="margin-top:8px;font-size:0.78rem" onclick="window.addBonusAnswer(this.dataset.si,this.dataset.idx)" data-si="${si}" data-idx="${i}">➕ הוסף תשובה</button>
     </div>`;
   }).join('');
-  list.insertAdjacentHTML('beforeend',`<button class="btn btn-primary" style="margin-top:10px" onclick="saveBonusBets(this.dataset.si)" data-si="${si}">💾 שמור הימורי בונוס</button>`);
+  list.insertAdjacentHTML('beforeend',`<button class="btn btn-primary" style="margin-top:10px" onclick="window.saveBonusBets(this.dataset.si)" data-si="${si}">💾 שמור הימורי בונוס</button>`);
 }
 
 function addBonusBet(){
@@ -1849,7 +1849,7 @@ function renderResultForm(){
     html+=`<div class="form-group"><label>🔵 אלופת המזרח</label><select id="res_east_champ"><option value="">בחר...</option>${mkS(eastT,r1.east_champ||'')}</select></div>`;
     html+=`<div class="form-group"><label>🔴 אלופת המערב</label><select id="res_west_champ"><option value="">בחר...</option>${mkS(westT,r1.west_champ||'')}</select></div>`;
   }
-  html+=`<button class="btn btn-secondary btn-sm" onclick="saveResults(this.dataset.si)" data-si="${si}">💾 שמור תוצאות</button>`;
+  html+=`<button class="btn btn-secondary btn-sm" onclick="window.saveResults(this.dataset.si)" data-si="${si}">💾 שמור תוצאות</button>`;
   content.innerHTML=html;
 }
 
@@ -2021,7 +2021,7 @@ function renderAutoLockList(){
       <span style="font-weight:700">${name}</span>
       <span style="color:var(--text2)">${d.toLocaleString('he-IL')}</span>
       ${status}
-      <button onclick="removeAutoLock('${key}')" style="background:transparent;border:none;color:var(--red);cursor:pointer;font-size:0.8rem;padding:0 4px">✕</button>
+      <button onclick="window.removeAutoLock('${key}')" style="background:transparent;border:none;color:var(--red);cursor:pointer;font-size:0.8rem;padding:0 4px">✕</button>
     </div>`;
   }).join('');
 }
