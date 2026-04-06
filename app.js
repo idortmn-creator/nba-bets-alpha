@@ -532,7 +532,7 @@ function gaRenderResultForm(){
         </select></div>`;
     }
   }
-  html+=`<button class="btn btn-secondary btn-sm" style="margin-top:10px" onclick="window.gaSaveResults()">💾 שמור תוצאות</button>`;
+  html+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-secondary btn-sm" onclick="window.gaSaveResults()">💾 שמור תוצאות</button><button class="btn btn-secondary btn-sm" style="background:rgba(255,68,68,0.1);border-color:rgba(255,68,68,0.3);color:var(--red)" onclick="window.gaResetStageResults()">🗑️ אפס תוצאות שלב</button></div>`;
   content.innerHTML=html;
 }
 window.gaRenderResultForm=gaRenderResultForm;
@@ -596,6 +596,24 @@ async function gaSaveResults(){
   gaRenderResultForm();
 }
 window.gaSaveResults=gaSaveResults;
+
+async function gaResetStageResults(){
+  const siRaw=document.getElementById('gaResultStageSelect')?.value;
+  if(!siRaw)return;
+  const si=siRaw==='0b'?'0b':parseInt(siRaw);
+  const stageName=STAGE_NAMES[STAGE_KEYS.indexOf(si)]||siRaw;
+  if(!confirm(`אפס את כל תוצאות "${stageName}"? פעולה זו בלתי הפיכה.`))return;
+  const bKey=getBonusStageKey(si);
+  try{
+    await setDoc(doc(db,'global','settings'),{
+      results:{['stage'+si]:null},
+      bonusResults:{[bKey]:{}}
+    },{merge:true});
+    toast('🗑️ תוצאות השלב אופסו');
+    gaRenderResultForm();
+  }catch(e){toast('❌ שגיאה: '+e.message);}
+}
+window.gaResetStageResults=gaResetStageResults;
 function gaRenderBonusAdmin(){
   const bsiRaw=document.getElementById('gaBonusStageSelect')?.value;
   if(!bsiRaw)return;
@@ -1273,8 +1291,8 @@ async function viewStage(idx){
       for(const m of matches){
         const serLocked=isSeriesLocked(idx,m.key);
         if(!serLocked){
-          // Series not locked - show grey placeholder
-          items+=`<div class="bet-item"><span class="bet-label">${teamLabel(idx,m.key,m.label)}</span><span class="bet-value" style="color:var(--border)">- טרם ננעל -</span></div>`;
+          // Series not locked - show "not started" header per PRD 5.2.1
+          items+=`<div class="series-not-started"><span class="series-not-started-label">${teamLabel(idx,m.key,m.label)}</span><span class="series-not-started-msg">🔒 הסדרה טרם החלה</span></div>`;
           continue;
         }
         const bW=bet[m.key+'_winner']||'-',bR=bet[m.key+'_result']||'-';
@@ -2227,4 +2245,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('loginPassword').addEventListener('keydown',function(e){
     if(e.key==='Enter'&&window.doLogin) window.doLogin();
   });
+
+  // Register service worker for PWA support
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(err=>console.warn('SW registration failed:',err));
+  }
 });
