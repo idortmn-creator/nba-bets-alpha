@@ -575,15 +575,15 @@ async function gaSaveResults(){
     const el=document.getElementById('ga_bres_'+b.id);
     if(el){bonusResults[b.id]=el.value||'';}
   }
-  await setDoc(doc(db,'global','settings'),{results:{['stage'+si]:resultToSave}},{merge:true});
+  // Write series results and bonus results together in one call
+  const savePayload={results:{['stage'+si]:resultToSave}};
   if(bonuses.length){
-    const bonusUpdates={};
-    for(const b of bonuses){
-      if(bonusResults[b.id])bonusUpdates[`bonusResults.${bKey2}.${b.id}`]=bonusResults[b.id];
-      else bonusUpdates[`bonusResults.${bKey2}.${b.id}`]=deleteField();
-    }
-    if(Object.keys(bonusUpdates).length)await updateDoc(doc(db,'global','settings'),bonusUpdates);
+    // Filter out empty answers so we only write actual results
+    const bonusResultsToSave={};
+    for(const b of bonuses){if(bonusResults[b.id])bonusResultsToSave[b.id]=bonusResults[b.id];}
+    savePayload.bonusResults={[bKey2]:bonusResultsToSave};
   }
+  await setDoc(doc(db,'global','settings'),savePayload,{merge:true});
   // Auto-lock the stage when results saved
   if(resultToSave){
     const sIdx=STAGE_KEYS.indexOf(si);
@@ -1228,13 +1228,21 @@ function scoreStage(uid,si){
       const bM=(bet[m.key+'_mvp']||'').toLowerCase(),rM=(result[m.key+'_mvp']||'').toLowerCase();if(bM&&rM&&bM===rM)pts+=2;
     }
   }
-  // Bonus bets scoring - only score on stage '0b' (end of playin) using shared bonus key
+  // Bonus bets scoring — applies to all stages
+  // Play-In bonuses use shared key 'stage0' and bets stored in stage0
   if(si==='0b'){
     const bonuses=getBonusBets(0),bonusResults=getBonusResults(0);
-    // use stage0 bets for bonus answers (bonus was entered in stage0)
     const bet0=(currentLeagueData?.bets||{})[uid]?.['stage0']||{};
     for(const b of bonuses){
       const userAns=(bet0['bonus_'+b.id]||bet['bonus_'+b.id]||'').toLowerCase().trim();
+      const correctAns=(bonusResults[b.id]||'').toLowerCase().trim();
+      if(userAns&&correctAns&&userAns===correctAns)pts+=b.points;
+    }
+  } else if(si!==0){
+    // Stages 1-4: score bonus bets using their own stage key and bets
+    const bonuses=getBonusBets(si),bonusResults=getBonusResults(si);
+    for(const b of bonuses){
+      const userAns=(bet['bonus_'+b.id]||'').toLowerCase().trim();
       const correctAns=(bonusResults[b.id]||'').toLowerCase().trim();
       if(userAns&&correctAns&&userAns===correctAns)pts+=b.points;
     }
