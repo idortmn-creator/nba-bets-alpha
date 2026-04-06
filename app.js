@@ -430,9 +430,18 @@ async function gaToggleStageLock(){
   const sIdx=STAGE_KEYS.indexOf(s);
   const newLocked=[...(getGlobal('stageLocked',[false,false,false,false,false,false]))];
   while(newLocked.length<6)newLocked.push(false);
-  newLocked[sIdx]=!newLocked[sIdx];
-  await setDoc(doc(db,'global','settings'),{stageLocked:newLocked},{merge:true});
-  toast(newLocked[sIdx]?'🔒 ננעל':'🔓 נפתח');renderGlobalAdmin();
+  const locking=!newLocked[sIdx];
+  newLocked[sIdx]=locking;
+  const updates={stageLocked:newLocked};
+  // When locking a stage, cascade: lock all individual series within it too
+  if(locking&&STAGE_MATCHES[s]){
+    const curSL=getGlobal('seriesLocked',{});
+    const newSL={...curSL};
+    for(const m of STAGE_MATCHES[s])newSL[s+'_'+m.key]=true;
+    updates.seriesLocked=newSL;
+  }
+  await setDoc(doc(db,'global','settings'),updates,{merge:true});
+  toast(locking?'🔒 שלב וכל הסדרות ננעלו':'🔓 נפתח');renderGlobalAdmin();
 }
 function gaRenderTeamSetup(){
   const tsiRaw=document.getElementById('gaTeamStageSelect')?.value;
@@ -1998,10 +2007,19 @@ async function toggleStageLock(){
   const currentLocked=getGlobal('stageLocked',[false,false,false,false,false,false]);
   const newLocked=[...currentLocked];
   while(newLocked.length<6)newLocked.push(false);
-  newLocked[sIdx]=!newLocked[sIdx];
+  const locking=!newLocked[sIdx];
+  newLocked[sIdx]=locking;
+  const updates={stageLocked:newLocked};
+  // When locking a stage, cascade: lock all individual series within it too
+  if(locking&&STAGE_MATCHES[s]){
+    const curSL=getGlobal('seriesLocked',{});
+    const newSL={...curSL};
+    for(const m of STAGE_MATCHES[s])newSL[s+'_'+m.key]=true;
+    updates.seriesLocked=newSL;
+  }
   try{
-    await setDoc(doc(db,'global','settings'),{stageLocked:newLocked},{merge:true});
-    toast(newLocked[sIdx]?'🔒 שלב ננעל':'🔓 שלב נפתח');
+    await setDoc(doc(db,'global','settings'),updates,{merge:true});
+    toast(locking?'🔒 שלב וכל הסדרות ננעלו':'🔓 שלב נפתח');
   }catch(e){
     console.error('toggleStageLock error:',e);
     toast('❌ שגיאה: אין הרשאה לנעול שלב. רק Super Admin יכול.');
@@ -2132,8 +2150,22 @@ function startAutoLockChecker(){
       }
     }
     if(changed){
-      await setDoc(doc(db,'global','settings'),{stageLocked},{merge:true});
-      toast('⏰ שלב ננעל אוטומטית!');
+      // Cascade: also lock all series within any newly locked stage
+      const curSL=getGlobal('seriesLocked',{});
+      const newSL={...curSL};
+      let seriesChanged=false;
+      STAGE_KEYS.forEach((sk,idx)=>{
+        if(stageLocked[idx]&&STAGE_MATCHES[sk]){
+          for(const m of STAGE_MATCHES[sk]){
+            const key=sk+'_'+m.key;
+            if(!newSL[key]){newSL[key]=true;seriesChanged=true;}
+          }
+        }
+      });
+      const updates={stageLocked};
+      if(seriesChanged)updates.seriesLocked=newSL;
+      await setDoc(doc(db,'global','settings'),updates,{merge:true});
+      toast('⏰ שלב וכל הסדרות ננעלו אוטומטית!');
     }
     if(document.getElementById('autoLockList'))renderAutoLockList();
   }
