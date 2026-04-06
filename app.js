@@ -678,7 +678,7 @@ function gaAddBonusBet(){const si=gaGetSi();if(!bonusBetDraft['ga_'+si])bonusBet
 function gaRemoveBonusBet(i){const si=gaGetSi();bonusBetDraft['ga_'+si].splice(i,1);gaRenderBonusAdmin();}
 function gaAddBonusAnswer(i){const si=gaGetSi();bonusBetDraft['ga_'+si][i].answers.push('');gaRenderBonusAdmin();}
 function gaRemoveBonusAnswer(i,ai){const si=gaGetSi();bonusBetDraft['ga_'+si][i].answers.splice(ai,1);gaRenderBonusAdmin();}
-function gaUpdateBonusSeries(siRaw,i,val){const si=siRaw.startsWith('ga_')?siRaw.slice(3):siRaw;const key='ga_'+(si==='0b'?'0b':isNaN(parseInt(si))?si:parseInt(si));if(bonusBetDraft[key]&&bonusBetDraft[key][i])bonusBetDraft[key][i].seriesKey=val;}
+function gaUpdateBonusSeries(siRaw,i,val){const key=_draftKey(siRaw);if(bonusBetDraft[key]&&bonusBetDraft[key][i])bonusBetDraft[key][i].seriesKey=val;}
 window.gaAddBonusBet=gaAddBonusBet;window.gaRemoveBonusBet=gaRemoveBonusBet;window.gaAddBonusAnswer=gaAddBonusAnswer;window.gaRemoveBonusAnswer=gaRemoveBonusAnswer;window.gaUpdateBonusSeries=gaUpdateBonusSeries;
 async function gaSaveBonusBets(){
   const si=gaGetSi();
@@ -1762,11 +1762,19 @@ async function saveTeamSetup(si){
 }
 
 // ── BONUS BETS ADMIN ──
-function updateBonusSeries(si,i,val){const key=si==='0b'?'0b':parseInt(si);if(bonusBetDraft[key]&&bonusBetDraft[key][i])bonusBetDraft[key][i].seriesKey=val;}
+// Resolve draft key — handles plain ('1','0b') and GA-prefixed ('ga_1','ga_2') values
+function _draftKey(si){
+  if(typeof si==='string'&&si.startsWith('ga_')){
+    const raw=si.slice(3);
+    return raw==='0b'?'ga_0b':'ga_'+parseInt(raw);
+  }
+  return si==='0b'?'0b':parseInt(si);
+}
+function updateBonusSeries(si,i,val){const key=_draftKey(si);if(bonusBetDraft[key]&&bonusBetDraft[key][i])bonusBetDraft[key][i].seriesKey=val;}
 window.updateBonusSeries=updateBonusSeries;
-function updateBonusQuestion(si,i,val){if(!si||si==='0b'?bonusBetDraft['0b']:bonusBetDraft[parseInt(si)||si]);const key=si==='0b'?'0b':parseInt(si);if(bonusBetDraft[key]&&bonusBetDraft[key][i])bonusBetDraft[key][i].question=val;}
-function updateBonusPoints(si,i,val){const key=si==='0b'?'0b':parseInt(si);if(bonusBetDraft[key]&&bonusBetDraft[key][i])bonusBetDraft[key][i].points=parseFloat(val)||1;}
-function updateBonusAnswer(si,i,ai,val){const key=si==='0b'?'0b':parseInt(si);if(bonusBetDraft[key]&&bonusBetDraft[key][i])bonusBetDraft[key][i].answers[parseInt(ai)]=val;}
+function updateBonusQuestion(si,i,val){const key=_draftKey(si);if(bonusBetDraft[key]&&bonusBetDraft[key][i])bonusBetDraft[key][i].question=val;}
+function updateBonusPoints(si,i,val){const key=_draftKey(si);if(bonusBetDraft[key]&&bonusBetDraft[key][i])bonusBetDraft[key][i].points=parseFloat(val)||1;}
+function updateBonusAnswer(si,i,ai,val){const key=_draftKey(si);if(bonusBetDraft[key]&&bonusBetDraft[key][i])bonusBetDraft[key][i].answers[parseInt(ai)]=val;}
 function renderBonusAdmin(){
   const bsiRaw=document.getElementById('bonusStageSelect').value;
   const si=bsiRaw==='0b'?'0b':parseInt(bsiRaw);
