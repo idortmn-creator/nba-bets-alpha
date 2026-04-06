@@ -625,12 +625,15 @@ function gaRenderBonusAdmin(){
   const list=document.getElementById('gaBonusAdminList');
   if(!list)return;
   if(!bonuses.length){list.innerHTML='<div style="color:var(--text2);font-size:0.82rem">אין הימורי בונוס</div>';return;}
+  // Build series options for this stage (same as per-league panel)
+  const gaStageMatches=STAGE_MATCHES[si==='0b'?'0b':(typeof si==='number'?si:parseInt(si))]||[];
   list.innerHTML=bonuses.map((b,i)=>{
     const answers=b.answers||[];
     const ansHtml=answers.map((a,ai)=>`<div class="bonus-answer-row">
       <input type="text" value="${a}" placeholder="תשובה..." data-si="ga_${si}" data-idx="${i}" data-aidx="${ai}" onchange="updateBonusAnswer(this.dataset.si,this.dataset.idx,this.dataset.aidx,this.value)">
       <button class="remove-ans" onclick="window.gaRemoveBonusAnswer(${i},${ai})">✕</button>
     </div>`).join('');
+    const seriesOpts=gaStageMatches.map(m=>{const t=getTeams(si,m.key);const lbl=t.home&&t.away?`${t.home} מול ${t.away}`:m.label;return`<option value="${m.key}" ${b.seriesKey===m.key?'selected':''}>${lbl}</option>`;}).join('');
     return`<div class="bonus-admin-card">
       <button class="remove-btn" onclick="window.gaRemoveBonusBet(${i})">✕ הסר</button>
       <div class="form-group" style="margin-bottom:8px"><label>שאלה</label>
@@ -639,6 +642,10 @@ function gaRenderBonusAdmin(){
       <div class="form-group" style="margin-bottom:8px"><label>נקודות</label>
         <input type="number" value="${b.points}" min="0.5" step="0.5" style="background:var(--dark);border:1.5px solid rgba(255,215,0,0.3);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.84rem;padding:7px 10px;width:100px" data-si="ga_${si}" data-idx="${i}" onchange="updateBonusPoints(this.dataset.si,this.dataset.idx,this.value)">
       </div>
+      ${gaStageMatches.length?`<div class="form-group" style="margin-bottom:8px"><label>🔗 שייך לסדרה (ננעל עם הסדרה)</label>
+        <select style="background:var(--dark);border:1.5px solid rgba(255,215,0,0.3);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.82rem;padding:6px 10px;width:100%" data-si="ga_${si}" data-idx="${i}" onchange="window.gaUpdateBonusSeries(this.dataset.si,this.dataset.idx,this.value)">
+          <option value="">ללא שיוך — נעל עם שלב</option>${seriesOpts}
+        </select></div>`:''}
       <label style="font-size:0.78rem;color:var(--text2);font-weight:600;display:block;margin-bottom:6px">תשובות אפשריות</label>
       <div class="bonus-answers">${ansHtml}</div>
       <button class="btn-ghost" style="margin-top:8px;font-size:0.78rem" onclick="window.gaAddBonusAnswer(${i})">➕ הוסף תשובה</button>
@@ -652,7 +659,8 @@ function gaAddBonusBet(){const si=gaGetSi();if(!bonusBetDraft['ga_'+si])bonusBet
 function gaRemoveBonusBet(i){const si=gaGetSi();bonusBetDraft['ga_'+si].splice(i,1);gaRenderBonusAdmin();}
 function gaAddBonusAnswer(i){const si=gaGetSi();bonusBetDraft['ga_'+si][i].answers.push('');gaRenderBonusAdmin();}
 function gaRemoveBonusAnswer(i,ai){const si=gaGetSi();bonusBetDraft['ga_'+si][i].answers.splice(ai,1);gaRenderBonusAdmin();}
-window.gaAddBonusBet=gaAddBonusBet;window.gaRemoveBonusBet=gaRemoveBonusBet;window.gaAddBonusAnswer=gaAddBonusAnswer;window.gaRemoveBonusAnswer=gaRemoveBonusAnswer;
+function gaUpdateBonusSeries(siRaw,i,val){const si=siRaw.startsWith('ga_')?siRaw.slice(3):siRaw;const key='ga_'+(si==='0b'?'0b':isNaN(parseInt(si))?si:parseInt(si));if(bonusBetDraft[key]&&bonusBetDraft[key][i])bonusBetDraft[key][i].seriesKey=val;}
+window.gaAddBonusBet=gaAddBonusBet;window.gaRemoveBonusBet=gaRemoveBonusBet;window.gaAddBonusAnswer=gaAddBonusAnswer;window.gaRemoveBonusAnswer=gaRemoveBonusAnswer;window.gaUpdateBonusSeries=gaUpdateBonusSeries;
 async function gaSaveBonusBets(){
   const si=gaGetSi();
   const bonuses=bonusBetDraft['ga_'+si]||[];
@@ -1443,11 +1451,12 @@ async function renderBetForm(){
       const makeOpts=(teams,curVal)=>[...teams].sort((a,b)=>a.localeCompare(b,'he')).map(t=>`<option value="${t}" ${curVal===t?'selected':''}>${t}</option>`).join('');
       
       if(isPreBetsLocked()){
+        // All Round 1 series locked — show read-only
         html+=`<div class="info-box" style="color:var(--red);border-color:rgba(255,68,68,0.3)">🔒 הימורים מוקדמים ננעלו</div>`;
-      } else if(!Object.keys(getGlobal('seriesLocked',{})).some(k=>k.startsWith('1_'))){
-        // No stage 1 series has ever been locked - hide pre-bets until first lock
-        html+=`<div class="info-box" style="color:var(--text2)">⏳ הימורים מוקדמים יפתחו לאחר נעילת הסדרה הראשונה</div>`;
+      } else if(allTeams.length===0){
+        html+=`<div class="info-box" style="color:var(--text2)">⏳ ממתין לקביעת קבוצות סיבוב ראשון</div>`;
       } else {
+        // Open for betting — lock happens together with first Round 1 series
       html+=`<div class="form-group"><label>🏆 אלוף NBA</label>
         <select id="pre_champion" onchange="CBD['champion']=this.value">
           <option value="">בחר קבוצה...</option>${makeOpts(allTeams,CBD['champion']||'')}
@@ -1470,15 +1479,10 @@ async function renderBetForm(){
     html+=`<div class="separator"></div><div class="card-title" style="margin-bottom:10px">⭐ הימורי בונוס</div>`;
     if(bonusLocked){html+=`<div class="info-box" style="color:var(--red);border-color:rgba(255,68,68,0.3)">🔒 הימורי הבונוס ננעלו עם שלב א' של הפליי-אין</div>`;}
     else{
-    // Show first bonus, rest hidden; user reveals with button
-    // Only show bonuses that are NOT yet locked (user can still bet)
-    // Bonuses with seriesKey: show only if that series is NOT locked yet
-    // Bonuses without seriesKey: show only if stage is NOT locked
-    const availableBonuses=bonuses.filter(b=>{
-      if(isSingleBonusLocked(si,b))return false; // locked - can't bet
-      if(b.seriesKey&&!isSeriesLocked(si,b.seriesKey))return false; // series not locked yet - hide
-      return true;
-    });
+    // Show all bonuses that are not yet locked.
+    // A bonus locks together with its assigned series (or stage if no seriesKey).
+    // Before any lock: all bonuses are visible and bettable.
+    const availableBonuses=bonuses.filter(b=>!isSingleBonusLocked(si,b));
     for(let bi=0;bi<availableBonuses.length;bi++){
       const b=availableBonuses[bi];
       const opts=b.answers.map(a=>`<button class="bonus-opt" id="bopt_${b.id}_${encodeURIComponent(a)}" onclick="window.pickBonus('${b.id}',this.getAttribute('data-val'))" data-val="${a}">${a}</button>`).join('');
