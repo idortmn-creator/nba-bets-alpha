@@ -69,7 +69,13 @@ function canBetOnStage(si){
   return true;
 }
 
-function isSeriesLocked(si,mk){return !!(getGlobal('seriesLocked',{})[si+'_'+mk]);}
+function isSeriesLocked(si,mk){
+  // A series is locked if individually locked OR its entire stage is locked
+  if(getGlobal('seriesLocked',{})[si+'_'+mk])return true;
+  const stageIdx=STAGE_KEYS.indexOf(si);
+  if(stageIdx>=0&&(getGlobal('stageLocked',[]))[stageIdx])return true;
+  return false;
+}
 function getSeriesLockedKey(si,mk){return si+'_'+mk;}
 // Bonus is locked when stage 0 (first playin) is locked
 function isBonusLocked(si){
