@@ -7,6 +7,11 @@
 <title>🏀 הימורי פלייאוף NBA 2026</title>
 <meta name="description" content="הימורי פלייאוף NBA 2026">
 <meta name="theme-color" content="#FF6B00">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NBA Bets">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;900&family=Oswald:wght@700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -26,7 +31,6 @@
         <div class="menu-item" onclick="closeMenuAnd(()=>showLeagueTab('leaderboard'))" id="menuLeaderboard" style="display:none"><span class="mi-icon">📊</span> טבלת נקודות</div>
         <div class="menu-item" onclick="closeMenuAnd(()=>showLeagueTab('enter-bets'))" id="menuEnterBets" style="display:none"><span class="mi-icon">✍️</span> הזן הימורים</div>
         <div class="menu-item" onclick="closeMenuAnd(()=>showLeagueTab('bets'))" id="menuViewBets" style="display:none"><span class="mi-icon">📋</span> הימורים</div>
-        <div class="menu-item" onclick="closeMenuAnd(()=>showLeagueTab('admin'))" id="menuAdmin" style="display:none"><span class="mi-icon">⚙️</span> ניהול</div>
         <div class="menu-separator"></div>
         <div class="menu-separator"></div>
         <div class="menu-item" onclick="closeMenuAnd(showProfile)"><span class="mi-icon">👤</span> פרופיל</div>
@@ -223,98 +227,6 @@
     </div>
   </div>
 
-  <div id="ltab-admin" style="display:none">
-    <div class="card">
-      <div class="card-title">🔄 ניהול שלבים</div>
-      <div class="info-box"><strong>שלב נוכחי:</strong> <span id="adminCurrentStage">-</span></div>
-      <div id="allStageLockStatus" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
-      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px;">
-        <select id="adminStageSelect" style="padding:8px 11px;background:var(--dark3);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.86rem;">
-          <option value="0">פליי-אין סיבוב א</option><option value="0b">פליי-אין גמר</option>
-          <option value="1">סיבוב ראשון</option><option value="2">סיבוב שני</option>
-          <option value="3">גמר איזורי</option><option value="4">גמר NBA</option>
-        </select>
-        <button class="btn btn-secondary btn-sm" onclick="setCurrentStage()">עדכן שלב</button>
-        <button class="btn btn-secondary btn-sm" onclick="toggleStageLock()">🔒 נעל/פתח ידנית</button>
-      </div>
-      <div style="background:var(--dark3);border:1px solid rgba(255,215,0,0.2);border-radius:10px;padding:14px;">
-        <div style="font-size:0.82rem;color:var(--gold);font-weight:700;margin-bottom:10px">⏰ נעילה אוטומטית לפי זמן</div>
-        <div id="autoLockList" style="margin-bottom:10px"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
-          <div>
-            <div style="font-size:0.75rem;color:var(--text2);margin-bottom:4px">סוג נעילה</div>
-            <select id="autoLockType" onchange="updateAutoLockTargets()" style="padding:7px 10px;background:var(--dark);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.82rem;">
-              <option value="stage">נעילת שלב</option>
-              <option value="series">נעילת סדרה</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size:0.75rem;color:var(--text2);margin-bottom:4px">יעד</div>
-            <select id="autoLockTarget" style="padding:7px 10px;background:var(--dark);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.82rem;">
-              <option value="0">פליי-אין א</option><option value="0b">פליי-אין גמר</option>
-              <option value="1">סיבוב ראשון</option><option value="2">סיבוב שני</option>
-              <option value="3">גמר איזורי</option><option value="4">גמר NBA</option>
-            </select>
-          </div>
-          <div>
-            <div style="font-size:0.75rem;color:var(--text2);margin-bottom:4px">תאריך ושעה</div>
-            <input type="datetime-local" id="autoLockTime" style="padding:7px 10px;background:var(--dark);border:1.5px solid var(--border);border-radius:7px;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.82rem;">
-          </div>
-          <button class="btn btn-secondary btn-sm" onclick="addAutoLock()" style="background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.3);color:var(--gold)">➕ הוסף נעילה</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">🏀 הגדרת קבוצות</div>
-      <div class="form-group"><label>שלב</label>
-        <select id="teamSetupStageSelect" onchange="renderTeamSetupForm()">
-          <option value="0">פליי-אין סיבוב א</option><option value="0b">פליי-אין גמר</option>
-          <option value="1">סיבוב ראשון</option><option value="2">סיבוב שני</option>
-          <option value="3">גמר איזורי</option><option value="4">גמר NBA</option>
-        </select>
-      </div>
-      <div id="teamSetupForm"></div>
-    </div>
-
-    <!-- BONUS BETS ADMIN -->
-    <div class="card">
-      <div class="card-title">⭐ הימורי בונוס</div>
-      <div class="form-group"><label>שלב</label>
-        <select id="bonusStageSelect" onchange="renderBonusAdmin()">
-          <option value="0">פליי-אין (כל השלב)</option>
-          <option value="1">סיבוב ראשון</option><option value="2">סיבוב שני</option>
-          <option value="3">גמר איזורי</option><option value="4">גמר NBA</option>
-        </select>
-      </div>
-      <div id="bonusAdminList"></div>
-      <button class="btn btn-secondary btn-sm" onclick="addBonusBet()" style="margin-top:8px">➕ הוסף הימור בונוס</button>
-    </div>
-
-    <div class="card">
-      <div class="card-title">📝 הזן תוצאות</div>
-      <div class="form-group"><label>שלב</label>
-        <select id="resultStageSelect" onchange="renderResultForm()">
-          <option value="0">פליי-אין סיבוב א</option><option value="0b">פליי-אין גמר</option>
-          <option value="1">סיבוב ראשון</option><option value="2">סיבוב שני</option>
-          <option value="3">גמר איזורי</option><option value="4">גמר NBA</option>
-        </select>
-      </div>
-      <div id="resultFormContent"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">📧 שליחת תזכורת</div>
-      <div style="color:var(--text2);font-size:0.82rem;margin-bottom:10px">שלח מייל תזכורת לכל המשתתפים להזין הימורים</div>
-      <button class="btn btn-secondary btn-sm" onclick="sendReminderEmail()" style="background:rgba(79,195,247,0.1);border-color:rgba(79,195,247,0.3);color:var(--blue)">📧 פתח מייל תזכורת</button>
-    </div>
-
-    <div class="card">
-      <div class="card-title">📋 קישור שיתוף</div>
-      <div class="share-box"><input type="text" id="adminShareLink" readonly><button class="btn btn-secondary btn-sm" onclick="copyAdminLink()">📋 העתק</button></div>
-      <div class="code-display" id="adminLeagueCode"></div>
-    </div>
-  </div>
 </div>
 
 </div><!-- /container -->
