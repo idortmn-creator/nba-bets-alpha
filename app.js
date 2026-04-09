@@ -1082,12 +1082,13 @@ async function renderLeaguePage(){
 
 // ── LEAGUE TABS ──
 function showLeagueTab(tab){
-  ['leaderboard','bets','enter-bets','prebets'].forEach(t=>{const el=document.getElementById('ltab-'+t);if(el)el.style.display=t===tab?'':'none';});
-  document.querySelectorAll('#leagueNavTabs .nav-tab').forEach((b,i)=>b.classList.toggle('active',['leaderboard','bets','enter-bets','prebets'][i]===tab));
+  ['leaderboard','bets','enter-bets','prebets','rules'].forEach(t=>{const el=document.getElementById('ltab-'+t);if(el)el.style.display=t===tab?'':'none';});
+  document.querySelectorAll('#leagueNavTabs .nav-tab').forEach((b,i)=>b.classList.toggle('active',['leaderboard','bets','enter-bets','prebets','rules'][i]===tab));
   if(tab==='leaderboard')renderLeaderboard();
   if(tab==='bets'){renderViewStageTabs();const ci=currentLeagueData.currentStage;viewStage(ci>0?STAGE_KEYS[Math.max(0,STAGE_KEYS.indexOf(ci)-1)]:0);}
   if(tab==='enter-bets')renderBetForm();
   if(tab==='prebets')renderPrebetsTab();
+  if(tab==='rules')renderRulesTab();
   if(tab==='admin'){initGlobalSettingsIfNeeded().then(()=>{
     renderAdmin();
     renderTeamSetupForm();
@@ -1254,6 +1255,125 @@ function scoreStage(uid,si){
   return pts;
 }
 
+
+// Returns a detailed breakdown of points for a stage: per-series, bonus rows, bonus bets
+function scoreStageDetail(uid, si){
+  const siKey=String(si);
+  const bet=(currentLeagueData?.bets||{})[uid]?.['stage'+siKey]||{};
+  const result=(getGlobal('results',{}))['stage'+siKey];
+  const detail={seriesPoints:{},bonusRows:[],bonusBetPoints:{}};
+  if(!result)return detail;
+  const matches=STAGE_MATCHES[si];
+
+  if(si===0){
+    for(const m of matches){
+      const b=(bet[m.key]||'').toLowerCase().trim(),r=(result[m.key]||'').toLowerCase().trim();
+      if(b&&r&&b===r)detail.seriesPoints[m.key]=1;
+    }
+  } else if(si==='0b'){
+    for(const m of matches){
+      const b=(bet[m.key]||'').toLowerCase().trim(),r=(result[m.key]||'').toLowerCase().trim();
+      if(b&&r&&b===r)detail.seriesPoints[m.key]=1;
+    }
+    // Playin bonus rows
+    const bet0=(currentLeagueData?.bets||{})[uid]?.['stage0']||{};
+    const result0=(getGlobal('results',{}))['stage0']||{};
+    const allMatches=[...STAGE_MATCHES[0],...STAGE_MATCHES['0b']];
+    let eCAll=0,wCAll=0,totAll=0;
+    for(const m of allMatches){
+      const bSrc=STAGE_MATCHES[0].find(x=>x.key===m.key)?bet0:bet;
+      const rSrc=STAGE_MATCHES[0].find(x=>x.key===m.key)?result0:result;
+      const b=(bSrc[m.key]||'').toLowerCase().trim(),r=(rSrc[m.key]||'').toLowerCase().trim();
+      if(b&&r&&b===r){totAll++;if(m.conf==='east')eCAll++;else wCAll++;}
+    }
+    if(eCAll===3)detail.bonusRows.push({label:'כל מנצחות המזרח',pts:1});
+    if(wCAll===3)detail.bonusRows.push({label:'כל מנצחות המערב',pts:1});
+    if(totAll===6)detail.bonusRows.push({label:'כל 6 המשחקים נכונים',pts:1});
+  } else if(si===1){
+    const eK=['e1','e2','e3','e4'];let eW=0,wW=0,aW=0,eX=0,wX=0,aX=0;
+    for(const m of matches){
+      const bW=(bet[m.key+'_winner']||'').toLowerCase().trim(),rW=(result[m.key+'_winner']||'').toLowerCase().trim();
+      const bR=bet[m.key+'_result']||'',rR=result[m.key+'_result']||'';
+      if(bW&&rW&&bW===rW){
+        const exact=bR&&rR&&bR===rR;
+        detail.seriesPoints[m.key]=exact?4:2;
+        if(exact){aX++;if(eK.includes(m.key))eX++;else wX++;}
+        aW++;if(eK.includes(m.key))eW++;else wW++;
+      }
+    }
+    if(aW===8){
+      if(aX===8)detail.bonusRows.push({label:'כל 8 התוצאות מדויקות',pts:14});
+      else detail.bonusRows.push({label:'כל 8 המנצחות נכונות',pts:7});
+    } else {
+      if(eW===4){if(eX===4)detail.bonusRows.push({label:'כל 4 מנצחות מזרח + תוצאה מדויקת',pts:6});else detail.bonusRows.push({label:'כל 4 מנצחות מזרח נכונות',pts:3});}
+      if(wW===4){if(wX===4)detail.bonusRows.push({label:'כל 4 מנצחות מערב + תוצאה מדויקת',pts:6});else detail.bonusRows.push({label:'כל 4 מנצחות מערב נכונות',pts:3});}
+    }
+    // Early bets
+    const bc=(bet.champion||'').toLowerCase(),rc=(result.champion||'').toLowerCase();if(bc&&rc&&bc===rc)detail.bonusRows.push({label:'🏆 אלוף NBA נכון',pts:10});
+    const be=(bet.east_champ||'').toLowerCase(),re=(result.east_champ||'').toLowerCase();if(be&&re&&be===re)detail.bonusRows.push({label:'🔵 אלופת המזרח נכונה',pts:3});
+    const bw=(bet.west_champ||'').toLowerCase(),rw=(result.west_champ||'').toLowerCase();if(bw&&rw&&bw===rw)detail.bonusRows.push({label:'🔴 אלופת המערב נכונה',pts:3});
+    const bF=[bet.east_champ,bet.west_champ].filter(Boolean).map(x=>x.toLowerCase()).sort().join('|');
+    const rF=[result.east_champ,result.west_champ].filter(Boolean).map(x=>x.toLowerCase()).sort().join('|');
+    if(bF&&rF&&bF===rF)detail.bonusRows.push({label:'שתי האלופות נכונות',pts:3});
+  } else if(si===2){
+    const eK=['e1','e2'];let eW=0,wW=0,aW=0,eX=0,wX=0,aX=0;
+    for(const m of matches){
+      const bW=(bet[m.key+'_winner']||'').toLowerCase().trim(),rW=(result[m.key+'_winner']||'').toLowerCase().trim();
+      const bR=bet[m.key+'_result']||'',rR=result[m.key+'_result']||'';
+      if(bW&&rW&&bW===rW){
+        const exact=bR&&rR&&bR===rR;
+        detail.seriesPoints[m.key]=exact?6:3;
+        if(exact){aX++;if(eK.includes(m.key))eX++;else wX++;}
+        aW++;if(eK.includes(m.key))eW++;else wW++;
+      }
+    }
+    if(aW===4){
+      if(aX===4)detail.bonusRows.push({label:'כל 4 התוצאות מדויקות',pts:14});
+      else detail.bonusRows.push({label:'כל 4 המנצחות נכונות',pts:7});
+    } else {
+      if(eW===2){if(eX===2)detail.bonusRows.push({label:'שתי מנצחות מזרח + מדויק',pts:6});else detail.bonusRows.push({label:'שתי מנצחות מזרח נכונות',pts:3});}
+      if(wW===2){if(wX===2)detail.bonusRows.push({label:'שתי מנצחות מערב + מדויק',pts:6});else detail.bonusRows.push({label:'שתי מנצחות מערב נכונות',pts:3});}
+    }
+  } else if(si===3){
+    let bW2=true,bX2=true;
+    for(const m of matches){
+      const bW=(bet[m.key+'_winner']||'').toLowerCase().trim(),rW=(result[m.key+'_winner']||'').toLowerCase().trim();
+      const bR=bet[m.key+'_result']||'',rR=result[m.key+'_result']||'';
+      const w=bW&&rW&&bW===rW,x=bR&&rR&&bR===rR;
+      if(w){detail.seriesPoints[m.key]=(x?8:4);}else bW2=false;if(!x)bX2=false;
+      const bM=(bet[m.key+'_mvp']||'').toLowerCase(),rM=(result[m.key+'_mvp']||'').toLowerCase();
+      if(bM&&rM&&bM===rM)detail.bonusRows.push({label:`MVP ${m.label} נכון`,pts:1});
+    }
+    if(bW2)detail.bonusRows.push({label:bX2?'שתי התוצאות מדויקות':'שתי המנצחות נכונות',pts:bX2?6:3});
+  } else if(si===4){
+    const m=matches[0];
+    const bW=(bet[m.key+'_winner']||'').toLowerCase(),rW=(result[m.key+'_winner']||'').toLowerCase();
+    const exact=(bet[m.key+'_result']||'')===(result[m.key+'_result']||'');
+    if(bW&&rW&&bW===rW)detail.seriesPoints[m.key]=exact?10:5;
+    const bM=(bet[m.key+'_mvp']||'').toLowerCase(),rM=(result[m.key+'_mvp']||'').toLowerCase();
+    if(bM&&rM&&bM===rM)detail.bonusRows.push({label:'MVP הגמר נכון',pts:2});
+  }
+
+  // Bonus bets for all stages
+  if(si==='0b'){
+    const bonuses=getBonusBets(0),bonusResults=getBonusResults(0);
+    const bet0=(currentLeagueData?.bets||{})[uid]?.['stage0']||{};
+    for(const b of bonuses){
+      const userAns=(bet0['bonus_'+b.id]||bet['bonus_'+b.id]||'').toLowerCase().trim();
+      const correctAns=(bonusResults[b.id]||'').toLowerCase().trim();
+      if(userAns&&correctAns&&userAns===correctAns)detail.bonusBetPoints[b.id]=b.points;
+    }
+  } else if(si!==0){
+    const bonuses=getBonusBets(si),bonusResults=getBonusResults(si);
+    for(const b of bonuses){
+      const userAns=(bet['bonus_'+b.id]||'').toLowerCase().trim();
+      const correctAns=(bonusResults[b.id]||'').toLowerCase().trim();
+      if(userAns&&correctAns&&userAns===correctAns)detail.bonusBetPoints[b.id]=b.points;
+    }
+  }
+  return detail;
+}
+
 // ── LEADERBOARD ──
 function renderLeaderboard(){
   const ld=currentLeagueData,members=ld.members||[],memberInfo=ld.memberInfo||{};
@@ -1286,25 +1406,34 @@ function renderViewStageTabs(){
     return `<button class="stage-tab ${i===0?'active':''}" onclick="window.viewStage(${kStr})">${s}</button>`;
   }).join('');
 }
+
+let _betsSubTab='participant'; // 'participant' or 'series'
+function switchBetsSubTab(tab){
+  _betsSubTab=tab;
+  document.querySelectorAll('.bets-subtab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  // Re-render current stage
+  const active=document.querySelector('#viewStageTabs .stage-tab.active');
+  if(active){
+    const idx=Array.from(document.querySelectorAll('#viewStageTabs .stage-tab')).indexOf(active);
+    if(idx>=0)viewStage(STAGE_KEYS[idx]);
+  }
+}
+window.switchBetsSubTab=switchBetsSubTab;
+
 async function viewStage(idx){
   await waitForGlobalData();
   const idxStr=String(idx);
   document.querySelectorAll('.stage-tab').forEach((t,i)=>t.classList.toggle('active',String(STAGE_KEYS[i])===idxStr));
-  // Normalize idx - could be number or string '0b'
   const idxNorm=(idx==='0b'||idx===0||idx==='0')?idx:(typeof idx==='string'?parseInt(idx):idx);
   const idxNum=STAGE_KEYS.indexOf(idxNorm);
   const stageLocks=getGlobal('stageLocked',[false,false,false,false,false,false]);
   const locked=stageLocks[idxNum]||false;
-  const currentStageIdx=STAGE_KEYS.indexOf(getGlobal('currentStage',0));
   const content=document.getElementById('betsContent');
-  // For playin stages (0 and 0b), require stage lock to view
-  // For series stages (1-4), show per-series even without stage lock
   const isSeriesStage=idx!==0&&idx!=='0b';
   if(!locked&&!isSeriesStage){
     content.innerHTML='<div class="card"><div class="empty-state"><div class="icon">🔒</div><p>ניתן לצפות לאחר נעילת השלב</p></div></div>';
     return;
   }
-  // For series stages with no stage lock - check if ANY series is locked
   if(isSeriesStage&&!locked){
     const anySeriesLocked=STAGE_MATCHES[idx]?.some(m=>isSeriesLocked(idx,m.key));
     if(!anySeriesLocked){
@@ -1316,69 +1445,173 @@ async function viewStage(idx){
   const result=(getGlobal('results',{}))['stage'+idx]||{},matches=STAGE_MATCHES[idx];
   const members=ld.members||[],memberInfo=ld.memberInfo||{};
   const bonuses=getBonusBets(idx),bonusResults=getBonusResults(idx);
+
+  if(_betsSubTab==='series'){
+    content.innerHTML=renderBySeriesView(idx,matches,members,memberInfo,result,bonuses,bonusResults);
+  } else {
+    content.innerHTML=renderByParticipantView(idx,matches,members,memberInfo,result,bonuses,bonusResults);
+  }
+}
+
+function renderByParticipantView(idx,matches,members,memberInfo,result,bonuses,bonusResults){
+  const ld=currentLeagueData;
   const cards=members.map(uid=>{
     const info=memberInfo[uid]||{username:uid};
     const bet=((ld.bets||{})[uid]||{})['stage'+idx]||{};
     const stageScore=scoreStage(uid,idx);
+    const detail=scoreStageDetail(uid,idx);
     let items='';
     if(idx===0||idx==='0b'){
-      for(const m of matches){const bv=bet[m.key]||'-';let cls='pending';if(result[m.key])cls=bv.toLowerCase()===result[m.key].toLowerCase()?'correct':'wrong';items+=`<div class="bet-item"><span class="bet-label">${teamLabel(idx,m.key,m.label)}</span><span class="bet-value ${cls}">${bv}</span></div>`;}
+      for(const m of matches){
+        const bv=bet[m.key]||'-';
+        let cls='pending';
+        const pts=detail.seriesPoints[m.key];
+        if(result[m.key])cls=bv.toLowerCase()===result[m.key].toLowerCase()?'correct':'wrong';
+        const ptsBadge=pts?`<span class="pts-badge">+${pts}</span>`:'';
+        items+=`<div class="bet-item"><span class="bet-label">${teamLabel(idx,m.key,m.label)}</span><span class="bet-value ${cls}">${bv}${ptsBadge}</span></div>`;
+      }
     } else {
       for(const m of matches){
         const serLocked=isSeriesLocked(idx,m.key);
-        if(!serLocked){
-          // Series not locked - show "not started" header per PRD 5.2.1
-          items+=`<div class="series-not-started"><span class="series-not-started-label">${teamLabel(idx,m.key,m.label)}</span><span class="series-not-started-msg">🔒 הסדרה טרם החלה</span></div>`;
-          continue;
-        }
+        if(!serLocked){items+=`<div class="series-not-started"><span class="series-not-started-label">${teamLabel(idx,m.key,m.label)}</span><span class="series-not-started-msg">🔒 הסדרה טרם החלה</span></div>`;continue;}
         const bW=bet[m.key+'_winner']||'-',bR=bet[m.key+'_result']||'-';
         let wC='pending';
         const winMatch=result[m.key+'_winner']&&bW.toLowerCase()===result[m.key+'_winner'].toLowerCase();
         const resMatch=result[m.key+'_result']&&bR===result[m.key+'_result'];
-        if(result[m.key+'_winner']){
-          if(winMatch&&resMatch)wC='correct-exact';
-          else if(winMatch)wC='correct';
-          else wC='wrong';
-        }
-        items+=`<div class="bet-item"><span class="bet-label">${teamLabel(idx,m.key,m.label)}</span><span class="bet-value ${wC}">${bW} <span style="opacity:0.65">(${bR})</span></span></div>`;
+        if(result[m.key+'_winner']){if(winMatch&&resMatch)wC='correct-exact';else if(winMatch)wC='correct';else wC='wrong';}
+        const pts=detail.seriesPoints[m.key];
+        const ptsBadge=pts?`<span class="pts-badge">+${pts}</span>`:'';
+        items+=`<div class="bet-item"><span class="bet-label">${teamLabel(idx,m.key,m.label)}</span><span class="bet-value ${wC}">${bW} <span style="opacity:0.65">(${bR})</span>${ptsBadge}</span></div>`;
         if(m.hasMvp){const bM=bet[m.key+'_mvp']||'-';let mC='pending';if(result[m.key+'_mvp'])mC=bM.toLowerCase()===result[m.key+'_mvp'].toLowerCase()?'correct':'wrong';items+=`<div class="bet-item"><span class="bet-label">MVP</span><span class="bet-value ${mC}">${bM}</span></div>`;}
       }
-      if(idx===1&&isPreBetsLocked()){for(const p of PREBETS){const bv=bet[p.key]||'-';let cls='pending';if(result[p.key])cls=bv.toLowerCase()===(result[p.key]||'').toLowerCase()?'correct':'wrong';items+=`<div class="bet-item"><span class="bet-label">${p.label}</span><span class="bet-value ${cls}">${bv}</span></div>`;}}
+      if(idx===1&&isPreBetsLocked()){
+        for(const p of PREBETS){
+          const bv=bet[p.key]||'-';let cls='pending';
+          if(result[p.key])cls=bv.toLowerCase()===(result[p.key]||'').toLowerCase()?'correct':'wrong';
+          items+=`<div class="bet-item"><span class="bet-label">${p.label}</span><span class="bet-value ${cls}">${bv}</span></div>`;
+        }
+      }
     }
-    // Bonus bets in view - only show locked bonuses
+    // Bonus bets
     for(const b of bonuses){
-      if(!isSingleBonusLocked(idx,b))continue; // skip unlocked bonuses
+      if(!isSingleBonusLocked(idx,b))continue;
       const bv=bet['bonus_'+b.id]||'-';let cls='pending';
       const correctAns=bonusResults[b.id]||'';
       if(correctAns)cls=bv.toLowerCase()===correctAns.toLowerCase()?'correct':'wrong';
-      items+=`<div class="bet-item"><span class="bet-label" style="color:var(--gold)">⭐ ${b.question}</span><span class="bet-value ${cls}">${bv}</span></div>`;
+      const bpts=detail.bonusBetPoints[b.id];
+      const ptsBadge=bpts?`<span class="pts-badge">+${bpts}</span>`:'';
+      items+=`<div class="bet-item"><span class="bet-label" style="color:var(--gold)">⭐ ${b.question}</span><span class="bet-value ${cls}">${bv}${ptsBadge}</span></div>`;
     }
-    return`<div class="bet-card"><div class="bet-header"><div><div class="bet-player-username">${info.username||uid}</div><div class="bet-player-name">${info.displayName||''}</div></div><div class="bet-pts">${(stageScore>0||result)?stageScore+' נק\'':'⏳'}</div></div>${items}</div>`;
+    // Bonus rows
+    if(detail.bonusRows.length){
+      items+=`<div class="bonus-rows-divider">בונוסים</div>`;
+      for(const row of detail.bonusRows){
+        items+=`<div class="bet-item bonus-row-item"><span class="bet-label" style="color:var(--gold)">⭐ ${row.label}</span><span class="pts-badge">+${row.pts}</span></div>`;
+      }
+    }
+    return`<div class="bet-card"><div class="bet-header"><div><div class="bet-player-username">${info.username||uid}</div><div class="bet-player-name">${info.displayName||''}</div></div><div class="bet-pts">${(stageScore>0||Object.keys(result||{}).length)?stageScore+" נק'":'⏳'}</div></div>${items}</div>`;
   }).join('');
-  // Build results display
+
   let resultsHtml='';
   if(Object.keys(result).length>0){
     resultsHtml+='<div class="card" style="margin-top:14px;border-color:rgba(79,195,247,0.3)"><div class="card-title" style="color:var(--blue)">📊 תוצאות אמיתיות</div>';
     if(idx===0||idx==='0b'){
-      for(const m of matches){
-        const rv=result[m.key]||'-';
-        const lbl=teamLabel(idx,m.key,m.label);
-        resultsHtml+=`<div class="bet-item"><span class="bet-label">${lbl}</span><span class="bet-value" style="color:var(--blue)">${rv}</span></div>`;
-      }
+      for(const m of matches){resultsHtml+=`<div class="bet-item"><span class="bet-label">${teamLabel(idx,m.key,m.label)}</span><span class="bet-value" style="color:var(--blue)">${result[m.key]||'-'}</span></div>`;}
     } else {
       for(const m of matches){
-        const rW=result[m.key+'_winner']||'-';
-        const rR=result[m.key+'_result']||'-';
-        const lbl=teamLabel(idx,m.key,m.label);
-        resultsHtml+=`<div class="bet-item"><span class="bet-label">${lbl}</span><span class="bet-value" style="color:var(--blue)">${rW} (${rR})</span></div>`;
+        const rW=result[m.key+'_winner']||'-',rR=result[m.key+'_result']||'-';
+        resultsHtml+=`<div class="bet-item"><span class="bet-label">${teamLabel(idx,m.key,m.label)}</span><span class="bet-value" style="color:var(--blue)">${rW} (${rR})</span></div>`;
         if(m.hasMvp&&result[m.key+'_mvp'])resultsHtml+=`<div class="bet-item"><span class="bet-label">MVP</span><span class="bet-value" style="color:var(--blue)">${result[m.key+'_mvp']}</span></div>`;
       }
     }
     resultsHtml+='</div>';
   }
-  content.innerHTML=`<div class="bets-grid">${cards}</div>${resultsHtml}`;
+  return`<div class="bets-grid">${cards}</div>${resultsHtml}`;
 }
 
+function renderBySeriesView(idx,matches,members,memberInfo,result,bonuses,bonusResults){
+  const ld=currentLeagueData;
+  let html='';
+
+  // For each series/game, show how many bet on each outcome
+  const seriesBlocks=(idx===0||idx==='0b')?matches:matches.filter(m=>isSeriesLocked(idx,m.key));
+  for(const m of seriesBlocks){
+    const lbl=teamLabel(idx,m.key,m.label);
+    const rW=result[m.key+'_winner']||result[m.key]||'';
+    const rR=result[m.key+'_result']||'';
+
+    // Tally bets
+    const tally={};
+    members.forEach(uid=>{
+      const bet=((ld.bets||{})[uid]||{})['stage'+idx]||{};
+      const pick=(idx===0||idx==='0b')?(bet[m.key]||''):(bet[m.key+'_winner']||'');
+      const res=(idx===0||idx==='0b')?'':(bet[m.key+'_result']||'');
+      const key=(idx===0||idx==='0b')?pick:(pick?(pick+(res?` (${res})`:'')):'');
+      if(!key)return;
+      if(!tally[key])tally[key]={count:0,correct:false,exact:false,users:[]};
+      tally[key].count++;
+      tally[key].users.push(memberInfo[uid]?.username||uid);
+      if(rW&&pick.toLowerCase()===rW.toLowerCase()){
+        tally[key].correct=true;
+        if(rR&&res===rR)tally[key].exact=true;
+      }
+    });
+
+    const total=members.length;
+    const rows=Object.entries(tally).sort((a,b)=>b[1].count-a[1].count).map(([pick,t])=>{
+      let cls=rW?(t.correct?(t.exact?'correct-exact':'correct'):'wrong'):'pending';
+      const pct=total?Math.round(t.count/total*100):0;
+      return`<div class="series-tally-row">
+        <span class="bet-value ${cls}">${pick}</span>
+        <div class="tally-bar-wrap"><div class="tally-bar" style="width:${pct}%"></div></div>
+        <span class="tally-count">${t.count}/${total}</span>
+        <span class="tally-names">${t.users.join(', ')}</span>
+      </div>`;
+    }).join('');
+
+    html+=`<div class="card series-tally-card" style="margin-bottom:10px">
+      <div class="card-title" style="margin-bottom:8px">🏀 ${lbl}</div>
+      ${rW?`<div style="font-size:0.75rem;color:var(--blue);margin-bottom:8px">תוצאה: ${rW}${rR?' ('+rR+')':''}</div>`:''}
+      ${rows||'<div style="color:var(--text2);font-size:0.78rem">אין הימורים</div>'}
+    </div>`;
+  }
+
+  // Bonus bets by series
+  const lockedBonuses=bonuses.filter(b=>isSingleBonusLocked(idx,b));
+  for(const b of lockedBonuses){
+    const correctAns=bonusResults[b.id]||'';
+    const tally={};
+    members.forEach(uid=>{
+      const bet=((ld.bets||{})[uid]||{})['stage'+idx]||{};
+      const pick=bet['bonus_'+b.id]||'';
+      if(!pick)return;
+      if(!tally[pick])tally[pick]={count:0,correct:false,users:[]};
+      tally[pick].count++;
+      tally[pick].users.push(memberInfo[uid]?.username||uid);
+      if(correctAns&&pick.toLowerCase()===correctAns.toLowerCase())tally[pick].correct=true;
+    });
+    const total=members.length;
+    const rows=Object.entries(tally).sort((a,b)=>b[1].count-a[1].count).map(([pick,t])=>{
+      let cls=correctAns?(t.correct?'correct':'wrong'):'pending';
+      const pct=total?Math.round(t.count/total*100):0;
+      return`<div class="series-tally-row">
+        <span class="bet-value ${cls}">${pick}</span>
+        <div class="tally-bar-wrap"><div class="tally-bar" style="width:${pct}%"></div></div>
+        <span class="tally-count">${t.count}/${total}</span>
+        <span class="tally-names">${t.users.join(', ')}</span>
+      </div>`;
+    }).join('');
+    html+=`<div class="card series-tally-card" style="margin-bottom:10px">
+      <div class="card-title" style="margin-bottom:8px;color:var(--gold)">⭐ ${b.question}</div>
+      ${correctAns?`<div style="font-size:0.75rem;color:var(--blue);margin-bottom:8px">תשובה נכונה: ${correctAns}</div>`:''}
+      ${rows||'<div style="color:var(--text2);font-size:0.78rem">אין הימורים</div>'}
+    </div>`;
+  }
+
+  return html||'<div class="card"><div class="empty-state"><p>אין נתונים להצגה</p></div></div>';
+}
+
+// ── BET FORM ──
 // ── BET FORM ──
 async function renderBetForm(){
   await waitForGlobalData();
@@ -2243,6 +2476,74 @@ function renderPrebetsTab(){
 }
 
 window.renderPrebetsTab=renderPrebetsTab;
+
+
+function renderRulesTab(){
+  const locks=getGlobal('autoLocks',{});
+  const sl=getGlobal('stageLocked',[false,false,false,false,false,false]);
+  const now=Date.now();
+
+  function lockInfo(stageKey){
+    const ts=locks[stageKey];
+    if(!ts)return '';
+    const tsNum=typeof ts==='number'?ts:(ts?.seconds?ts.seconds*1000:0);
+    if(tsNum<=now)return '<span style="color:var(--red);font-size:0.75rem">🔒 ננעל</span>';
+    return `<span style="color:var(--gold);font-size:0.75rem">⏰ ${new Date(tsNum).toLocaleString('he-IL')}</span>`;
+  }
+
+  const stages=[
+    {key:'0',name:'פליי-אין סיבוב א',desc:'4 משחקים — ניחוש מנצחת כל משחק.',
+     scoring:[{l:'ניחוש נכון',v:'1 נק''}],
+     bonus:[{l:'כל 3 מנצחות מזרח / מערב',v:'+1 נק' לכל קונפרנס'},{l:'כל 6 נכונות',v:'+1 נק''}],
+     max:'עד 9 נק' (כולל בונוסים)'},
+    {key:'0b',name:'פליי-אין גמר',desc:'2 משחקים — מפסידת 7v8 מול מנצחת 9v10.',
+     scoring:[{l:'ניחוש נכון',v:'1 נק''}],bonus:[],max:''},
+    {key:'1',name:'סיבוב ראשון',desc:'8 סדרות Best of 7 — ניחוש מנצחת + תוצאה.',
+     scoring:[{l:'מנצחת נכונה',v:'2 נק''},{l:'תוצאה מדויקת',v:'4 נק''}],
+     bonus:[{l:'4 מנצחות נכונות בקונפרנס',v:'+3 נק''},{l:'4 תוצאות מדויקות בקונפרנס',v:'+3 נק' נוספים'},{l:'כל 8 מנצחות נכונות',v:'+1 נק''},{l:'כל 8 תוצאות מדויקות',v:'+1 נק''}],
+     extra:[{l:'הימורים מוקדמים — אלוף NBA',v:'10 נק''},{l:'אלופת מזרח / מערב',v:'3 נק' כל אחד'},{l:'שתי האלופות נכונות',v:'+3 נק''}],
+     max:'עד 46 נק''},
+    {key:'2',name:'סיבוב שני',desc:'4 סדרות Best of 7.',
+     scoring:[{l:'מנצחת נכונה',v:'3 נק''},{l:'תוצאה מדויקת',v:'6 נק''}],
+     bonus:[{l:'2 מנצחות נכונות בקונפרנס',v:'+3 נק''},{l:'2 תוצאות מדויקות בקונפרנס',v:'+3 נק' נוספים'},{l:'כל 4 מנצחות',v:'+1 נק''},{l:'כל 4 תוצאות מדויקות',v:'+1 נק''}],
+     max:'עד 38 נק''},
+    {key:'3',name:'גמר אזורי',desc:'2 סדרות Best of 7.',
+     scoring:[{l:'מנצחת נכונה',v:'4 נק''},{l:'תוצאה מדויקת',v:'8 נק''},{l:'MVP נכון (כל קונפרנס)',v:'1 נק''}],
+     bonus:[{l:'שתי המנצחות נכונות',v:'+3 נק''},{l:'שתי התוצאות מדויקות',v:'+3 נק' נוספים'}],
+     max:'עד 24 נק''},
+    {key:'4',name:'גמר NBA',desc:'סדרה אחת Best of 7.',
+     scoring:[{l:'מנצחת נכונה',v:'5 נק''},{l:'תוצאה מדויקת',v:'10 נק''},{l:'MVP הגמר',v:'2 נק''}],
+     bonus:[],max:'עד 12 נק''},
+  ];
+
+  const html=stages.map((s,i)=>{
+    const locked=sl[i]||false;
+    const deadline=lockInfo(s.key);
+    const scoringRows=s.scoring.map(r=>`<div class="rules-row"><span>${r.l}</span><span class="rules-val">${r.v}</span></div>`).join('');
+    const bonusRows=(s.bonus||[]).map(r=>`<div class="rules-row bonus"><span>⭐ ${r.l}</span><span class="rules-val">${r.v}</span></div>`).join('');
+    const extraRows=(s.extra||[]).map(r=>`<div class="rules-row bonus"><span>🏆 ${r.l}</span><span class="rules-val">${r.v}</span></div>`).join('');
+    return`<div class="card rules-card" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;margin-bottom:6px">
+        <div class="card-title" style="margin-bottom:0">${s.name}</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          ${locked?'<span class="badge badge-locked">🔒 נעול</span>':'<span class="badge badge-open">🟢 פתוח</span>'}
+          ${deadline}
+        </div>
+      </div>
+      <div style="font-size:0.78rem;color:var(--text2);margin-bottom:10px">${s.desc}</div>
+      ${scoringRows}${bonusRows}${extraRows}
+      ${s.max?`<div style="font-size:0.75rem;color:var(--text2);margin-top:8px;text-align:left;font-style:italic">${s.max}</div>`:''}
+    </div>`;
+  }).join('');
+
+  const bonusNote=`<div class="card" style="margin-bottom:10px;border-color:rgba(255,215,0,0.3)">
+    <div class="card-title" style="color:var(--gold)">⭐ הימורי בונוס</div>
+    <div style="font-size:0.78rem;color:var(--text2)">לכל שלב יוגדרו שאלות בונוס עם ערך נקודות שנקבע על ידי האדמין. ההימור ננעל יחד עם הסדרה או השלב שאליו הוא שויך.</div>
+  </div>`;
+
+  document.getElementById('rulesContent').innerHTML=bonusNote+html;
+}
+window.renderRulesTab=renderRulesTab;
 
 function sendReminderEmail(){
   const ld=currentLeagueData;
