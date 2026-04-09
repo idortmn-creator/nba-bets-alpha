@@ -9,6 +9,7 @@ export default function HomePage() {
 
   return (
     <div className="py-6">
+      <h1 style={{ color: 'red' }}>test deployment</h1>
       <div className="mb-4 text-lg font-bold">
         שלום, <span className="text-[var(--orange)]">{userDoc?.username || ''}</span> 👋
       </div>
