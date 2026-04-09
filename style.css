@@ -184,3 +184,28 @@ header{background:linear-gradient(135deg,var(--dark2),var(--dark3));border-botto
 .share-box input{flex:1;background:transparent;border:none;color:var(--text);font-family:'Heebo',sans-serif;font-size:0.86rem;}
 .share-box input:focus{outline:none;}
 .code-display{font-family:'Oswald',sans-serif;font-size:2.3rem;letter-spacing:8px;color:var(--orange);text-align:center;padding:14px;background:var(--dark3);border-radius:12px;margin-bottom:11px;border:1px solid var(--border);}
+
+/* ── POINTS BADGE ── */
+.pts-badge{display:inline-block;background:rgba(0,230,118,0.15);color:#00e676;font-size:0.7rem;font-weight:700;padding:1px 5px;border-radius:4px;margin-right:3px;white-space:nowrap;}
+.bonus-rows-divider{font-size:0.7rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:6px 0 2px;border-top:1px solid rgba(255,215,0,0.2);margin-top:4px;}
+.bonus-row-item .bet-label{color:var(--gold)!important;}
+
+/* ── BY SERIES VIEW ── */
+.series-tally-card{}
+.series-tally-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem;flex-wrap:wrap;}
+.series-tally-row:last-child{border-bottom:none;}
+.tally-bar-wrap{flex:1;min-width:60px;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;}
+.tally-bar{height:100%;background:var(--orange);border-radius:3px;transition:width 0.3s;}
+.tally-count{color:var(--text2);font-size:0.72rem;min-width:32px;text-align:center;}
+.tally-names{color:var(--text2);font-size:0.7rem;flex-basis:100%;}
+
+/* ── BETS SUB-TABS ── */
+.bets-subtab-btn{padding:6px 14px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--text2);font-family:'Heebo',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.15s;}
+.bets-subtab-btn.active{background:rgba(255,107,0,0.12);border-color:var(--orange);color:var(--orange);}
+
+/* ── RULES TAB ── */
+.rules-card{}
+.rules-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.8rem;}
+.rules-row:last-child{border-bottom:none;}
+.rules-row.bonus{color:var(--text2);}
+.rules-val{font-weight:700;color:var(--orange);white-space:nowrap;margin-right:8px;}
