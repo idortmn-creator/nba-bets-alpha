@@ -18,7 +18,7 @@ export interface LeagueData {
   results?: Record<string, unknown>
   bonusBets?: Record<string, unknown>
   bonusResults?: Record<string, unknown>
-  bets?: Record<string, Record<string, unknown>>
+  bets?: Record<string, Record<string, Record<string, string>>>
   createdAt?: unknown
 }
 
