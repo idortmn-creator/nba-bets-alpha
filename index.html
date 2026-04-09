@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v3.3 -->
+<!-- v3.4 -->
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -16,7 +16,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;900&family=Oswald:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=3.3">
+<link rel="stylesheet" href="style.css?v=3.4">
 </head>
 <body>
 
@@ -185,7 +185,6 @@
     <button class="nav-tab" onclick="showLeagueTab('bets')">📋 הימורים</button>
     <button class="nav-tab" onclick="showLeagueTab('enter-bets')">✍️ הימורים שלי</button>
     <button class="nav-tab" onclick="showLeagueTab('prebets')">🏆 הימורים מוקדמים</button>
-    <button class="nav-tab" onclick="showLeagueTab('rules')">📖 פורמט</button>
 
   </nav>
 
@@ -203,17 +202,8 @@
 
   <!-- Bets view -->
   <div id="ltab-bets" style="display:none">
-    <div style="display:flex;gap:8px;margin-bottom:12px;">
-      <button class="bets-subtab-btn active" data-tab="participant" onclick="switchBetsSubTab('participant')">👤 לפי משתתף</button>
-      <button class="bets-subtab-btn" data-tab="series" onclick="switchBetsSubTab('series')">🏀 לפי סדרה</button>
-    </div>
     <div class="stage-tabs" id="viewStageTabs"></div>
     <div id="betsContent"></div>
-  </div>
-
-  <!-- Rules tab -->
-  <div id="ltab-rules" style="display:none">
-    <div id="rulesContent"></div>
   </div>
 
   <!-- Enter bets -->
@@ -244,6 +234,6 @@
 
 </div><!-- /container -->
 
-<script type="module" src="app.js?v=3.3"></script>
+<script type="module" src="app.js?v=3.4"></script>
 </body>
 </html>
