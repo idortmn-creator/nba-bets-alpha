@@ -31,6 +31,15 @@ export default function InstallPrompt() {
     setPlatform(p)
 
     if (p === 'android') {
+      // The event may have already fired before React mounted (captured in index.html inline script)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const early = (window as any).__pwaInstallEvent
+      if (early) {
+        setDeferredPrompt(early)
+        setVisible(true)
+        return
+      }
+      // Otherwise wait for it
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const handler = (e: any) => {
         e.preventDefault()

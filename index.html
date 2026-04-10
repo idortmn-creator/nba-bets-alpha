@@ -13,6 +13,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="NBA Bets" />
     <link rel="manifest" href="/manifest.json" />
+    <script>
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        window.__pwaInstallEvent = e;
+      });
+    </script>
     <link rel="apple-touch-icon" href="/icon.png" />
     <link
       href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;700;900&family=Oswald:wght@700&display=swap"
