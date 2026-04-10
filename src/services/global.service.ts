@@ -18,10 +18,10 @@ export async function toggleStageLock(
   const locking = !newLocked[sIdx]
   newLocked[sIdx] = locking
   const updates: Record<string, unknown> = { stageLocked: newLocked }
-  if (locking && STAGE_MATCHES[stage]) {
+  if (STAGE_MATCHES[stage]) {
     const curSL = globalData.seriesLocked || {}
     const newSL = { ...curSL }
-    for (const m of STAGE_MATCHES[stage]) newSL[stage + '_' + m.key] = true
+    for (const m of STAGE_MATCHES[stage]) newSL[stage + '_' + m.key] = locking
     updates.seriesLocked = newSL
   }
   await setDoc(doc(db, 'global', 'settings'), updates, { merge: true })
