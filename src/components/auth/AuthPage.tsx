@@ -15,6 +15,7 @@ export default function AuthPage() {
   const [regEmail, setRegEmail] = useState('')
   const [regPassword, setRegPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [registeredEmail, setRegisteredEmail] = useState('')
 
   async function handleLogin() {
     if (!email || !password) { toast('⚠️ מלא את כל השדות'); return }
@@ -34,8 +35,7 @@ export default function AuthPage() {
     setLoading(true)
     try {
       await register(regName, regUsername.replace(/\s/g, ''), regEmail, regPassword)
-      toast('📧 נשלח מייל אימות! אמת ואז התחבר')
-      setTab('login')
+      setRegisteredEmail(regEmail)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       if (msg === 'USERNAME_TAKEN') toast('⚠️ שם המשתמש תפוס')
@@ -57,6 +57,36 @@ export default function AuthPage() {
       if (msg === 'ALREADY_VERIFIED') toast('✅ האימייל כבר מאומת!')
       else toast('❌ ' + msg)
     }
+  }
+
+  if (registeredEmail) {
+    return (
+      <div className="mx-auto max-w-[400px] pt-12">
+        <div className="mb-6 text-center">
+          <div className="font-oswald text-3xl text-[var(--orange)]">🏀 NBA BETS</div>
+          <div className="mt-1 text-sm text-[var(--text2)]">הימורי פלייאוף 2026</div>
+        </div>
+        <Card>
+          <div className="mb-4 text-center text-4xl">📧</div>
+          <div className="mb-2 text-center text-lg font-bold">נשלח מייל אימות!</div>
+          <div className="mb-4 text-center text-sm text-[var(--text2)]">{registeredEmail}</div>
+          <div className="mb-4 rounded-lg border border-[var(--orange-border)] bg-[var(--orange-dim)] p-3 text-sm leading-relaxed">
+            לחץ על הקישור במייל כדי לאמת את החשבון לפני הכניסה.
+          </div>
+          <div className="mb-5 flex items-start gap-2 rounded-lg border border-[rgba(255,215,0,0.3)] bg-[rgba(255,215,0,0.06)] p-3 text-sm leading-relaxed text-[var(--text)]">
+            <span className="mt-0.5 text-base">⚠️</span>
+            <span>לא רואה את המייל? <strong>בדוק את תיקיית הספאם / דואר זבל.</strong> לפעמים מיילי אימות נחסמים אוטומטית.</span>
+          </div>
+          <Button size="full" onClick={() => { setRegisteredEmail(''); setTab('login') }}>להתחברות →</Button>
+          <div className="mt-3 text-center">
+            <Button variant="ghost" size="sm" onClick={async () => {
+              try { await resendVerification(registeredEmail, regPassword); toast('📧 מייל אימות נשלח שוב!') }
+              catch { toast('❌ שגיאה בשליחה מחדש') }
+            }}>לא קיבלת? שלח שוב</Button>
+          </div>
+        </Card>
+      </div>
+    )
   }
 
   return (
