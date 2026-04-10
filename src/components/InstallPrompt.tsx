@@ -22,6 +22,7 @@ export default function InstallPrompt() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [visible, setVisible] = useState(false)
+  const [showAndroidWarning, setShowAndroidWarning] = useState(false)
   const [showIOSSteps, setShowIOSSteps] = useState(false)
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function InstallPrompt() {
   function dismiss() {
     localStorage.setItem(DISMISSED_KEY, '1')
     setVisible(false)
+    setShowAndroidWarning(false)
     setShowIOSSteps(false)
   }
 
@@ -69,13 +71,44 @@ export default function InstallPrompt() {
 
   if (!visible) return null
 
+  /* ── Android: pre-install warning explanation modal ── */
+  if (platform === 'android' && showAndroidWarning) {
+    return (
+      <div className="install-modal-overlay" onClick={() => setShowAndroidWarning(false)}>
+        <div className="install-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="install-modal-title">⚠️ הודעת אבטחה מ-Google</div>
+          <p className="install-modal-body">
+            לאחר לחיצה על "התקן", Android עשוי להציג אזהרה מ-<strong>Google Play Protect</strong> שאומרת שהאפליקציה "לא בטוחה" או "מיועדת לגרסה ישנה".
+          </p>
+          <p className="install-modal-body">
+            זו <strong>אזהרה אוטומטית סטנדרטית</strong> שמופיעה לכל אפליקציית ווב (PWA) שמותקנת מחוץ ל-Play Store — ולא קשורה לתוכן האפליקציה שלנו.
+          </p>
+          <p className="install-modal-body">
+            האפליקציה מאובטחת לחלוטין: היא מתארחת על שרתי Google (Firebase) ואין לה גישה למכשיר שלך.
+          </p>
+          <p className="install-modal-hint">
+            כדי להמשיך: לחץ <strong>"אני רוצה להתקין"</strong> בתחתית האזהרה של Google.
+          </p>
+          <div className="install-modal-actions">
+            <button className="install-btn install-btn-primary install-btn-full" onClick={handleAndroidInstall}>
+              הבנתי — התקן
+            </button>
+            <button className="install-btn install-btn-secondary install-btn-full" onClick={dismiss}>
+              ביטול
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   /* ── Android banner ── */
   if (platform === 'android') {
     return (
       <div className="install-banner">
         <span className="install-banner-text">📲 הוסף לדף הבית כאפליקציה</span>
         <div className="install-banner-actions">
-          <button className="install-btn install-btn-primary" onClick={handleAndroidInstall}>התקן</button>
+          <button className="install-btn install-btn-primary" onClick={() => setShowAndroidWarning(true)}>התקן</button>
           <button className="install-btn install-btn-dismiss" onClick={dismiss}>✕</button>
         </div>
       </div>
