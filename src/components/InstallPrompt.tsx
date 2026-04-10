@@ -66,7 +66,10 @@ export default function InstallPrompt() {
     if (!deferredPrompt) return
     deferredPrompt.prompt()
     await deferredPrompt.userChoice
-    dismiss()
+    // Don't permanently dismiss — just hide the banner.
+    // The Header always provides a fallback install entry point.
+    setVisible(false)
+    setShowAndroidWarning(false)
   }
 
   if (!visible) return null
