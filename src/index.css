@@ -36,6 +36,8 @@
     --text: #e8e8f0;
     --text2: #8888aa;
     --green: #00e676;
+    --green-light: #86efac;
+    --green-dark: #22c55e;
     --blue: #4fc3f7;
     --gold: #ffd700;
     --red: #ff4444;
@@ -100,8 +102,8 @@
 }
 .bet-label { color: var(--text2); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bet-value { font-weight: 600; }
-.bet-value.correct { color: var(--green); }
-.bet-value.correct-exact { color: var(--gold); }
+.bet-value.correct { color: var(--green-light); }
+.bet-value.correct-exact { color: var(--green-dark); }
 .bet-value.wrong { color: var(--red); }
 .bet-value.pending { color: var(--text); }
 
@@ -365,6 +367,111 @@
   font-size: 0.8rem;
   gap: 8px;
 }
+
+/* ── MAIN NAV TABS ── */
+.main-nav-tab {
+  padding: 10px 18px;
+  border-radius: 9px;
+  border: 1.5px solid rgba(255,255,255,0.14);
+  background: var(--dark3);
+  color: var(--text);
+  font-family: 'Heebo', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
+}
+.main-nav-tab.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+.main-nav-tab:hover:not(.active) { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.22); }
+
+.main-nav-separator {
+  border: none;
+  border-top: 2px solid rgba(255,255,255,0.08);
+  margin: 0 0 16px 0;
+}
+
+/* ── INSTALL PROMPT ── */
+.install-banner {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  z-index: 9999;
+  background: var(--dark2);
+  border-top: 2px solid var(--orange-border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: 'Heebo', sans-serif;
+  direction: rtl;
+}
+.install-banner-text {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+}
+.install-banner-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.install-btn {
+  padding: 7px 16px;
+  border-radius: 7px;
+  border: none;
+  font-family: 'Heebo', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.install-btn-primary { background: var(--orange); color: #fff; }
+.install-btn-primary:hover { background: #e05e00; }
+.install-btn-secondary { background: rgba(255,255,255,0.08); color: var(--text2); border: 1px solid rgba(255,255,255,0.12); }
+.install-btn-secondary:hover { background: rgba(255,255,255,0.14); }
+.install-btn-dismiss { background: transparent; color: var(--text2); font-size: 1rem; padding: 6px 10px; }
+.install-btn-dismiss:hover { color: var(--text); }
+.install-btn-full { width: 100%; margin-top: 8px; padding: 10px; font-size: 0.9rem; }
+
+.install-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 env(safe-area-inset-bottom, 0);
+}
+.install-modal {
+  background: var(--dark2);
+  border: 1.5px solid var(--orange-border);
+  border-radius: 18px 18px 0 0;
+  padding: 24px 20px 28px;
+  width: 100%;
+  max-width: 500px;
+  font-family: 'Heebo', sans-serif;
+  direction: rtl;
+}
+.install-modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--orange);
+  margin-bottom: 16px;
+}
+.install-steps {
+  margin: 0 0 12px 0;
+  padding-right: 20px;
+  list-style: decimal;
+  font-size: 0.88rem;
+  line-height: 2;
+  color: var(--text);
+}
+.install-steps li strong { color: var(--orange); }
 
 /* ── UTILS ── */
 .text-orange { color: var(--orange); }

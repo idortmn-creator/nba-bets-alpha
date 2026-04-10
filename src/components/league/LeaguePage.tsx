@@ -57,15 +57,16 @@ export default function LeaguePage() {
         <Button variant="secondary" size="sm" onClick={() => navigate('/')}>← ליגות</Button>
       </div>
 
-      <nav className="mb-4 flex flex-wrap gap-1.5">
+      <nav className="mb-3 flex flex-wrap gap-2">
         {tabs.map((t) => (
           <button
             key={t.key}
-            className={`stage-tab ${activeTab === t.key ? 'active' : ''}`}
+            className={`main-nav-tab ${activeTab === t.key ? 'active' : ''}`}
             onClick={() => switchTab(t.key)}
           >{t.label}</button>
         ))}
       </nav>
+      <hr className="main-nav-separator" />
 
       {activeTab === 'leaderboard' && <LeaderboardTab />}
       {activeTab === 'bets' && <BetsViewTab />}

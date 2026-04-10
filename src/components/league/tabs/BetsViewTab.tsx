@@ -101,7 +101,8 @@ function ParticipantView({ stage, members, memberInfo, result, matches, bonuses,
                 return <div key={p.key} className="bet-item"><span className="bet-label">{p.label}</span><span className={`bet-value ${cls}`}>{bv}</span></div>
               })}
               {bonuses.filter((b: any) => isSingleBonusLocked(stage, b)).map((b: any) => {
-                const bv = bet['bonus_' + b.id] || '-'
+                const bonusBet = ((leagueData.bets || {})[uid] || {})['stage0'] || {}
+                const bv = bonusBet['bonus_' + b.id] || '-'
                 let cls = 'pending'
                 if (bonusRes[b.id]) cls = bv.toLowerCase() === bonusRes[b.id].toLowerCase() ? 'correct' : 'wrong'
                 const bpts = detail.bonusBetPoints[b.id]
@@ -178,7 +179,7 @@ function SeriesView({ stage, members, memberInfo, result, matches, bonuses, bonu
         const correctAns = bonusRes[b.id] || ''
         const tally: Record<string, { count: number; correct: boolean; users: string[] }> = {}
         members.forEach((uid: string) => {
-          const bet = ((leagueData.bets || {})[uid] || {})['stage' + stage] || {}
+          const bet = ((leagueData.bets || {})[uid] || {})['stage0'] || {}
           const pick = bet['bonus_' + b.id] || ''
           if (!pick) return
           if (!tally[pick]) tally[pick] = { count: 0, correct: false, users: [] }

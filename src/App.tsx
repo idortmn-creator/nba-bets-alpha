@@ -10,6 +10,7 @@ import MyLeaguesPage from '@/components/leagues/MyLeaguesPage'
 import LeaguePage from '@/components/league/LeaguePage'
 import ProfilePage from '@/components/profile/ProfilePage'
 import GlobalAdminPage from '@/components/admin/GlobalAdminPage'
+import InstallPrompt from '@/components/InstallPrompt'
 
 function AppContent() {
   const { currentUser } = useAuth()
@@ -46,6 +47,7 @@ function AppContent() {
 export default function App() {
   return (
     <HashRouter>
+      <InstallPrompt />
       <Toaster
         position="top-center"
         toastOptions={{
