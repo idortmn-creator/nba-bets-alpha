@@ -8,6 +8,7 @@ import ResultsPanel from './panels/ResultsPanel'
 import BonusAdminPanel from './panels/BonusAdminPanel'
 import AutoLockPanel from './panels/AutoLockPanel'
 import ESPNPanel from './panels/ESPNPanel'
+import LeagueManagementPanel from './panels/LeagueManagementPanel'
 
 export default function GlobalAdminPage() {
   const navigate = useNavigate()
@@ -29,6 +30,7 @@ export default function GlobalAdminPage() {
       <BonusAdminPanel />
       <AutoLockPanel />
       <ESPNPanel />
+      <LeagueManagementPanel />
       <ReminderCard />
     </div>
   )

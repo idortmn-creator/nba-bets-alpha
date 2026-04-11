@@ -4,10 +4,13 @@ import {
   setDoc,
   updateDoc,
   getDocs,
+  deleteDoc,
   query,
   collection,
   where,
   arrayUnion,
+  arrayRemove,
+  deleteField,
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
@@ -107,4 +110,27 @@ export async function openLeague(lid: string) {
   const snap = await getDoc(doc(db, 'leagues', lid))
   if (!snap.exists()) throw new Error('LEAGUE_NOT_FOUND')
   return { id: snap.id, ...snap.data() }
+}
+
+export async function loadAllLeagues() {
+  const snap = await getDocs(collection(db, 'leagues'))
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
+export async function deleteLeague(lid: string, memberUids: string[]) {
+  await Promise.all(
+    memberUids.map((uid) =>
+      updateDoc(doc(db, 'users', uid), { leagues: arrayRemove(lid) })
+    )
+  )
+  await deleteDoc(doc(db, 'leagues', lid))
+}
+
+export async function removeUserFromLeague(lid: string, uid: string) {
+  await updateDoc(doc(db, 'leagues', lid), {
+    members: arrayRemove(uid),
+    [`memberInfo.${uid}`]: deleteField(),
+    [`bets.${uid}`]: deleteField(),
+  })
+  await updateDoc(doc(db, 'users', uid), { leagues: arrayRemove(lid) })
 }

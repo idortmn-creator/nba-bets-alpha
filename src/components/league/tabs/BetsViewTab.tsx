@@ -18,7 +18,6 @@ export default function BetsViewTab() {
 
   const stageLocks = getGlobal('stageLocked', [false, false, false, false, false, false] as boolean[])
   const locked = stageLocks[STAGE_KEYS.indexOf(stage)] || false
-  const isSeriesStage = stage !== 0 && stage !== '0b'
   const result = (getGlobal('results', {} as Record<string, Record<string, string> | null>))['stage' + stage] || {}
   const matches = STAGE_MATCHES[stage] || []
   const members = leagueData.members || []
@@ -27,11 +26,8 @@ export default function BetsViewTab() {
   const bonusRes = getBonusResults(stage)
 
   function canView() {
-    if (!locked && !isSeriesStage) return false
-    if (isSeriesStage && !locked) {
-      return matches.some((m) => isSeriesLocked(stage, m.key))
-    }
-    return true
+    if (locked) return true
+    return matches.some((m) => isSeriesLocked(stage, m.key))
   }
 
   return (

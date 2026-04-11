@@ -42,7 +42,6 @@ export default function RulesTab() {
           ]} />
           <Section title="הימורי בונוס" items={[
             'שאלות בונוס עם ניקוד מותאם אישית',
-            'ניתן לשייך בונוס לסדרה ספציפית',
           ]} />
         </div>
       </Card>

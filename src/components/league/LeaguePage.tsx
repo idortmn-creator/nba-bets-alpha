@@ -37,7 +37,7 @@ export default function LeaguePage() {
     { key: 'bets', label: '📋 הימורים' },
     { key: 'enter-bets', label: '✍️ הימורים שלי' },
     { key: 'prebets', label: '🏆 הימורים מוקדמים' },
-    { key: 'rules', label: '📖 פורמט' },
+    { key: 'rules', label: '📖 שיטת הניקוד' },
   ]
 
   function switchTab(tab: Tab) {

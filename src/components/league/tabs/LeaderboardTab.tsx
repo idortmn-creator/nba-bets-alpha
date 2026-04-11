@@ -1,15 +1,12 @@
 import { useLeagueStore } from '@/store/league.store'
 import { useGlobalStore } from '@/store/global.store'
-import { useGlobalHelpers } from '@/hooks/useGlobalHelpers'
 import { scoreStage } from '@/services/scoring'
-import { STAGE_KEYS, STAGE_SHORT, STAGE_NAMES } from '@/lib/constants'
+import { STAGE_KEYS, STAGE_SHORT } from '@/lib/constants'
 import { Card } from '@/components/ui/card'
 
 export default function LeaderboardTab() {
   const leagueData = useLeagueStore((s) => s.currentLeagueData)
   const globalData = useGlobalStore((s) => s.globalData)
-  const { getGlobal } = useGlobalHelpers()
-
   if (!leagueData) return null
 
   const members = leagueData.members || []
@@ -27,14 +24,10 @@ export default function LeaderboardTab() {
     })
     .sort((a, b) => b.total - a.total)
 
-  const csIdx = STAGE_KEYS.indexOf(getGlobal('currentStage', 0))
-  const locked = (getGlobal('stageLocked', [] as boolean[]))[csIdx] || false
-
   return (
     <Card>
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-3">
         <div className="font-oswald text-lg text-[var(--orange)]">🏆 טבלת ניקוד</div>
-        <span className={locked ? 'badge-locked' : 'badge-open'}>{STAGE_NAMES[csIdx] || ''}</span>
       </div>
       <div className="flex flex-col gap-1.5">
         {scores.length === 0 ? (
