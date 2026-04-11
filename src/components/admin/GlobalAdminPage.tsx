@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useGlobalHelpers } from '@/hooks/useGlobalHelpers'
@@ -10,9 +11,22 @@ import AutoLockPanel from './panels/AutoLockPanel'
 import ESPNPanel from './panels/ESPNPanel'
 import LeagueManagementPanel from './panels/LeagueManagementPanel'
 
+type AdminTab = 'stages' | 'teams' | 'results' | 'bonus' | 'autolock' | 'espn' | 'leagues'
+
+const TABS: { key: AdminTab; label: string }[] = [
+  { key: 'stages',   label: '🔄 שלבים' },
+  { key: 'teams',    label: '🏀 קבוצות' },
+  { key: 'results',  label: '📊 תוצאות' },
+  { key: 'bonus',    label: '⭐ בונוס' },
+  { key: 'autolock', label: '⏰ נעילה אוטו׳' },
+  { key: 'espn',     label: '📡 ESPN' },
+  { key: 'leagues',  label: '🏟️ ליגות' },
+]
+
 export default function GlobalAdminPage() {
   const navigate = useNavigate()
   const { isSuperAdmin } = useGlobalHelpers()
+  const [activeTab, setActiveTab] = useState<AdminTab>('stages')
 
   if (!isSuperAdmin()) {
     return <div className="py-12 text-center text-[var(--red)]">⛔ אין גישה</div>
@@ -24,14 +38,31 @@ export default function GlobalAdminPage() {
         <Button variant="secondary" size="sm" onClick={() => navigate('/')}>← חזור</Button>
         <div className="text-xl font-bold text-[var(--orange)]">⚙️ ניהול גלובלי</div>
       </div>
-      <StagePanel />
-      <TeamSetupPanel />
-      <ResultsPanel />
-      <BonusAdminPanel />
-      <AutoLockPanel />
-      <ESPNPanel />
-      <LeagueManagementPanel />
-      <ReminderCard />
+
+      <nav className="mb-4 flex flex-wrap gap-1.5">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            className={`stage-tab ${activeTab === t.key ? 'active' : ''}`}
+            onClick={() => setActiveTab(t.key)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
+
+      {activeTab === 'stages'   && <StagePanel />}
+      {activeTab === 'teams'    && <TeamSetupPanel />}
+      {activeTab === 'results'  && <ResultsPanel />}
+      {activeTab === 'bonus'    && <BonusAdminPanel />}
+      {activeTab === 'autolock' && <AutoLockPanel />}
+      {activeTab === 'espn'     && <ESPNPanel />}
+      {activeTab === 'leagues'  && (
+        <>
+          <LeagueManagementPanel />
+          <ReminderCard />
+        </>
+      )}
     </div>
   )
 }
