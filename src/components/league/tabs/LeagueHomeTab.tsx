@@ -122,14 +122,13 @@ export default function LeagueHomeTab({ onViewRules }: { onViewRules?: () => voi
           </div>
         </div>
       </div>
-    </div>
 
-    {/* Rules link */}
-    {onViewRules && (
-      <button className="lh-rules-link" onClick={onViewRules}>
-        📖 שיטת הניקוד ושובר השוויון ←
-      </button>
-    )}
-  </div>
+      {/* Rules link */}
+      {onViewRules && (
+        <button className="lh-rules-link" onClick={onViewRules}>
+          📖 שיטת הניקוד ושובר השוויון ←
+        </button>
+      )}
+    </div>
   )
 }
