@@ -59,6 +59,21 @@
 
   #root {
     min-height: 100vh;
+    position: relative;
+  }
+
+  /* Basketball arena ambient background */
+  #root::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 130% 55% at 50% -5%, rgba(255,107,0,0.11) 0%, transparent 65%),
+      radial-gradient(ellipse 70% 50% at 10% 90%, rgba(79,195,247,0.06) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 50% at 90% 90%, rgba(255,107,0,0.07) 0%, transparent 55%),
+      radial-gradient(ellipse 100% 40% at 50% 105%, rgba(79,195,247,0.05) 0%, transparent 60%);
   }
 }
 
@@ -88,6 +103,82 @@
 .lb-displayname { font-size: 0.75rem; color: var(--text2); }
 .lb-breakdown { font-size: 0.7rem; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lb-score { font-family: 'Oswald', sans-serif; font-size: 1.1rem; color: var(--orange); font-weight: 700; white-space: nowrap; }
+.lb-row-me { border-color: var(--orange-border) !important; background: rgba(255,107,0,0.06) !important; }
+.lb-trend { font-size: 0.85rem; font-weight: 700; min-width: 18px; text-align: center; }
+.lb-trend-same { color: var(--text2); }
+.lb-trend-up { color: var(--green); }
+.lb-trend-down { color: var(--red); }
+
+/* Sticky pinned row */
+.lb-sticky-bar {
+  position: sticky;
+  bottom: 68px;
+  z-index: 100;
+  margin-top: 6px;
+}
+@media (min-width: 768px) {
+  .lb-sticky-bar { bottom: 12px; }
+}
+.lb-sticky-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--dark2);
+  border: 1.5px solid var(--orange);
+  box-shadow: 0 4px 20px rgba(255,107,0,0.25), 0 0 0 1px rgba(255,107,0,0.1);
+  backdrop-filter: blur(8px);
+}
+.lb-sticky-rank { font-family: 'Oswald', sans-serif; font-size: 1.1rem; min-width: 36px; text-align: center; }
+.lb-sticky-name { flex: 1; font-weight: 700; font-size: 0.9rem; }
+.lb-sticky-score { font-family: 'Oswald', sans-serif; font-size: 1rem; color: var(--orange); font-weight: 700; white-space: nowrap; }
+
+/* ── LEAGUE HOME TAB ── */
+.lh-wrap { display: flex; flex-direction: column; gap: 14px; }
+.lh-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 16px;
+}
+.lh-card-title { font-family: 'Oswald', sans-serif; font-size: 1.1rem; color: var(--orange); margin-bottom: 12px; }
+.lh-standings { display: flex; flex-direction: column; gap: 6px; }
+.lh-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--dark3);
+  border: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.88rem;
+}
+.lh-row-me { border-color: var(--orange-border) !important; background: rgba(255,107,0,0.06) !important; }
+.lh-row-rank { font-family: 'Oswald', sans-serif; font-size: 1.05rem; min-width: 32px; text-align: center; }
+.lh-row-name { flex: 1; font-weight: 700; }
+.lh-row-pts { font-family: 'Oswald', sans-serif; color: var(--orange); font-weight: 700; white-space: nowrap; }
+.lh-row-sep { text-align: center; color: var(--text2); font-size: 0.75rem; padding: 2px 0; letter-spacing: 3px; }
+.lh-empty { text-align: center; color: var(--text2); font-size: 0.82rem; padding: 8px 0; }
+.lh-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.lh-stat-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 14px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.lh-stat-warn { border-color: rgba(255,68,68,0.35); background: rgba(255,68,68,0.04); }
+.lh-stat-ok { border-color: rgba(0,230,118,0.3); background: rgba(0,230,118,0.04); }
+.lh-stat-icon { font-size: 1.4rem; line-height: 1; flex-shrink: 0; }
+.lh-stat-body { flex: 1; min-width: 0; }
+.lh-stat-label { font-size: 0.7rem; color: var(--text2); font-weight: 600; margin-bottom: 3px; }
+.lh-stat-value { font-size: 0.82rem; font-weight: 700; line-height: 1.35; }
+.lh-pts-num { font-family: 'Oswald', sans-serif; font-size: 1.1rem; color: var(--green); }
+.lh-pts-stage { font-size: 0.72rem; color: var(--text2); }
+.lh-empty-val { color: var(--text2); }
 
 /* ── BET ITEMS ── */
 .bet-item {

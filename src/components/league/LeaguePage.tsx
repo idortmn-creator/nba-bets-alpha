@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useLeague } from '@/hooks/useLeague'
 import { useLeagueStore } from '@/store/league.store'
+import LeagueHomeTab from './tabs/LeagueHomeTab'
 import LeaderboardTab from './tabs/LeaderboardTab'
 import BetsViewTab from './tabs/BetsViewTab'
 import EnterBetsTab from './tabs/EnterBetsTab'
@@ -10,8 +11,8 @@ import PreBetsTab from './tabs/PreBetsTab'
 import RulesTab from './tabs/RulesTab'
 import ProfileContent from '@/components/profile/ProfileContent'
 
-type Tab = 'leaderboard' | 'bets' | 'enter-bets' | 'prebets' | 'rules' | 'profile'
-type MobileTab = 'standings' | 'bets' | 'my-bets' | 'rules' | 'profile'
+type Tab = 'home' | 'leaderboard' | 'bets' | 'enter-bets' | 'prebets' | 'rules' | 'profile'
+type MobileTab = 'home' | 'standings' | 'bets' | 'my-bets' | 'rules' | 'profile'
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
@@ -24,6 +25,7 @@ function useIsMobile() {
 }
 
 const DESKTOP_TABS: { key: Tab; label: string }[] = [
+  { key: 'home',        label: '🏠 דף הבית' },
   { key: 'leaderboard', label: '🏆 טבלה' },
   { key: 'bets',        label: '📋 הימורים' },
   { key: 'enter-bets',  label: '✍️ הימורים שלי' },
@@ -32,10 +34,10 @@ const DESKTOP_TABS: { key: Tab; label: string }[] = [
 ]
 
 const MOBILE_TABS: { key: MobileTab; icon: string; label: string }[] = [
+  { key: 'home',      icon: '🏠', label: 'בית' },
   { key: 'standings', icon: '🏆', label: 'טבלה' },
   { key: 'bets',      icon: '📋', label: 'הימורים' },
   { key: 'my-bets',   icon: '✍️', label: 'שלי' },
-  { key: 'rules',     icon: '📖', label: 'כללים' },
   { key: 'profile',   icon: '👤', label: 'פרופיל' },
 ]
 
@@ -46,7 +48,7 @@ export default function LeaguePage() {
   const leagueData = useLeagueStore((s) => s.currentLeagueData)
   const isMobile = useIsMobile()
 
-  const [activeTab, setActiveTab] = useState<Tab>((urlTab as Tab) || 'leaderboard')
+  const [activeTab, setActiveTab] = useState<Tab>((urlTab as Tab) || 'home')
   const [betsSubTab, setBetsSubTab] = useState<'series' | 'prebets'>('series')
 
   useEffect(() => {
@@ -66,23 +68,23 @@ export default function LeaguePage() {
   function switchTab(tab: Tab) {
     setActiveTab(tab)
     if (tab !== 'profile') {
-      navigate(`/league/${lid}/${tab === 'leaderboard' ? '' : tab}`, { replace: true })
+      navigate(`/league/${lid}/${tab === 'home' ? '' : tab}`, { replace: true })
     }
   }
 
   function getMobileActiveTab(): MobileTab {
+    if (activeTab === 'home') return 'home'
     if (activeTab === 'leaderboard') return 'standings'
-    if (activeTab === 'bets' || activeTab === 'prebets') return 'bets'
+    if (activeTab === 'bets' || activeTab === 'prebets' || activeTab === 'rules') return 'bets'
     if (activeTab === 'enter-bets') return 'my-bets'
-    if (activeTab === 'rules') return 'rules'
     return 'profile'
   }
 
   function handleMobileTab(mt: MobileTab) {
-    if (mt === 'standings') { switchTab('leaderboard') }
+    if (mt === 'home') { switchTab('home') }
+    else if (mt === 'standings') { switchTab('leaderboard') }
     else if (mt === 'bets') { switchTab('bets'); setBetsSubTab('series') }
     else if (mt === 'my-bets') { switchTab('enter-bets') }
-    else if (mt === 'rules') { switchTab('rules') }
     else if (mt === 'profile') { setActiveTab('profile') }
   }
 
@@ -116,6 +118,7 @@ export default function LeaguePage() {
       </div>
 
       {/* Tab content */}
+      {activeTab === 'home'        && <LeagueHomeTab />}
       {activeTab === 'leaderboard' && <LeaderboardTab />}
 
       {activeTab === 'bets' && (
