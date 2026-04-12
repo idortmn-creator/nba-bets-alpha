@@ -26,8 +26,7 @@ export default function BetsViewTab() {
   const bonusRes = getBonusResults(stage)
 
   function canView() {
-    if (locked) return true
-    return matches.some((m) => isSeriesLocked(stage, m.key))
+    return locked
   }
 
   return (

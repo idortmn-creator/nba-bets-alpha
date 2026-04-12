@@ -8,15 +8,46 @@ import BetsViewTab from './tabs/BetsViewTab'
 import EnterBetsTab from './tabs/EnterBetsTab'
 import PreBetsTab from './tabs/PreBetsTab'
 import RulesTab from './tabs/RulesTab'
+import ProfileContent from '@/components/profile/ProfileContent'
 
-type Tab = 'leaderboard' | 'bets' | 'enter-bets' | 'prebets' | 'rules'
+type Tab = 'leaderboard' | 'bets' | 'enter-bets' | 'prebets' | 'rules' | 'profile'
+type MobileTab = 'standings' | 'bets' | 'my-bets' | 'rules' | 'profile'
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return isMobile
+}
+
+const DESKTOP_TABS: { key: Tab; label: string }[] = [
+  { key: 'leaderboard', label: '🏆 טבלה' },
+  { key: 'bets',        label: '📋 הימורים' },
+  { key: 'enter-bets',  label: '✍️ הימורים שלי' },
+  { key: 'prebets',     label: '🏆 הימורים מוקדמים' },
+  { key: 'rules',       label: '📖 שיטת הניקוד' },
+]
+
+const MOBILE_TABS: { key: MobileTab; icon: string; label: string }[] = [
+  { key: 'standings', icon: '🏆', label: 'טבלה' },
+  { key: 'bets',      icon: '📋', label: 'הימורים' },
+  { key: 'my-bets',   icon: '✍️', label: 'שלי' },
+  { key: 'rules',     icon: '📖', label: 'כללים' },
+  { key: 'profile',   icon: '👤', label: 'פרופיל' },
+]
 
 export default function LeaguePage() {
   const { lid, tab: urlTab } = useParams<{ lid: string; tab?: string }>()
   const navigate = useNavigate()
   const { openLeague, closeLeague } = useLeague()
   const leagueData = useLeagueStore((s) => s.currentLeagueData)
+  const isMobile = useIsMobile()
+
   const [activeTab, setActiveTab] = useState<Tab>((urlTab as Tab) || 'leaderboard')
+  const [betsSubTab, setBetsSubTab] = useState<'series' | 'prebets'>('series')
 
   useEffect(() => {
     if (lid) openLeague(lid)
@@ -32,21 +63,34 @@ export default function LeaguePage() {
     return <div className="flex items-center justify-center py-16"><div className="spinner" /></div>
   }
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: 'leaderboard', label: '🏆 טבלה' },
-    { key: 'bets', label: '📋 הימורים' },
-    { key: 'enter-bets', label: '✍️ הימורים שלי' },
-    { key: 'prebets', label: '🏆 הימורים מוקדמים' },
-    { key: 'rules', label: '📖 שיטת הניקוד' },
-  ]
-
   function switchTab(tab: Tab) {
     setActiveTab(tab)
-    navigate(`/league/${lid}/${tab === 'leaderboard' ? '' : tab}`, { replace: true })
+    if (tab !== 'profile') {
+      navigate(`/league/${lid}/${tab === 'leaderboard' ? '' : tab}`, { replace: true })
+    }
   }
 
+  function getMobileActiveTab(): MobileTab {
+    if (activeTab === 'leaderboard') return 'standings'
+    if (activeTab === 'bets' || activeTab === 'prebets') return 'bets'
+    if (activeTab === 'enter-bets') return 'my-bets'
+    if (activeTab === 'rules') return 'rules'
+    return 'profile'
+  }
+
+  function handleMobileTab(mt: MobileTab) {
+    if (mt === 'standings') { switchTab('leaderboard') }
+    else if (mt === 'bets') { switchTab('bets'); setBetsSubTab('series') }
+    else if (mt === 'my-bets') { switchTab('enter-bets') }
+    else if (mt === 'rules') { switchTab('rules') }
+    else if (mt === 'profile') { setActiveTab('profile') }
+  }
+
+  const mobileActiveTab = getMobileActiveTab()
+
   return (
-    <div className="py-6">
+    <div className="py-6 league-content">
+      {/* League header */}
       <div className="mb-4 flex items-start justify-between">
         <div>
           <div className="text-lg font-bold">{leagueData.name}</div>
@@ -57,22 +101,61 @@ export default function LeaguePage() {
         <Button variant="secondary" size="sm" onClick={() => navigate('/')}>← ליגות</Button>
       </div>
 
-      <nav className="mb-3 flex flex-wrap gap-2">
-        {tabs.map((t) => (
+      {/* Desktop top nav — hidden on mobile */}
+      <div className="desktop-nav-wrapper">
+        <nav className="mb-3 flex flex-wrap gap-2">
+          {DESKTOP_TABS.map((t) => (
+            <button
+              key={t.key}
+              className={`main-nav-tab ${activeTab === t.key ? 'active' : ''}`}
+              onClick={() => switchTab(t.key)}
+            >{t.label}</button>
+          ))}
+        </nav>
+        <hr className="main-nav-separator" />
+      </div>
+
+      {/* Tab content */}
+      {activeTab === 'leaderboard' && <LeaderboardTab />}
+
+      {activeTab === 'bets' && (
+        <>
+          {/* Mobile bets sub-tabs */}
+          {isMobile && (
+            <div className="mb-3 flex gap-2">
+              <button
+                className={`stage-tab ${betsSubTab === 'series' ? 'active' : ''}`}
+                onClick={() => setBetsSubTab('series')}
+              >🏀 הימורי סדרות</button>
+              <button
+                className={`stage-tab ${betsSubTab === 'prebets' ? 'active' : ''}`}
+                onClick={() => setBetsSubTab('prebets')}
+              >🏆 הימורים מוקדמים</button>
+            </div>
+          )}
+          {(!isMobile || betsSubTab === 'series') && <BetsViewTab />}
+          {isMobile && betsSubTab === 'prebets' && <PreBetsTab />}
+        </>
+      )}
+
+      {activeTab === 'enter-bets' && <EnterBetsTab />}
+      {activeTab === 'prebets'    && <PreBetsTab />}
+      {activeTab === 'rules'      && <RulesTab />}
+      {activeTab === 'profile'    && <ProfileContent />}
+
+      {/* Mobile bottom navigation bar */}
+      <nav className="league-bottom-nav">
+        {MOBILE_TABS.map((t) => (
           <button
             key={t.key}
-            className={`main-nav-tab ${activeTab === t.key ? 'active' : ''}`}
-            onClick={() => switchTab(t.key)}
-          >{t.label}</button>
+            className={`lbn-item ${mobileActiveTab === t.key ? 'active' : ''}`}
+            onClick={() => handleMobileTab(t.key)}
+          >
+            <span className="lbn-icon">{t.icon}</span>
+            <span className="lbn-label">{t.label}</span>
+          </button>
         ))}
       </nav>
-      <hr className="main-nav-separator" />
-
-      {activeTab === 'leaderboard' && <LeaderboardTab />}
-      {activeTab === 'bets' && <BetsViewTab />}
-      {activeTab === 'enter-bets' && <EnterBetsTab />}
-      {activeTab === 'prebets' && <PreBetsTab />}
-      {activeTab === 'rules' && <RulesTab />}
     </div>
   )
 }
