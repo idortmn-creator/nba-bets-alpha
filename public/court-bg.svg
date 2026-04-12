@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 500" preserveAspectRatio="xMidYMid slice">
+  <!--
+    NBA basketball court — overhead view
+    Scale: 1 ft = 10 px  →  94 ft × 50 ft = 940 × 500
+    All measurements from official NBA court specs.
+    Colors match app theme (#ff6b00 orange).
+  -->
+
+  <!-- Court floor fill (very faint) -->
+  <rect width="940" height="500" fill="#ff6b00" fill-opacity="0.035"/>
+
+  <!-- ── COURT BOUNDARY ── -->
+  <rect x="5" y="5" width="930" height="490"
+        fill="none" stroke="#ff6b00" stroke-opacity="0.50" stroke-width="4"/>
+
+  <!-- ── HALF-COURT LINE ── -->
+  <line x1="470" y1="5" x2="470" y2="495"
+        stroke="#ff6b00" stroke-opacity="0.45" stroke-width="3"/>
+
+  <!-- ── CENTER CIRCLE (6 ft radius = 60 px) ── -->
+  <circle cx="470" cy="250" r="60"
+          fill="none" stroke="#ff6b00" stroke-opacity="0.45" stroke-width="3"/>
+
+  <!-- ── CENTER JUMP CIRCLE (2 ft radius = 20 px) ── -->
+  <circle cx="470" cy="250" r="20"
+          fill="none" stroke="#ff6b00" stroke-opacity="0.45" stroke-width="2.5"/>
+
+
+  <!-- ═══════════════ LEFT END ═══════════════ -->
+
+  <!-- Basket at x=57 (5.25 ft from left baseline + 5 px border) -->
+
+  <!-- Left three-point corners (22 ft from basket center → y = 250 ± 220 = 30, 470) -->
+  <line x1="5" y1="30" x2="148" y2="30"
+        stroke="#ff6b00" stroke-opacity="0.45" stroke-width="3"/>
+  <line x1="5" y1="470" x2="148" y2="470"
+        stroke="#ff6b00" stroke-opacity="0.45" stroke-width="3"/>
+
+  <!-- Left three-point arc (23.75 ft = 237.5 px, center at basket 57,250) -->
+  <!-- Arc endpoints calculated: at y=30 → x≈148, at y=470 → x≈148 -->
+  <path d="M148,30 A237,237 0 0,1 148,470"
+        fill="none" stroke="#ff6b00" stroke-opacity="0.45" stroke-width="3"/>
+
+  <!-- Left paint / key  (16 ft × 19 ft → 160 px × 190 px, centred at y=250) -->
+  <rect x="5" y="170" width="190" height="160"
+        fill="#ff6b00" fill-opacity="0.07"
+        stroke="#ff6b00" stroke-opacity="0.45" stroke-width="3"/>
+
+  <!-- Left free throw circle (6 ft = 60 px, dashed half facing basket) -->
+  <circle cx="195" cy="250" r="60"
+          fill="none" stroke="#ff6b00" stroke-opacity="0.25"
+          stroke-width="2.5" stroke-dasharray="14,9"/>
+
+  <!-- Left restricted area (4 ft = 40 px from basket) -->
+  <path d="M57,210 A40,40 0 0,1 57,290"
+        fill="none" stroke="#ff6b00" stroke-opacity="0.45" stroke-width="3"/>
+
+  <!-- Left rim / hoop -->
+  <circle cx="57" cy="250" r="10"
+          fill="none" stroke="#ff6b00" stroke-opacity="0.75" stroke-width="3.5"/>
+
+  <!-- Left backboard (4 ft wide = 40 px, centered) -->
+  <line x1="20" y1="225" x2="20" y2="275"
+        stroke="#ff6b00" stroke-opacity="0.80" stroke-width="6"/>
+
+  <!-- Left backboard connector -->
+  <line x1="20" y1="250" x2="47" y2="250"
+        stroke="#ff6b00" stroke-opacity="0.45" stroke-width="2"/>
+
+
+  <!-- ═══════════════ RIGHT END ═══════════════ -->
+
+  <!-- Basket at x=883 -->
+
+  <!-- Right three-point corners -->
+  <line x1="935" y1="30" x2="792" y2="30"
+        stroke="#ff6b00" stroke-opacity="0.45" stroke-width="3"/>
+  <line x1="935" y1="470" x2="792" y2="470"
+        stroke="#ff6b00" stroke-opacity="0.45" stroke-width="3"/>
+
+  <!-- Right three-point arc -->
+  <path d="M792,30 A237,237 0 0,0 792,470"
+        fill="none" stroke="#ff6b00" stroke-opacity="0.45" stroke-width="3"/>
+
+  <!-- Right paint -->
+  <rect x="745" y="170" width="190" height="160"
+        fill="#ff6b00" fill-opacity="0.07"
+        stroke="#ff6b00" stroke-opacity="0.45" stroke-width="3"/>
+
+  <!-- Right free throw circle -->
+  <circle cx="745" cy="250" r="60"
+          fill="none" stroke="#ff6b00" stroke-opacity="0.25"
+          stroke-width="2.5" stroke-dasharray="14,9"/>
+
+  <!-- Right restricted area -->
+  <path d="M883,210 A40,40 0 0,0 883,290"
+        fill="none" stroke="#ff6b00" stroke-opacity="0.45" stroke-width="3"/>
+
+  <!-- Right rim / hoop -->
+  <circle cx="883" cy="250" r="10"
+          fill="none" stroke="#ff6b00" stroke-opacity="0.75" stroke-width="3.5"/>
+
+  <!-- Right backboard -->
+  <line x1="920" y1="225" x2="920" y2="275"
+        stroke="#ff6b00" stroke-opacity="0.80" stroke-width="6"/>
+
+  <!-- Right backboard connector -->
+  <line x1="893" y1="250" x2="920" y2="250"
+        stroke="#ff6b00" stroke-opacity="0.45" stroke-width="2"/>
+</svg>
