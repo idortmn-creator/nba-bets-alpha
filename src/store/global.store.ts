@@ -9,6 +9,8 @@ export interface GlobalData {
   bonusBets?: Record<string, BonusBet[]>
   bonusResults?: Record<string, Record<string, string>>
   autoLocks?: Record<string, number>
+  tiebreakerQuestion?: string
+  tiebreakerAnswer?: number | null
   [key: string]: unknown
 }
 

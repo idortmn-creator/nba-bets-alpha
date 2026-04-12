@@ -89,6 +89,12 @@ function ParticipantView({ stage, members, memberInfo, result, matches, bonuses,
                   </div>
                 )
               })}
+              {stage === 0 && globalData?.tiebreakerQuestion && (
+                <div className="bet-item mt-1 border-t border-[var(--border)] pt-1">
+                  <span className="bet-label text-[var(--gold)]">🎯 {globalData.tiebreakerQuestion}</span>
+                  <span className="bet-value pending">{bet['tiebreaker'] || '-'}</span>
+                </div>
+              )}
               {stage === 1 && isPreBetsLocked() && PREBETS.map((p: any) => {
                 const bv = bet[p.key] || '-'
                 let cls = 'pending'
@@ -116,7 +122,15 @@ function ParticipantView({ stage, members, memberInfo, result, matches, bonuses,
       {Object.keys(result || {}).length > 0 && (
         <Card className="mt-3 !border-[rgba(79,195,247,0.3)]">
           <div className="mb-2 font-oswald text-lg text-[var(--blue)]">📊 תוצאות אמיתיות</div>
-          {(stage === 0 || stage === '0b') ? matches.map((m: any) => <div key={m.key} className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className="bet-value text-blue">{result[m.key] || '-'}</span></div>) :
+          {(stage === 0 || stage === '0b') ? <>
+            {matches.map((m: any) => <div key={m.key} className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className="bet-value text-blue">{result[m.key] || '-'}</span></div>)}
+            {stage === 0 && globalData?.tiebreakerQuestion && globalData?.tiebreakerAnswer !== null && globalData?.tiebreakerAnswer !== undefined && (
+              <div className="bet-item mt-1 border-t border-[var(--border)] pt-1">
+                <span className="bet-label text-[var(--gold)]">🎯 {globalData.tiebreakerQuestion}</span>
+                <span className="bet-value text-blue">{globalData.tiebreakerAnswer}</span>
+              </div>
+            )}
+          </> :
             matches.map((m: any) => (
               <div key={m.key}>
                 <div className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className="bet-value text-blue">{result[m.key + '_winner'] || '-'} ({result[m.key + '_result'] || '-'})</span></div>

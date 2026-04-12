@@ -43,6 +43,14 @@ export default function RulesTab() {
           <Section title="הימורי בונוס" items={[
             'שאלות בונוס עם ניקוד מותאם אישית',
           ]} />
+          <div className="rounded-lg border border-[rgba(255,215,0,0.3)] bg-[rgba(255,215,0,0.05)] p-3">
+            <div className="mb-1.5 font-bold text-[var(--gold)]">🎯 שובר שוויון</div>
+            <ul className="list-inside list-disc space-y-1 text-[var(--text2)]">
+              <li>במקרה של תיקו בסוף הפלייאוף, שובר השוויון ייקבע על ידי שאלת בונוס מספרית שנענתה <strong className="text-[var(--text)]">לפני תחילת הפליי-אין</strong></li>
+              <li>המשתתף שתשובתו קרובה יותר לתשובה הנכונה מנצח בתיקו</li>
+              <li>אם שני משתתפים רחוקים באותו מרחק — התיקו ישמר</li>
+            </ul>
+          </div>
         </div>
       </Card>
     </div>

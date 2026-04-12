@@ -118,7 +118,7 @@ export default function LeaguePage() {
       </div>
 
       {/* Tab content */}
-      {activeTab === 'home'        && <LeagueHomeTab />}
+      {activeTab === 'home'        && <LeagueHomeTab onViewRules={() => switchTab('rules')} />}
       {activeTab === 'leaderboard' && <LeaderboardTab />}
 
       {activeTab === 'bets' && (

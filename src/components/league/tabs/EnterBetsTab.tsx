@@ -17,6 +17,7 @@ export default function EnterBetsTab() {
   const leagueData = useLeagueStore((s) => s.currentLeagueData)
   const currentUser = useAuthStore((s) => s.currentUser)
   const { getGlobal, canBetOnStage, isSeriesLocked, isBonusLocked, isSingleBonusLocked, getTeams, teamLabel, getPlayinFinalTeams, getBonusBets, isPreBetsLocked } = useGlobalHelpers()
+  const tiebreakerQuestion = getGlobal('tiebreakerQuestion', '') as string
   const [stage, setStage] = useState<StageKey>(0)
   const [cbd, setCbd] = useState<Record<string, string>>({})
 
@@ -109,7 +110,7 @@ export default function EnterBetsTab() {
       </div>
 
       {locked ? (
-        <LockedView stage={stage} cbd={cbd} matches={matches} teamLabel={teamLabel} />
+        <LockedView stage={stage} cbd={cbd} matches={matches} teamLabel={teamLabel} tiebreakerQuestion={tiebreakerQuestion} />
       ) : !canBetOnStage(stage) ? (
         <div className="text-sm text-[var(--text2)]">⏳ ניתן להמר רק לאחר הזנת תוצאות השלב הקודם</div>
       ) : (
@@ -119,6 +120,13 @@ export default function EnterBetsTab() {
             <PlayinForm stage={stage} matches={matches} cbd={cbd} pick={pick} getTeams={getTeams} getPlayinFinalTeams={getPlayinFinalTeams} />
           ) : (
             <SeriesForm stage={stage} matches={matches} cbd={cbd} pick={pick} getTeams={getTeams} isSeriesLocked={isSeriesLocked} />
+          )}
+
+          {stage === 0 && tiebreakerQuestion && (
+            <>
+              <Separator />
+              <TiebreakerForm question={tiebreakerQuestion} value={cbd['tiebreaker'] || ''} onChange={(v) => pick('tiebreaker', v)} />
+            </>
           )}
 
           {stage === 1 && !isPreBetsLocked() && <PreBetsForm stage={stage} cbd={cbd} pick={pick} getTeams={getTeams} />}
@@ -137,7 +145,7 @@ export default function EnterBetsTab() {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function LockedView({ stage, cbd, matches, teamLabel }: any) {
+function LockedView({ stage, cbd, matches, teamLabel, tiebreakerQuestion }: any) {
   if (Object.keys(cbd).length === 0) return <div className="rounded-lg border border-[var(--red)]/30 bg-[var(--red)]/5 p-3 text-sm text-[var(--red)]">🔒 שלב זה נעול ולא הזנת הימורים</div>
   return (
     <div>
@@ -146,6 +154,32 @@ function LockedView({ stage, cbd, matches, teamLabel }: any) {
         matches.map((m: any) => <div key={m.key} className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className="bet-value pending">{cbd[m.key] || '-'}</span></div>) :
         matches.map((m: any) => <div key={m.key} className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className="bet-value pending">{cbd[m.key + '_winner'] || '-'} ({cbd[m.key + '_result'] || '-'})</span></div>)
       }
+      {stage === 0 && tiebreakerQuestion && (
+        <div className="bet-item mt-2 border-t border-[var(--border)] pt-2">
+          <span className="bet-label text-[var(--gold)]">🎯 {tiebreakerQuestion}</span>
+          <span className="bet-value pending">{cbd['tiebreaker'] || '-'}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TiebreakerForm({ question, value, onChange }: { question: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="tiebreaker-card">
+      <div className="tiebreaker-header">
+        <span className="tiebreaker-icon">🎯</span>
+        <span className="tiebreaker-title">שאלת שובר שוויון</span>
+      </div>
+      <p className="tiebreaker-q">{question}</p>
+      <p className="tiebreaker-hint">תשובה מספרית — תשמש לשבירת שוויון בסוף הפלייאוף</p>
+      <Input
+        type="number"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="הכנס מספר..."
+        className="tiebreaker-input"
+      />
     </div>
   )
 }

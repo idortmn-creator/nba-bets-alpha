@@ -4,6 +4,14 @@ import { STAGE_KEYS, STAGE_MATCHES } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
 import type { GlobalData } from '@/store/global.store'
 
+export async function saveTiebreakerQuestion(question: string) {
+  await setDoc(doc(db, 'global', 'settings'), { tiebreakerQuestion: question }, { merge: true })
+}
+
+export async function saveTiebreakerAnswer(answer: number | null) {
+  await setDoc(doc(db, 'global', 'settings'), { tiebreakerAnswer: answer }, { merge: true })
+}
+
 export async function setCurrentStage(stage: StageKey) {
   await setDoc(doc(db, 'global', 'settings'), { currentStage: stage }, { merge: true })
 }

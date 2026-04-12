@@ -5,7 +5,7 @@ import { useGlobalHelpers } from '@/hooks/useGlobalHelpers'
 import { scoreStage } from '@/services/scoring'
 import { STAGE_KEYS, STAGE_SHORT } from '@/lib/constants'
 
-export default function LeagueHomeTab() {
+export default function LeagueHomeTab({ onViewRules }: { onViewRules?: () => void }) {
   const leagueData = useLeagueStore((s) => s.currentLeagueData)
   const globalData = useGlobalStore((s) => s.globalData)
   const currentUser = useAuthStore((s) => s.currentUser)
@@ -123,5 +123,13 @@ export default function LeagueHomeTab() {
         </div>
       </div>
     </div>
+
+    {/* Rules link */}
+    {onViewRules && (
+      <button className="lh-rules-link" onClick={onViewRules}>
+        📖 שיטת הניקוד ושובר השוויון ←
+      </button>
+    )}
+  </div>
   )
 }
