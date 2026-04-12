@@ -3,6 +3,7 @@ import { Toaster } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
 import Header from '@/components/layout/Header'
 import AuthPage from '@/components/auth/AuthPage'
+import LandingPage from '@/components/home/LandingPage'
 import HomePage from '@/components/home/HomePage'
 import CreateLeaguePage from '@/components/leagues/CreateLeaguePage'
 import JoinLeaguePage from '@/components/leagues/JoinLeaguePage'
@@ -28,7 +29,8 @@ function AppContent() {
       <Header />
       <div className="mx-auto max-w-[1100px] px-4">
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/home" element={<HomePage />} />
           <Route path="/create-league" element={<CreateLeaguePage />} />
           <Route path="/join-league" element={<JoinLeaguePage />} />
           <Route path="/join/:code" element={<JoinLeaguePage />} />
