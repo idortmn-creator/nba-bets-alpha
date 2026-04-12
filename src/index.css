@@ -71,10 +71,12 @@
     pointer-events: none;
     /* Court SVG centred, fills viewport (crops to show mid-court on mobile) */
     background-image:
-      /* Vignette: fade edges to keep content readable */
-      radial-gradient(ellipse 90% 85% at 50% 50%, transparent 40%, rgba(10,10,15,0.75) 100%),
+      /* Dark overlay dims the court further so it stays behind the content */
+      linear-gradient(rgba(10,10,15,0.55), rgba(10,10,15,0.55)),
+      /* Vignette: fade edges */
+      radial-gradient(ellipse 90% 85% at 50% 50%, transparent 30%, rgba(10,10,15,0.85) 100%),
       url('/court-bg.svg');
-    background-size: 100% 100%, cover;
+    background-size: 100% 100%, 100% 100%, cover;
     background-position: center, center;
     background-repeat: no-repeat, no-repeat;
   }
