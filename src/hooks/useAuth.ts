@@ -29,14 +29,18 @@ export function useAuth() {
           })
         } else if (user.providerData.some((p) => p.providerId === 'google.com')) {
           // First Google sign-in — create the user doc
-          const created = await ensureGoogleUserDoc(user)
-          setUserDoc({
-            uid: user.uid,
-            displayName: created.displayName,
-            username: created.username,
-            email: created.email,
-            leagues: [],
-          })
+          try {
+            const created = await ensureGoogleUserDoc(user)
+            setUserDoc({
+              uid: user.uid,
+              displayName: created.displayName,
+              username: created.username,
+              email: created.email,
+              leagues: [],
+            })
+          } catch (err) {
+            console.error('Failed to create Google user doc:', err)
+          }
         }
         // Start global listener
         if (!globalUnsub.current) {

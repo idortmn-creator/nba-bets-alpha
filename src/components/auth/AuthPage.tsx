@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { login, register, resetPassword, resendVerification, signInWithGoogle } from '@/services/auth.service'
+import { login, register, resetPassword, resendVerification, signInWithGoogle, getGoogleRedirectResult } from '@/services/auth.service'
 
 function GoogleButton({ onClick, disabled, label }: { onClick: () => void; disabled: boolean; label: string }) {
   return (
@@ -30,6 +30,16 @@ export default function AuthPage() {
   const [regPassword, setRegPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [registeredEmail, setRegisteredEmail] = useState('')
+
+  // Pick up any Google redirect result (errors only — success fires onAuthStateChanged)
+  useEffect(() => {
+    getGoogleRedirectResult().catch((e: unknown) => {
+      const msg = e instanceof Error ? e.message : String(e)
+      if (!msg.includes('popup-closed-by-user') && !msg.includes('cancelled-popup-request')) {
+        toast('❌ ' + msg)
+      }
+    })
+  }, [])
 
   async function handleLogin() {
     if (!email || !password) { toast('⚠️ מלא את כל השדות'); return }
@@ -67,12 +77,12 @@ export default function AuthPage() {
     setLoading(true)
     try {
       await signInWithGoogle()
+      // signInWithRedirect navigates away — code below won't run
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
-      if (!msg.includes('popup-closed-by-user') && !msg.includes('cancelled-popup-request')) {
-        toast('❌ ' + msg)
-      }
-    } finally { setLoading(false) }
+      toast('❌ ' + msg)
+      setLoading(false)
+    }
   }
 
   async function handleResend() {
