@@ -158,6 +158,38 @@ service cloud.firestore {
           && after.teams       == before.teams;
     }
 
+    // ── BRACKET LEAGUES ───────────────────────────────────────────
+    //
+    //  bracket_leagues/{lid}
+    //    Fields: id, name, code, adminUid, members[], memberInfo{}, bets{}, createdAt
+    //
+    match /bracket_leagues/{lid} {
+
+      // Any authenticated user may read
+      allow read: if isAuth();
+
+      // Any authenticated user may create — must be the admin and only member
+      allow create: if isAuth()
+                    && request.resource.data.adminUid == request.auth.uid
+                    && request.resource.data.members.hasOnly([request.auth.uid]);
+
+      allow update: if isAuth() && (
+          isSuperAdmin()
+          // Member can update their own bets
+          || (request.auth.uid in resource.data.members
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bets', 'memberInfo'])
+              && request.resource.data.adminUid == resource.data.adminUid
+              && request.resource.data.members == resource.data.members)
+          // Non-member joining
+          || (!(request.auth.uid in resource.data.members)
+              && request.auth.uid in request.resource.data.members
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'memberInfo'])
+              && request.resource.data.adminUid == resource.data.adminUid)
+      );
+
+      allow delete: if isSuperAdmin();
+    }
+
     // ── GLOBAL SETTINGS ────────────────────────────────────────────
     //
     //  global/settings  (single document)

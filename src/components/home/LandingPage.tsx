@@ -19,11 +19,11 @@ export default function LandingPage() {
           <div className="hc-sub">הימורי שלב-שלב</div>
         </div>
 
-        {/* Card 2 — coming soon */}
-        <div className="home-card home-card-soon">
+        {/* Card 2 — Bracket format */}
+        <div className="home-card" onClick={() => navigate('/bracket')}>
           <div className="hc-icon">📊</div>
           <div className="hc-title">NBA Playoff Bracket</div>
-          <div className="hc-sub coming-soon-label">בקרוב</div>
+          <div className="hc-sub">פלייאוף ברקט</div>
         </div>
 
         {/* Card 3 — coming soon */}

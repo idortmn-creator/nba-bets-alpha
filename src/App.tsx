@@ -12,6 +12,11 @@ import LeaguePage from '@/components/league/LeaguePage'
 import ProfilePage from '@/components/profile/ProfilePage'
 import GlobalAdminPage from '@/components/admin/GlobalAdminPage'
 import InstallPrompt from '@/components/InstallPrompt'
+import BracketHomePage from '@/bracket/BracketHomePage'
+import BracketCreatePage from '@/bracket/BracketCreatePage'
+import BracketJoinPage from '@/bracket/BracketJoinPage'
+import BracketMyLeaguesPage from '@/bracket/BracketMyLeaguesPage'
+import BracketLeaguePage from '@/bracket/BracketLeaguePage'
 
 function AppContent() {
   const { currentUser } = useAuth()
@@ -39,6 +44,14 @@ function AppContent() {
           <Route path="/league/:lid/:tab" element={<LeaguePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin" element={<GlobalAdminPage />} />
+          {/* ── Bracket format routes ── */}
+          <Route path="/bracket" element={<BracketHomePage />} />
+          <Route path="/bracket/create" element={<BracketCreatePage />} />
+          <Route path="/bracket/join" element={<BracketJoinPage />} />
+          <Route path="/bracket/join/:code" element={<BracketJoinPage />} />
+          <Route path="/bracket/leagues" element={<BracketMyLeaguesPage />} />
+          <Route path="/bracket/league/:lid" element={<BracketLeaguePage />} />
+          <Route path="/bracket/league/:lid/:tab" element={<BracketLeaguePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
