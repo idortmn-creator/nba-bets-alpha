@@ -360,7 +360,30 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+/* ── TEAM NAME + LOGO ── */
+.team-name-h {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  vertical-align: middle;
+}
+.team-name-v {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.team-logo {
+  object-fit: contain;
+  flex-shrink: 0;
+  display: inline-block;
 }
 .team-btn:hover { border-color: var(--orange); background: var(--orange-dim); }
 .team-btn.selected { background: var(--orange); color: #fff; border-color: var(--orange); }

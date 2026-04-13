@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { useGlobalHelpers } from '@/hooks/useGlobalHelpers'
 import { STAGE_MATCHES, PREBETS } from '@/lib/constants'
 import { Card, CardTitle } from '@/components/ui/card'
+import { TeamName } from '@/components/ui/TeamName'
 
 export default function PreBetsTab() {
   const leagueData = useLeagueStore((s) => s.currentLeagueData)
@@ -32,7 +33,7 @@ export default function PreBetsTab() {
           {PREBETS.map((p) => (
             <div key={p.key} className="bet-item">
               <span className="bet-label">{p.label}</span>
-              <span className="bet-value pending">{bet[p.key] || '-'}</span>
+              <span className="bet-value pending"><TeamName name={bet[p.key] || '-'} size={16} /></span>
             </div>
           ))}
         </div>

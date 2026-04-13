@@ -3,13 +3,56 @@ import { useGlobalStore } from '@/store/global.store'
 import { useAuthStore } from '@/store/auth.store'
 import { useGlobalHelpers } from '@/hooks/useGlobalHelpers'
 import { scoreStage } from '@/services/scoring'
-import { STAGE_KEYS, STAGE_SHORT } from '@/lib/constants'
+import { STAGE_KEYS, STAGE_SHORT, STAGE_MATCHES } from '@/lib/constants'
+import type { StageKey } from '@/lib/constants'
+
+function isStageComplete(
+  sk: StageKey,
+  stageBets: Record<string, string>,
+  getTeams: (si: StageKey, mk: string) => { home: string; away: string },
+  tiebreakerQuestion: string,
+  preBetsLocked: boolean,
+): boolean {
+  const matches = STAGE_MATCHES[sk] || []
+
+  if (sk === 0) {
+    if (!matches.every((m) => !!stageBets[m.key])) return false
+    if (tiebreakerQuestion && !stageBets['tiebreaker']) return false
+    return true
+  }
+
+  if (sk === '0b') {
+    return matches.every((m) => !!stageBets[m.key])
+  }
+
+  // Series stages (1, 2, 3, 4): require winner + result for every match with known teams
+  for (const m of matches) {
+    const t = getTeams(sk, m.key)
+    if (!t.home && !t.away) continue // teams not set yet — skip
+    if (!stageBets[m.key + '_winner'] || !stageBets[m.key + '_result']) return false
+    if (m.hasMvp && !stageBets[m.key + '_mvp']) return false
+  }
+
+  // Stage 1: require pre-bets (champion / east / west) if teams are available
+  if (sk === 1 && !preBetsLocked) {
+    const hasTeams = STAGE_MATCHES[1].some((m) => {
+      const t = getTeams(1, m.key)
+      return !!(t.home || t.away)
+    })
+    if (hasTeams) {
+      if (!stageBets['champion'] || !stageBets['east_champ'] || !stageBets['west_champ']) return false
+    }
+  }
+
+  return true
+}
 
 export default function LeagueHomeTab({ onViewRules }: { onViewRules?: () => void }) {
   const leagueData = useLeagueStore((s) => s.currentLeagueData)
   const globalData = useGlobalStore((s) => s.globalData)
   const currentUser = useAuthStore((s) => s.currentUser)
-  const { getGlobal, canBetOnStage } = useGlobalHelpers()
+  const { getGlobal, canBetOnStage, getTeams, isPreBetsLocked } = useGlobalHelpers()
+  const tiebreakerQuestion = getGlobal('tiebreakerQuestion', '') as string
 
   if (!leagueData || !currentUser) return null
 
@@ -33,15 +76,17 @@ export default function LeagueHomeTab({ onViewRules }: { onViewRules?: () => voi
 
   const medal = (r: number) => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : String(r)
 
-  // Detect stages with no bets submitted but open for betting
+  // Detect stages with incomplete bets that are still open for betting
   const stageLocks = getGlobal('stageLocked', [] as boolean[])
   const openBetStages: string[] = []
   for (let i = 0; i < STAGE_KEYS.length; i++) {
     const sk = STAGE_KEYS[i]
     const isLocked = stageLocks[i] || false
     if (!isLocked && canBetOnStage(sk)) {
-      const stageBets = ((leagueData.bets || {})[myUid] || {})['stage' + sk] || {}
-      if (Object.keys(stageBets).length === 0) openBetStages.push(STAGE_SHORT[i])
+      const stageBets = ((leagueData.bets || {})[myUid] || {})['stage' + sk] as Record<string, string> || {}
+      if (!isStageComplete(sk, stageBets, getTeams, tiebreakerQuestion, isPreBetsLocked())) {
+        openBetStages.push(STAGE_SHORT[i])
+      }
     }
   }
 

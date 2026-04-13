@@ -12,6 +12,7 @@ import { useGlobalHelpers } from '@/hooks/useGlobalHelpers'
 import { saveBet, clearBet } from '@/services/global.service'
 import { STAGE_MATCHES, STAGE_KEYS, GAPS, PREBETS } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
+import { TeamName } from '@/components/ui/TeamName'
 
 export default function EnterBetsTab() {
   const leagueData = useLeagueStore((s) => s.currentLeagueData)
@@ -197,8 +198,8 @@ function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams }
           <div key={m.key} className="playin-card">
             <div className="match-label">🏀 {t1 && t2 ? `${t1} מול ${t2}` : m.label}</div>
             <div className="team-btns">
-              <button className={`team-btn ${cbd[m.key] === t1 ? 'selected' : ''}`} onClick={() => pick(m.key, t1)}>{t1}</button>
-              <button className={`team-btn ${cbd[m.key] === t2 ? 'selected' : ''}`} onClick={() => pick(m.key, t2)}>{t2}</button>
+              <button className={`team-btn ${cbd[m.key] === t1 ? 'selected' : ''}`} onClick={() => pick(m.key, t1)}><TeamName name={t1} size={28} vertical /></button>
+              <button className={`team-btn ${cbd[m.key] === t2 ? 'selected' : ''}`} onClick={() => pick(m.key, t2)}><TeamName name={t2} size={28} vertical /></button>
             </div>
           </div>
         )
@@ -223,11 +224,11 @@ function SeriesForm({ stage, matches, cbd, pick, getTeams, isSeriesLocked }: any
             <div className="match-label">🏀 {home && away ? `${home} מול ${away}` : m.label}</div>
             <div className="mt-2 flex gap-2.5">
               <div className="flex flex-1 flex-col gap-1 rounded-lg border border-[var(--blue)]/15 bg-[var(--blue)]/5 p-2">
-                <div className="mb-0.5 text-center text-[0.7rem] font-bold text-[var(--blue)]">{home} 🏠</div>
+                <div className="mb-0.5 text-center text-[0.7rem] font-bold text-[var(--blue)]"><TeamName name={home} size={16} /> 🏠</div>
                 {GAPS.map((r) => <button key={r} className={`bet-opt ${cbd[m.key + '_winner'] === home && cbd[m.key + '_result'] === r ? 'sel-home' : ''}`} onClick={() => { pick(m.key + '_winner', home); pick(m.key + '_result', r) }}><span className="opt-res">{r}</span></button>)}
               </div>
               <div className="flex flex-1 flex-col gap-1 rounded-lg border border-[var(--orange)]/15 bg-[var(--orange)]/5 p-2">
-                <div className="mb-0.5 text-center text-[0.7rem] font-bold text-[var(--orange)]">{away} ✈️</div>
+                <div className="mb-0.5 text-center text-[0.7rem] font-bold text-[var(--orange)]"><TeamName name={away} size={16} /> ✈️</div>
                 {GAPS.map((r) => <button key={r} className={`bet-opt ${cbd[m.key + '_winner'] === away && cbd[m.key + '_result'] === r ? 'sel-away' : ''}`} onClick={() => { pick(m.key + '_winner', away); pick(m.key + '_result', r) }}><span className="opt-res">{r}</span></button>)}
               </div>
             </div>

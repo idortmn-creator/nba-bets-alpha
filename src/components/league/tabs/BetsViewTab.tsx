@@ -6,6 +6,7 @@ import { scoreStage, scoreStageDetail } from '@/services/scoring'
 import { STAGE_KEYS, STAGE_SHORT, STAGE_MATCHES, PREBETS } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
 import { Card } from '@/components/ui/card'
+import { TeamName } from '@/components/ui/TeamName'
 
 export default function BetsViewTab() {
   const leagueData = useLeagueStore((s) => s.currentLeagueData)
@@ -73,7 +74,7 @@ function ParticipantView({ stage, members, memberInfo, result, matches, bonuses,
                 let cls = 'pending'
                 if (result[m.key]) cls = bv.toLowerCase() === result[m.key].toLowerCase() ? 'correct' : 'wrong'
                 const pts = detail.seriesPoints[m.key]
-                return <div key={m.key} className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className={`bet-value ${cls}`}>{bv}{pts ? <span className="pts-badge">+{pts}</span> : ''}</span></div>
+                return <div key={m.key} className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className={`bet-value ${cls}`}><TeamName name={bv} size={14} />{pts ? <span className="pts-badge">+{pts}</span> : ''}</span></div>
               }) : matches.map((m: any) => {
                 if (!isSeriesLocked(stage, m.key)) return <div key={m.key} className="series-not-started"><span className="series-not-started-label">{teamLabel(stage, m.key, m.label)}</span><span className="series-not-started-msg">🔒 הסדרה טרם החלה</span></div>
                 const bW = bet[m.key + '_winner'] || '-', bR = bet[m.key + '_result'] || '-'
@@ -84,7 +85,7 @@ function ParticipantView({ stage, members, memberInfo, result, matches, bonuses,
                 const pts = detail.seriesPoints[m.key]
                 return (
                   <div key={m.key}>
-                    <div className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className={`bet-value ${wC}`}>{bW} <span className="opacity-65">({bR})</span>{pts ? <span className="pts-badge">+{pts}</span> : ''}</span></div>
+                    <div className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className={`bet-value ${wC}`}><TeamName name={bW} size={14} /> <span className="opacity-65">({bR})</span>{pts ? <span className="pts-badge">+{pts}</span> : ''}</span></div>
                     {m.hasMvp && <div className="bet-item"><span className="bet-label">MVP</span><span className={`bet-value ${result[m.key + '_mvp'] ? (bet[m.key + '_mvp']?.toLowerCase() === result[m.key + '_mvp']?.toLowerCase() ? 'correct' : 'wrong') : 'pending'}`}>{bet[m.key + '_mvp'] || '-'}</span></div>}
                   </div>
                 )
@@ -123,7 +124,7 @@ function ParticipantView({ stage, members, memberInfo, result, matches, bonuses,
         <Card className="mt-3 !border-[rgba(79,195,247,0.3)]">
           <div className="mb-2 font-oswald text-lg text-[var(--blue)]">📊 תוצאות אמיתיות</div>
           {(stage === 0 || stage === '0b') ? <>
-            {matches.map((m: any) => <div key={m.key} className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className="bet-value text-blue">{result[m.key] || '-'}</span></div>)}
+            {matches.map((m: any) => <div key={m.key} className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className="bet-value text-blue"><TeamName name={result[m.key] || '-'} size={14} /></span></div>)}
             {stage === 0 && globalData?.tiebreakerQuestion && globalData?.tiebreakerAnswer !== null && globalData?.tiebreakerAnswer !== undefined && (
               <div className="bet-item mt-1 border-t border-[var(--border)] pt-1">
                 <span className="bet-label text-[var(--gold)]">🎯 {globalData.tiebreakerQuestion}</span>
@@ -133,7 +134,7 @@ function ParticipantView({ stage, members, memberInfo, result, matches, bonuses,
           </> :
             matches.map((m: any) => (
               <div key={m.key}>
-                <div className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className="bet-value text-blue">{result[m.key + '_winner'] || '-'} ({result[m.key + '_result'] || '-'})</span></div>
+                <div className="bet-item"><span className="bet-label">{teamLabel(stage, m.key, m.label)}</span><span className="bet-value text-blue"><TeamName name={result[m.key + '_winner'] || '-'} size={14} /> ({result[m.key + '_result'] || '-'})</span></div>
                 {m.hasMvp && result[m.key + '_mvp'] && <div className="bet-item"><span className="bet-label">MVP</span><span className="bet-value text-blue">{result[m.key + '_mvp']}</span></div>}
               </div>
             ))}
@@ -172,9 +173,12 @@ function SeriesView({ stage, members, memberInfo, result, matches, bonuses, bonu
             {Object.entries(tally).sort(([, a], [, b]) => b.count - a.count).map(([pick, t]) => {
               const cls = rW ? (t.correct ? (t.exact ? 'correct-exact' : 'correct') : 'wrong') : 'pending'
               const pct = Math.round(t.count / total * 100)
+              const parenIdx = pick.lastIndexOf(' (')
+              const pickTeam = parenIdx >= 0 ? pick.slice(0, parenIdx) : pick
+              const pickSuffix = parenIdx >= 0 ? pick.slice(parenIdx) : ''
               return (
                 <div key={pick} className="series-tally-row">
-                  <span className={`bet-value ${cls}`} style={{ minWidth: 90 }}>{pick}</span>
+                  <span className={`bet-value ${cls}`} style={{ minWidth: 110 }}><TeamName name={pickTeam} size={14} />{pickSuffix}</span>
                   <div className="tally-bar-wrap"><div className="tally-bar" style={{ width: `${pct}%` }} /></div>
                   <span className="tally-count">{t.count}/{total}</span>
                   <div className="tally-names">{t.users.join(', ')}</div>
