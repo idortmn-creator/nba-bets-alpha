@@ -76,8 +76,8 @@ export function useAuth() {
         // Check if already locked
         if (key.startsWith('series_')) {
           const parts = key.split('_')
-          const si = parseInt(parts[1]) as StageKey
-          const mk = parts[2]
+          const si: StageKey = parts[1] === '0b' ? '0b' : (parseInt(parts[1]) as StageKey)
+          const mk = parts.slice(2).join('_')
           const sl = gd.seriesLocked || {}
           if (sl[si + '_' + mk]) continue
           // Lock it

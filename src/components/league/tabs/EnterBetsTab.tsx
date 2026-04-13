@@ -118,7 +118,7 @@ export default function EnterBetsTab() {
         <>
           <Separator />
           {(stage === 0 || stage === '0b') ? (
-            <PlayinForm stage={stage} matches={matches} cbd={cbd} pick={pick} getTeams={getTeams} getPlayinFinalTeams={getPlayinFinalTeams} />
+            <PlayinForm stage={stage} matches={matches} cbd={cbd} pick={pick} getTeams={getTeams} getPlayinFinalTeams={getPlayinFinalTeams} isSeriesLocked={isSeriesLocked} />
           ) : (
             <SeriesForm stage={stage} matches={matches} cbd={cbd} pick={pick} getTeams={getTeams} isSeriesLocked={isSeriesLocked} />
           )}
@@ -186,7 +186,7 @@ function TiebreakerForm({ question, value, onChange }: { question: string; value
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams }: any) {
+function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, isSeriesLocked }: any) {
   return (
     <div>
       <CardTitle>🎯 בחר מנצחת</CardTitle>
@@ -194,6 +194,14 @@ function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams }
         let t1: string, t2: string
         if (stage === '0b') { const ft = getPlayinFinalTeams(m.conf); t1 = ft.home; t2 = ft.away }
         else { const t = getTeams(stage, m.key); t1 = t.home || 'קבוצה 1'; t2 = t.away || 'קבוצה 2' }
+        if (isSeriesLocked(stage, m.key)) {
+          return (
+            <div key={m.key} className="playin-card opacity-50 pointer-events-none">
+              <div className="match-label">🏀 {t1 && t2 ? `${t1} מול ${t2}` : m.label} 🔒</div>
+              <div className="p-2 text-center text-sm text-[var(--text2)]">משחק זה ננעל</div>
+            </div>
+          )
+        }
         return (
           <div key={m.key} className="playin-card">
             <div className="match-label">🏀 {t1 && t2 ? `${t1} מול ${t2}` : m.label}</div>

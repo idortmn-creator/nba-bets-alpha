@@ -33,7 +33,7 @@ export default function AutoLockPanel() {
   }
 
   const seriesOptions: { value: string; label: string }[] = []
-  for (const si of [1, 2, 3, 4] as StageKey[]) {
+  for (const si of [0, '0b', 1, 2, 3, 4] as StageKey[]) {
     for (const m of STAGE_MATCHES[si] || []) {
       const t = getTeams(si, m.key)
       const lbl = t.home && t.away ? `${t.home} מול ${t.away}` : m.label
@@ -51,8 +51,8 @@ export default function AutoLockPanel() {
           let name = ''
           if (key.startsWith('series_')) {
             const parts = key.split('_')
-            const si = parseInt(parts[1]) as StageKey
-            const mk = parts[2]
+            const si: StageKey = parts[1] === '0b' ? '0b' : (parseInt(parts[1]) as StageKey)
+            const mk = parts.slice(2).join('_')
             const t = getTeams(si, mk)
             name = '🏀 ' + (t.home && t.away ? `${t.home} מול ${t.away}` : mk)
           } else {
@@ -63,7 +63,9 @@ export default function AutoLockPanel() {
           let locked = false
           if (key.startsWith('series_')) {
             const parts = key.split('_')
-            locked = isSeriesLocked(parseInt(parts[1]) as StageKey, parts[2])
+            const si2: StageKey = parts[1] === '0b' ? '0b' : (parseInt(parts[1]) as StageKey)
+            const mk2 = parts.slice(2).join('_')
+            locked = isSeriesLocked(si2, mk2)
           } else {
             const normKey = key === '0b' ? '0b' : (parseInt(key) as StageKey)
             locked = (getGlobal('stageLocked', [] as boolean[]))[STAGE_KEYS.indexOf(normKey)] || false
