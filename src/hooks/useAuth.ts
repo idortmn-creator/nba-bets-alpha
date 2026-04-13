@@ -4,7 +4,7 @@ import { doc, onSnapshot } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { useAuthStore } from '@/store/auth.store'
 import { useGlobalStore } from '@/store/global.store'
-import { getUserDoc } from '@/services/auth.service'
+import { getUserDoc, ensureGoogleUserDoc } from '@/services/auth.service'
 import { STAGE_KEYS } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
 
@@ -26,6 +26,16 @@ export function useAuth() {
             username: udoc.username || user.email || '',
             email: udoc.email || user.email || '',
             leagues: udoc.leagues,
+          })
+        } else if (user.providerData.some((p) => p.providerId === 'google.com')) {
+          // First Google sign-in — create the user doc
+          const created = await ensureGoogleUserDoc(user)
+          setUserDoc({
+            uid: user.uid,
+            displayName: created.displayName,
+            username: created.username,
+            email: created.email,
+            leagues: [],
           })
         }
         // Start global listener

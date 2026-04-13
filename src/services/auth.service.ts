@@ -8,7 +8,10 @@ import {
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth'
+import type { User } from 'firebase/auth'
 import {
   doc,
   getDoc,
@@ -53,6 +56,35 @@ export async function register(
   })
   await sendEmailVerification(cred.user)
   await fbSignOut(auth)
+}
+
+const googleProvider = new GoogleAuthProvider()
+
+export async function signInWithGoogle() {
+  const cred = await signInWithPopup(auth, googleProvider)
+  return cred.user
+}
+
+export async function ensureGoogleUserDoc(user: User) {
+  const base = (user.email || '').split('@')[0].replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'user'
+  let username = base
+  let attempt = 0
+  while (true) {
+    const uQ = await getDocs(query(collection(db, 'users'), where('username', '==', username)))
+    if (uQ.empty) break
+    attempt++
+    username = base + attempt
+  }
+  const data = {
+    uid: user.uid,
+    displayName: user.displayName || '',
+    username,
+    email: user.email || '',
+    createdAt: serverTimestamp(),
+    leagues: [],
+  }
+  await setDoc(doc(db, 'users', user.uid), data)
+  return data
 }
 
 export async function resetPassword(email: string) {
