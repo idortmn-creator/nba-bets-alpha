@@ -1,6 +1,8 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
+import { useAuthStore } from '@/store/auth.store'
+import { SUPER_ADMIN_UID } from '@/lib/constants'
 import Header from '@/components/layout/Header'
 import AuthPage from '@/components/auth/AuthPage'
 import LandingPage from '@/components/home/LandingPage'
@@ -17,6 +19,12 @@ import BracketCreatePage from '@/bracket/BracketCreatePage'
 import BracketJoinPage from '@/bracket/BracketJoinPage'
 import BracketMyLeaguesPage from '@/bracket/BracketMyLeaguesPage'
 import BracketLeaguePage from '@/bracket/BracketLeaguePage'
+
+function BracketGuard({ children }: { children: React.ReactNode }) {
+  const uid = useAuthStore((s) => s.currentUser?.uid)
+  if (uid !== SUPER_ADMIN_UID) return <Navigate to="/" replace />
+  return <>{children}</>
+}
 
 function AppContent() {
   const { currentUser } = useAuth()
@@ -44,14 +52,14 @@ function AppContent() {
           <Route path="/league/:lid/:tab" element={<LeaguePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/admin" element={<GlobalAdminPage />} />
-          {/* ── Bracket format routes ── */}
-          <Route path="/bracket" element={<BracketHomePage />} />
-          <Route path="/bracket/create" element={<BracketCreatePage />} />
-          <Route path="/bracket/join" element={<BracketJoinPage />} />
-          <Route path="/bracket/join/:code" element={<BracketJoinPage />} />
-          <Route path="/bracket/leagues" element={<BracketMyLeaguesPage />} />
-          <Route path="/bracket/league/:lid" element={<BracketLeaguePage />} />
-          <Route path="/bracket/league/:lid/:tab" element={<BracketLeaguePage />} />
+          {/* ── Bracket format routes (super-admin only) ── */}
+          <Route path="/bracket" element={<BracketGuard><BracketHomePage /></BracketGuard>} />
+          <Route path="/bracket/create" element={<BracketGuard><BracketCreatePage /></BracketGuard>} />
+          <Route path="/bracket/join" element={<BracketGuard><BracketJoinPage /></BracketGuard>} />
+          <Route path="/bracket/join/:code" element={<BracketGuard><BracketJoinPage /></BracketGuard>} />
+          <Route path="/bracket/leagues" element={<BracketGuard><BracketMyLeaguesPage /></BracketGuard>} />
+          <Route path="/bracket/league/:lid" element={<BracketGuard><BracketLeaguePage /></BracketGuard>} />
+          <Route path="/bracket/league/:lid/:tab" element={<BracketGuard><BracketLeaguePage /></BracketGuard>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
