@@ -1,4 +1,5 @@
-import { defineSecret } from 'firebase-functions/params'
-
-// Provision once with: firebase functions:secrets:set RAPIDAPI_KEY
-export const RAPIDAPI_KEY = defineSecret('RAPIDAPI_KEY')
+export function getRapidApiKey(): string {
+  const key = process.env.RAPIDAPI_KEY
+  if (!key) throw new Error('RAPIDAPI_KEY environment variable not set')
+  return key
+}

@@ -1,7 +1,7 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
 import { onSchedule } from 'firebase-functions/v2/scheduler'
 import { getFirestore } from 'firebase-admin/firestore'
-import { RAPIDAPI_KEY } from './secrets'
+import { getRapidApiKey } from './secrets'
 import { SUPER_ADMIN_UID } from './constants'
 import { fetchSeasonGames, fetchGamesByDate, filterPlayoffGames } from './nbaApi'
 import type { NBAGame } from './nbaApi'
@@ -102,7 +102,7 @@ async function runSync(
 // ── Callable (manual sync from admin panel) ───────────────────────────────
 
 export const syncResults = onCall(
-  { secrets: [RAPIDAPI_KEY], region: 'us-central1' },
+  { region: 'us-central1' },
   async (request) => {
     if (!request.auth?.uid) throw new HttpsError('unauthenticated', 'Login required')
     if (request.auth.uid !== SUPER_ADMIN_UID) throw new HttpsError('permission-denied', 'Super admin only')
@@ -110,7 +110,7 @@ export const syncResults = onCall(
     const { season = 2025, stageKey = 1, fullSync = true } =
       (request.data ?? {}) as SyncResultsRequest
 
-    const apiKey = RAPIDAPI_KEY.value()
+    const apiKey = getRapidApiKey()
     const result = await runSync(season, stageKey as StageKeyInput, apiKey, fullSync)
 
     return { ok: true, ...result }
@@ -121,7 +121,7 @@ export const syncResults = onCall(
 // Fetches only today's + yesterday's completed games — one API call per date.
 
 export const scheduledNBASync = onSchedule(
-  { schedule: '30 23 * * *', timeZone: 'UTC', secrets: [RAPIDAPI_KEY] },
+  { schedule: '30 23 * * *', timeZone: 'UTC' },
   async () => {
     const db = getFirestore()
     const settingsSnap = await db.doc('global/settings').get()
@@ -141,6 +141,7 @@ export const scheduledNBASync = onSchedule(
     const isLocked = (settings.stageLocked ?? [])[stageIdx] ?? false
     if (isLocked) return // stage already locked — nothing to sync
 
-    await runSync(2025, currentStage as StageKeyInput, RAPIDAPI_KEY.value(), false)
+    const apiKey = getRapidApiKey()
+    await runSync(2025, currentStage as StageKeyInput, apiKey, false)
   }
 )
