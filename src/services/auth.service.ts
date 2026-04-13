@@ -9,8 +9,7 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
   GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
 } from 'firebase/auth'
 import type { User } from 'firebase/auth'
 import {
@@ -62,11 +61,7 @@ export async function register(
 const googleProvider = new GoogleAuthProvider()
 
 export async function signInWithGoogle() {
-  await signInWithRedirect(auth, googleProvider)
-}
-
-export async function getGoogleRedirectResult() {
-  return getRedirectResult(auth)
+  return signInWithPopup(auth, googleProvider)
 }
 
 export async function ensureGoogleUserDoc(user: User) {
