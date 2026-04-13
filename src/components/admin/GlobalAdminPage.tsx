@@ -9,10 +9,11 @@ import ResultsPanel from './panels/ResultsPanel'
 import BonusAdminPanel from './panels/BonusAdminPanel'
 import AutoLockPanel from './panels/AutoLockPanel'
 import ESPNPanel from './panels/ESPNPanel'
+import NBAApiPanel from './panels/NBAApiPanel'
 import LeagueManagementPanel from './panels/LeagueManagementPanel'
 import TiebreakerAdminPanel from './panels/TiebreakerAdminPanel'
 
-type AdminTab = 'stages' | 'teams' | 'results' | 'bonus' | 'autolock' | 'espn' | 'leagues' | 'tiebreaker'
+type AdminTab = 'stages' | 'teams' | 'results' | 'bonus' | 'autolock' | 'espn' | 'nba' | 'leagues' | 'tiebreaker'
 
 const TABS: { key: AdminTab; label: string }[] = [
   { key: 'stages',     label: '🔄 שלבים' },
@@ -21,6 +22,7 @@ const TABS: { key: AdminTab; label: string }[] = [
   { key: 'bonus',      label: '⭐ בונוס' },
   { key: 'tiebreaker', label: '🎯 שובר שוויון' },
   { key: 'autolock',   label: '⏰ נעילה אוטו׳' },
+  { key: 'nba',        label: '🏀 NBA API' },
   { key: 'espn',       label: '📡 ESPN' },
   { key: 'leagues',    label: '🏟️ ליגות' },
 ]
@@ -59,6 +61,7 @@ export default function GlobalAdminPage() {
       {activeTab === 'bonus'    && <BonusAdminPanel />}
       {activeTab === 'tiebreaker' && <TiebreakerAdminPanel />}
       {activeTab === 'autolock' && <AutoLockPanel />}
+      {activeTab === 'nba'      && <NBAApiPanel />}
       {activeTab === 'espn'     && <ESPNPanel />}
       {activeTab === 'leagues'  && (
         <>

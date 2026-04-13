@@ -17,21 +17,26 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install and Build
+      - name: Install and Build (Frontend)
         run: |
           npm install
           npm run build
 
-      - name: Deploy to Firebase Hosting
+      - name: Install and Build (Functions)
+        run: |
+          npm --prefix functions install
+          npm --prefix functions run build
+
+      - name: Deploy Hosting + Firestore Rules
         uses: w9jds/firebase-action@master
         with:
-          args: deploy --only hosting --project nba-bets-2026
+          args: deploy --only hosting,firestore:rules --project nba-bets-2026
         env:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
-      - name: Deploy Firestore Rules
+      - name: Deploy Functions
         uses: w9jds/firebase-action@master
         with:
-          args: deploy --only firestore:rules --project nba-bets-2026
+          args: deploy --only functions --project nba-bets-2026
         env:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
