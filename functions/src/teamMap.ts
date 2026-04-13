@@ -11,29 +11,29 @@ import type { NBAGame } from './nbaApi'
 // Then: firebase deploy --only functions
 // ─────────────────────────────────────────────────────────────────────────────
 export const TEAM_CONF_SEED: Record<string, { conf: 'east' | 'west'; seed: number }> = {
-  // ── EAST (2025-26 season — fill in actual seeds) ─────────────────────────
-  // 'Cleveland Cavaliers':    { conf: 'east', seed: 1 },
-  // 'Boston Celtics':         { conf: 'east', seed: 2 },
-  // 'New York Knicks':        { conf: 'east', seed: 3 },
-  // 'Indiana Pacers':         { conf: 'east', seed: 4 },
-  // 'Milwaukee Bucks':        { conf: 'east', seed: 5 },
-  // 'Detroit Pistons':        { conf: 'east', seed: 6 },
-  // 'Miami Heat':             { conf: 'east', seed: 7 },   // play-in
-  // 'Chicago Bulls':          { conf: 'east', seed: 8 },   // play-in
-  // 'Atlanta Hawks':          { conf: 'east', seed: 9 },   // play-in
-  // 'Orlando Magic':          { conf: 'east', seed: 10 },  // play-in
+  // ── EAST (2025-26 season) ─────────────────────────────────────────────────
+  'Detroit Pistons':        { conf: 'east', seed: 1 },
+  'Boston Celtics':         { conf: 'east', seed: 2 },
+  'New York Knicks':        { conf: 'east', seed: 3 },
+  'Cleveland Cavaliers':    { conf: 'east', seed: 4 },
+  'Toronto Raptors':        { conf: 'east', seed: 5 },
+  'Atlanta Hawks':          { conf: 'east', seed: 6 },
+  'Philadelphia 76ers':     { conf: 'east', seed: 7 },  // play-in
+  'Orlando Magic':          { conf: 'east', seed: 8 },  // play-in
+  'Charlotte Hornets':      { conf: 'east', seed: 9 },  // play-in
+  'Miami Heat':             { conf: 'east', seed: 10 }, // play-in
 
-  // ── WEST (2025-26 season — fill in actual seeds) ─────────────────────────
-  // 'Oklahoma City Thunder':  { conf: 'west', seed: 1 },
-  // 'Houston Rockets':        { conf: 'west', seed: 2 },
-  // 'Los Angeles Clippers':   { conf: 'west', seed: 3 },
-  // 'Denver Nuggets':         { conf: 'west', seed: 4 },
-  // 'Golden State Warriors':  { conf: 'west', seed: 5 },
-  // 'Los Angeles Lakers':     { conf: 'west', seed: 6 },
-  // 'Memphis Grizzlies':      { conf: 'west', seed: 7 },   // play-in
-  // 'Dallas Mavericks':       { conf: 'west', seed: 8 },   // play-in
-  // 'Minnesota Timberwolves': { conf: 'west', seed: 9 },   // play-in
-  // 'San Antonio Spurs':      { conf: 'west', seed: 10 },  // play-in
+  // ── WEST (2025-26 season) ─────────────────────────────────────────────────
+  'Oklahoma City Thunder':  { conf: 'west', seed: 1 },
+  'San Antonio Spurs':      { conf: 'west', seed: 2 },
+  'Denver Nuggets':         { conf: 'west', seed: 3 },
+  'Los Angeles Lakers':     { conf: 'west', seed: 4 },
+  'Houston Rockets':        { conf: 'west', seed: 5 },
+  'Minnesota Timberwolves': { conf: 'west', seed: 6 },
+  'Phoenix Suns':           { conf: 'west', seed: 7 },  // play-in
+  'Portland Trail Blazers': { conf: 'west', seed: 8 },  // play-in
+  'Los Angeles Clippers':   { conf: 'west', seed: 9 },  // play-in
+  'Golden State Warriors':  { conf: 'west', seed: 10 }, // play-in
 }
 
 // ── Lookup helpers ─────────────────────────────────────────────────────────
