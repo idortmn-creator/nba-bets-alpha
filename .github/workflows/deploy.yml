@@ -40,6 +40,6 @@ jobs:
       - name: Deploy Functions
         uses: w9jds/firebase-action@master
         with:
-          args: deploy --only functions --project nba-bets-2026
+          args: deploy --only functions --force --project nba-bets-2026
         env:
           GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
