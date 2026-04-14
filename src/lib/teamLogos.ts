@@ -181,6 +181,7 @@ const ABBR: Record<string, string> = {
   'סיקסרז': 'phi',
   'סאנס': 'phx',
   'סאנז': 'phx',
+  'פינקס': 'phx',   // alternate transliteration of Phoenix
   'בלייזרס': 'por',
   'בלייזרז': 'por',
   'קינגס': 'sac',
@@ -276,8 +277,9 @@ export function getTeamLogoUrl(name: string): string | null {
   // so entries like "ג'אז" and "ג׳אז" both match the same ABBR key.
   const normalize = (s: string) =>
     s.toLowerCase().trim()
-      .replace(/[\u05F3\u2018\u2019\u02BC]/g, "'")     // Hebrew geresh + smart quotes → apostrophe
-      .replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '') // strip invisible RTL/Unicode marks
+      .replace(/[\u05F3\u2018\u2019\u02BC]/g, "'")        // Hebrew geresh + smart quotes → apostrophe
+      .replace(/[\u0591-\u05C7]/g, '')                    // strip Hebrew nikud (vowel points) & cantillation marks
+      .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF\u061C]/g, '') // strip invisible Unicode/RTL marks
       .replace(/\s+/g, ' ')
 
   const key = normalize(name)
