@@ -2,7 +2,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { Toaster } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
-import { initMessaging, setupForegroundListener } from '@/lib/messaging'
+import { refreshTokenIfGranted, setupForegroundListener } from '@/lib/messaging'
 import { useAuthStore } from '@/store/auth.store'
 import { SUPER_ADMIN_UID } from '@/lib/constants'
 import Header from '@/components/layout/Header'
@@ -16,6 +16,7 @@ import LeaguePage from '@/components/league/LeaguePage'
 import ProfilePage from '@/components/profile/ProfilePage'
 import GlobalAdminPage from '@/components/admin/GlobalAdminPage'
 import InstallPrompt from '@/components/InstallPrompt'
+import NotificationBanner from '@/components/NotificationBanner'
 import BracketHomePage from '@/bracket/BracketHomePage'
 import BracketCreatePage from '@/bracket/BracketCreatePage'
 import BracketJoinPage from '@/bracket/BracketJoinPage'
@@ -33,7 +34,7 @@ function AppContent() {
 
   useEffect(() => {
     if (!currentUser) return
-    initMessaging(currentUser.uid)
+    refreshTokenIfGranted(currentUser.uid)
     const unsub = setupForegroundListener()
     return unsub
   }, [currentUser?.uid])
@@ -80,6 +81,7 @@ export default function App() {
   return (
     <HashRouter>
       <InstallPrompt />
+      <NotificationBanner />
       <Toaster
         position="top-center"
         toastOptions={{

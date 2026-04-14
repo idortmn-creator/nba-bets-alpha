@@ -27,7 +27,13 @@ export default function BetsViewTab() {
   const bonusRes = getBonusResults(stage)
 
   function canView() {
-    return locked
+    if (locked) return true
+    // For Play-In stages reveal bets as soon as any individual game is locked,
+    // not waiting for the entire stage to lock.
+    if (stage === 0 || stage === '0b') {
+      return matches.some((m) => isSeriesLocked(stage, m.key))
+    }
+    return false
   }
 
   return (
@@ -70,6 +76,7 @@ function ParticipantView({ stage, members, memberInfo, result, matches, bonuses,
                 <div className="bet-pts">{stageScore > 0 || hasResult ? stageScore + " נק'" : '⏳'}</div>
               </div>
               {(stage === 0 || stage === '0b') ? matches.map((m: any) => {
+                if (!isSeriesLocked(stage, m.key)) return <div key={m.key} className="series-not-started"><span className="series-not-started-label">{teamLabel(stage, m.key, m.label)}</span><span className="series-not-started-msg">🔒 טרם נעל</span></div>
                 const bv = bet[m.key] || '-'
                 let cls = 'pending'
                 if (result[m.key]) cls = bv.toLowerCase() === result[m.key].toLowerCase() ? 'correct' : 'wrong'
@@ -146,7 +153,7 @@ function ParticipantView({ stage, members, memberInfo, result, matches, bonuses,
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function SeriesView({ stage, members, memberInfo, result, matches, bonuses, bonusRes, leagueData, isSeriesLocked, teamLabel, isSingleBonusLocked }: any) {
-  const visibleMatches = (stage === 0 || stage === '0b') ? matches : matches.filter((m: any) => isSeriesLocked(stage, m.key))
+  const visibleMatches = matches.filter((m: any) => isSeriesLocked(stage, m.key))
 
   return (
     <div>

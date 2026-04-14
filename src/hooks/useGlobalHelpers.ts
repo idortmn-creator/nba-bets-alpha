@@ -38,8 +38,15 @@ export function useGlobalHelpers() {
   }
 
   function isBonusLocked(si: StageKey) {
-    const lockIdx = si === 0 || si === '0b' ? 0 : STAGE_KEYS.indexOf(si)
-    return (getGlobal('stageLocked', [] as boolean[]))[lockIdx] || false
+    if (si === 0 || si === '0b') {
+      // For Play-In, the bonus is locked (revealed) as soon as any stage-0
+      // game is individually locked. If ALL those locks are removed, the bonus
+      // goes back to hidden/editable.
+      const sl = getGlobal('seriesLocked', {} as Record<string, boolean>)
+      if ((STAGE_MATCHES[0] || []).some((m) => sl['0_' + m.key])) return true
+      return (getGlobal('stageLocked', [] as boolean[]))[0] || false
+    }
+    return (getGlobal('stageLocked', [] as boolean[]))[STAGE_KEYS.indexOf(si)] || false
   }
 
   function isSingleBonusLocked(si: StageKey, bonus: BonusBet) {

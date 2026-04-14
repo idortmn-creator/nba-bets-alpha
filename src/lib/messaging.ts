@@ -3,48 +3,72 @@ import { doc, updateDoc } from 'firebase/firestore'
 import { app, db } from '@/lib/firebase'
 import { toast } from 'sonner'
 
-// ── Replace this with your VAPID public key from:
-//    Firebase Console → Project Settings → Cloud Messaging
-//    → Web Push certificates → Generate key pair
 const VAPID_KEY = 'BDn9g14cbhTesCmJUTDT8GHRBfCn4cZ7Iu0XD9DyjAilP1azMb7tnDEU7yQ4uWN9L5Vj2d1FJ5RguwFQ8VUQhD8'
+const PROMPTED_KEY = 'nba-bets-notif-prompted'
 
-let _initialized = false
+function isFCMSupported(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    'Notification' in window &&
+    'serviceWorker' in navigator
+  )
+}
+
+async function registerAndSaveToken(uid: string): Promise<void> {
+  const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
+  const messaging = getMessaging(app)
+  const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg })
+  if (token) {
+    await updateDoc(doc(db, 'users', uid), { fcmToken: token })
+  }
+}
 
 /**
- * Request notification permission, obtain an FCM token, and persist it to
- * the user's Firestore document. Safe to call on every app load — it's a
- * no-op when already granted and the token hasn't changed.
+ * Returns true when we should show the in-app notification banner:
+ * - browser supports notifications
+ * - permission hasn't been granted or denied yet (still 'default')
+ * - we haven't prompted this device before
  */
-export async function initMessaging(uid: string): Promise<void> {
-  if (_initialized) return
-  _initialized = true
+export function shouldShowNotificationPrompt(): boolean {
+  if (!isFCMSupported()) return false
+  if (Notification.permission !== 'default') return false
+  return localStorage.getItem(PROMPTED_KEY) !== '1'
+}
 
-  // Feature-detect — not available in old browsers or SSR
-  if (typeof window === 'undefined') return
-  if (!('Notification' in window)) return
-  if (!('serviceWorker' in navigator)) return
+/** Mark this device as having been prompted (so the banner doesn't reappear). */
+export function dismissNotificationPrompt(): void {
+  localStorage.setItem(PROMPTED_KEY, '1')
+}
 
+/**
+ * Called when the user explicitly agrees to enable notifications.
+ * Triggers the browser permission dialog, then registers the FCM token.
+ */
+export async function requestPermissionAndSave(uid: string): Promise<boolean> {
+  dismissNotificationPrompt()
+  if (!isFCMSupported()) return false
   try {
     const permission = await Notification.requestPermission()
-    if (permission !== 'granted') return
-
-    // Register the FCM service worker explicitly so we control the scope
-    const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-      scope: '/',
-    })
-
-    const messaging = getMessaging(app)
-    const token = await getToken(messaging, {
-      vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: swReg,
-    })
-
-    if (token) {
-      await updateDoc(doc(db, 'users', uid), { fcmToken: token })
-    }
+    if (permission !== 'granted') return false
+    await registerAndSaveToken(uid)
+    return true
   } catch (err) {
-    // Non-fatal — user simply won't receive push notifications
-    console.warn('[FCM] setup failed:', err)
+    console.warn('[FCM] requestPermissionAndSave failed:', err)
+    return false
+  }
+}
+
+/**
+ * Silent refresh: if the user already granted permission (on a previous visit),
+ * just ensure the token is current. Does NOT show any prompt.
+ */
+export async function refreshTokenIfGranted(uid: string): Promise<void> {
+  if (!isFCMSupported()) return
+  if (Notification.permission !== 'granted') return
+  try {
+    await registerAndSaveToken(uid)
+  } catch (err) {
+    console.warn('[FCM] refreshTokenIfGranted failed:', err)
   }
 }
 

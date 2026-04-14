@@ -84,18 +84,22 @@ export function useAuth() {
           const mk = parts.slice(2).join('_')
           const sl = gd.seriesLocked || {}
           if (sl[si + '_' + mk]) continue
-          // Lock it
-          import('@/services/global.service').then((svc) =>
+          // Lock it, then remove the auto-lock entry so a subsequent manual
+          // unlock by the admin won't be immediately re-locked by this checker.
+          import('@/services/global.service').then((svc) => {
             svc.toggleSeriesLock(si, mk, gd)
-          )
+            svc.removeAutoLock(key)
+          })
         } else {
           const normKey = key === '0b' ? '0b' : (parseInt(key) as StageKey)
           const sIdx = STAGE_KEYS.indexOf(normKey)
           const sl = gd.stageLocked || []
           if (sl[sIdx]) continue
-          import('@/services/global.service').then((svc) =>
+          // Lock it, then remove the auto-lock entry (same reason as above).
+          import('@/services/global.service').then((svc) => {
             svc.toggleStageLock(normKey, gd)
-          )
+            svc.removeAutoLock(key)
+          })
         }
       }
     }, 30000)

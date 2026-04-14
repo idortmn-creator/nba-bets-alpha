@@ -1,4 +1,4 @@
-import { doc, setDoc, updateDoc } from 'firebase/firestore'
+import { doc, setDoc, updateDoc, deleteField } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { STAGE_KEYS, STAGE_MATCHES } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
@@ -142,10 +142,12 @@ export async function addAutoLock(
   )
 }
 
-export async function removeAutoLock(key: string, globalData: GlobalData) {
-  const curLocks = { ...(globalData.autoLocks || {}) }
-  delete curLocks[key]
-  await setDoc(doc(db, 'global', 'settings'), { autoLocks: curLocks }, { merge: true })
+export async function removeAutoLock(key: string) {
+  // Use deleteField() on the specific map key — avoids the read-modify-write
+  // race condition and correctly removes the entry even if globalData is stale.
+  await updateDoc(doc(db, 'global', 'settings'), {
+    [`autoLocks.${key}`]: deleteField(),
+  })
 }
 
 export async function initGlobalSettingsIfNeeded(globalData: GlobalData) {

@@ -28,7 +28,7 @@ export default function AutoLockPanel() {
   }
 
   async function handleRemove(key: string) {
-    await removeAutoLock(key, globalData)
+    await removeAutoLock(key)
     toast('✅ נעילה הוסרה')
   }
 
