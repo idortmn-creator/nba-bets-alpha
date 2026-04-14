@@ -17,9 +17,19 @@ function filterPlayoffByDate(games: NBAGame[], season: number): NBAGame[] {
 
 /**
  * Callable: returns today's NBA playoff games (all statuses).
- * Used by the Live Results tab in the frontend.
+ * Returns { ok: false, error: string } on failure so the client always sees the real message.
  */
-export const getLiveGames = functions.https.onCall(async (_data, _context) => {
-  // DIAGNOSTIC: hardcoded response — no API calls. If this still errors, code is not deploying.
-  return { ok: true, games: [], date: 'diagnostic-v5', version: 'v5' }
+export const getLiveGames = functions.https.onCall(async (data, _context) => {
+  try {
+    const { season = 2025, date } = (data ?? {}) as { season?: number; date?: string }
+    const apiKey = getRapidApiKey()
+    const targetDate = date ?? new Date().toISOString().slice(0, 10)
+    const allGames = await fetchGamesByDate(targetDate, season, apiKey)
+    const playoffGames = filterPlayoffByDate(allGames, season)
+    return { ok: true, games: playoffGames, date: targetDate }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    console.error('[getLiveGames]', msg)
+    return { ok: false, error: msg, games: [], date: '' }
+  }
 })

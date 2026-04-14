@@ -79,13 +79,16 @@ export default function LiveResultsTab() {
     setError(null)
     try {
       const res = await getLiveGamesFn({ season: 2025 })
-      const data = res.data as { ok: boolean; games: LiveGame[] }
-      setGames(data.games ?? [])
-      setLastRefresh(new Date())
+      const data = res.data as { ok: boolean; games: LiveGame[]; error?: string }
+      if (!data.ok) {
+        setError(data.error ?? 'שגיאה לא ידועה')
+      } else {
+        setGames(data.games ?? [])
+        setLastRefresh(new Date())
+      }
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string }
-      const msg = err.message ?? err.code ?? String(e)
-      setError(msg)
+      setError(err.message ?? err.code ?? String(e))
     } finally {
       setLoading(false)
     }
