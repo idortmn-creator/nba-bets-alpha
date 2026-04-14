@@ -42,6 +42,8 @@ export default function EmailPanel() {
   const [body, setBody]             = useState('')
   const [sending, setSending]       = useState(false)
   const [progress, setProgress]     = useState<string | null>(null)
+  const [recipients, setRecipients] = useState<{ email: string; name: string }[] | null>(null)
+  const [loadingRecipients, setLoadingRecipients] = useState(false)
 
   // Load saved credentials from globalData
   useEffect(() => {
@@ -59,6 +61,22 @@ export default function EmailPanel() {
     }
   }
 
+  async function handleLoadRecipients() {
+    setLoadingRecipients(true)
+    try {
+      const snap = await getDocs(collection(db, 'users'))
+      const list = snap.docs
+        .map(d => d.data() as { email?: string; displayName?: string; username?: string })
+        .filter(u => !!u.email)
+        .map(u => ({ email: u.email!, name: u.displayName || u.username || u.email! }))
+      setRecipients(list)
+    } catch (e: unknown) {
+      toast('❌ ' + (e instanceof Error ? e.message : String(e)))
+    } finally {
+      setLoadingRecipients(false)
+    }
+  }
+
   async function handleSend() {
     if (!serviceId || !templateId || !publicKey) {
       toast('❌ יש להזין ולשמור פרטי EmailJS תחילה')
@@ -68,41 +86,33 @@ export default function EmailPanel() {
       toast('❌ יש להזין נושא וגוף המייל')
       return
     }
+    if (!recipients) {
+      toast('❌ יש ללחוץ "טען נמענים" תחילה')
+      return
+    }
 
     setSending(true)
-    setProgress('טוען רשימת משתמשים...')
+    setProgress(null)
 
-    try {
-      const snap = await getDocs(collection(db, 'users'))
-      const users = snap.docs
-        .map(d => d.data() as { email?: string; displayName?: string; username?: string })
-        .filter(u => u.email)
-
-      let sent = 0, failed = 0
-
-      for (const u of users) {
-        setProgress(`שולח ${sent + failed + 1} / ${users.length}...`)
-        try {
-          await emailjsSend(serviceId, templateId, publicKey, {
-            to_email: u.email!,
-            to_name: u.displayName || u.username || u.email!,
-            subject: subject.trim(),
-            message: body.trim(),
-          })
-          sent++
-        } catch {
-          failed++
-        }
+    let sent = 0, failed = 0
+    for (const u of recipients) {
+      setProgress(`שולח ${sent + failed + 1} / ${recipients.length}... (${u.email})`)
+      try {
+        await emailjsSend(serviceId, templateId, publicKey, {
+          to_email: u.email,
+          to_name: u.name,
+          subject: subject.trim(),
+          message: body.trim(),
+        })
+        sent++
+      } catch {
+        failed++
       }
-
-      setProgress(null)
-      toast(`✅ נשלח ל-${sent} משתמשים${failed ? ` · נכשל: ${failed}` : ''}`)
-    } catch (e: unknown) {
-      setProgress(null)
-      toast('❌ ' + (e instanceof Error ? e.message : String(e)))
-    } finally {
-      setSending(false)
     }
+
+    setProgress(null)
+    toast(`✅ נשלח ל-${sent} משתמשים${failed ? ` · נכשל: ${failed}` : ''}`)
+    setSending(false)
   }
 
   return (
@@ -131,6 +141,18 @@ export default function EmailPanel() {
         </div>
       </div>
 
+      {/* ⚠️ Critical template warning */}
+      <div className="mb-4 rounded-lg border border-[rgba(255,80,80,0.4)] bg-[rgba(255,80,80,0.07)] p-3 text-xs">
+        <div className="font-bold text-[var(--red)] mb-1">⚠️ חשוב: הגדרת שדה "To Email" בתבנית</div>
+        <p className="text-[var(--text2)] leading-relaxed">
+          בדשבורד EmailJS, תחת <strong className="text-[var(--text1)]">Email Templates → Edit Template → To Email</strong>,
+          חייב להיות רשום בדיוק:{' '}
+          <code className="rounded bg-[rgba(255,165,0,0.2)] px-1 text-[var(--orange)]">{'{{to_email}}'}</code>
+          <br />
+          אם השדה הזה מכיל כתובת קבועה (כמו כתובת המייל שלך) — כל המיילים יישלחו לאותה כתובת במקום לנמענים האמיתיים.
+        </p>
+      </div>
+
       {/* Email compose */}
       <div className="space-y-3">
         <div>
@@ -152,12 +174,38 @@ export default function EmailPanel() {
           />
         </div>
 
+        {/* Step 1: load & preview recipients */}
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--dark3)] p-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-[var(--text2)]">שלב 1 — טען ובדוק נמענים</span>
+            <Button variant="secondary" size="sm" onClick={handleLoadRecipients} disabled={loadingRecipients}>
+              {loadingRecipients ? '⏳' : '👥'} טען נמענים
+            </Button>
+          </div>
+          {recipients !== null && (
+            recipients.length === 0 ? (
+              <div className="text-xs text-[var(--red)]">לא נמצאו משתמשים עם כתובת מייל</div>
+            ) : (
+              <div className="space-y-0.5 max-h-40 overflow-y-auto">
+                {recipients.map(r => (
+                  <div key={r.email} className="text-xs text-[var(--text2)] flex gap-2">
+                    <span className="text-[var(--text1)]">{r.name}</span>
+                    <span className="opacity-60">{r.email}</span>
+                  </div>
+                ))}
+                <div className="mt-1 text-xs font-bold text-[var(--orange)]">סה״כ: {recipients.length} נמענים</div>
+              </div>
+            )
+          )}
+        </div>
+
         {progress && (
-          <div className="text-sm text-[var(--text2)]">⏳ {progress}</div>
+          <div className="text-xs text-[var(--text2)] break-all">⏳ {progress}</div>
         )}
 
-        <Button onClick={handleSend} disabled={sending}>
-          {sending ? '⏳ שולח...' : '📧 שלח לכל המשתמשים'}
+        {/* Step 2: send */}
+        <Button onClick={handleSend} disabled={sending || !recipients?.length}>
+          {sending ? '⏳ שולח...' : `📧 שלב 2 — שלח ל-${recipients?.length ?? '?'} משתמשים`}
         </Button>
       </div>
 
@@ -169,9 +217,9 @@ export default function EmailPanel() {
           <li>Email Services ← Add New Service (Gmail / Outlook)</li>
           <li>Email Templates ← Create New Template</li>
           <li>
-            הגדר בתבנית:
-            <ul className="list-disc list-inside mr-4 mt-0.5">
-              <li>To Email: <code className="text-[var(--orange)]">{"{{to_email}}"}</code></li>
+            הגדר בתבנית — <strong className="text-[var(--red)]">שימו לב לשדה "To Email"!</strong>
+            <ul className="list-disc list-inside mr-4 mt-0.5 space-y-0.5">
+              <li><strong>To Email:</strong> <code className="text-[var(--orange)]">{"{{to_email}}"}</code> ← חובה! בלי זה הכל הולך אליך</li>
               <li>Subject: <code className="text-[var(--orange)]">{"{{subject}}"}</code></li>
               <li>Body: <code className="text-[var(--orange)]">{"{{message}}"}</code></li>
             </ul>

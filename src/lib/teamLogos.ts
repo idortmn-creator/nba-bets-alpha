@@ -144,35 +144,58 @@ const ABBR: Record<string, string> = {
   'הורנטס': 'cha',
   'בולס': 'chi',
   'קבליירס': 'cle',
+  'קבאלירס': 'cle',
+  'קאבאלירס': 'cle',
   'קבס': 'cle',
+  'קאבס': 'cle',
   'מאברקס': 'dal',
   'מאוורקס': 'dal',
+  'מברקס': 'dal',
   'נאגטס': 'den',
   'פיסטונס': 'det',
   'ווריורס': 'gs',
+  'ווריירס': 'gs',
   'וורירס': 'gs',
+  'ורירס': 'gs',
   'רוקטס': 'hou',
   'פייסרס': 'ind',
+  'פיסרס': 'ind',
+  'פסיירס': 'ind',
   'קליפרס': 'lac',
   'לייקרס': 'lal',
   'גריזליס': 'mem',
+  'גריזלס': 'mem',
   'היט': 'mia',
   'באקס': 'mil',
   'וולבס': 'min',
   'פליקנס': 'no',
   'ניקס': 'ny',
+  'נייקס': 'ny',
   'תאנדר': 'okc',
+  'ת\'אנדר': 'okc',
   'מג\'יק': 'orl',
+  'מגיק': 'orl',
   'מאג\'יק': 'orl',
+  'מאגיק': 'orl',
   'סיקסרס': 'phi',
+  'סיקסרז': 'phi',
   'סאנס': 'phx',
+  'סאנז': 'phx',
   'בלייזרס': 'por',
+  'בלייזרז': 'por',
   'קינגס': 'sac',
+  'קינגז': 'sac',
   'ספארס': 'sa',
+  'ספרס': 'sa',
   'ראפטורס': 'tor',
+  'ראפטורז': 'tor',
   'רפטורס': 'tor',
   'ג\'אז': 'utah',
+  'גאז': 'utah',
+  'ג\'ז': 'utah',
   'וויזארדס': 'wsh',
+  'וויזארדז': 'wsh',
+  'ויזארדס': 'wsh',
   // Hebrew city/state names
   'אטלנטה': 'atl',
   'בוסטון': 'bos',
@@ -243,13 +266,22 @@ const ABBR: Record<string, string> = {
 
 export function getTeamLogoUrl(name: string): string | null {
   if (!name || name === '-') return null
-  const key = name.toLowerCase().trim()
+
+  // Normalize: lowercase + trim + collapse spaces + replace
+  // Hebrew geresh (׳ U+05F3) and typographic apostrophes with ASCII apostrophe
+  // so entries like "ג'אז" and "ג׳אז" both match the same ABBR key.
+  const normalize = (s: string) =>
+    s.toLowerCase().trim()
+      .replace(/[\u05F3\u2018\u2019\u02BC]/g, "'")
+      .replace(/\s+/g, ' ')
+
+  const key = normalize(name)
 
   // 1. Exact match
   const abbr = ABBR[key]
   if (abbr) return `https://a.espncdn.com/i/teamlogos/nba/500/${abbr}.png`
 
-  // 2. Word-by-word fallback — handles "OKC Thunder", "Golden State", etc.
+  // 2. Word-by-word fallback — handles "OKC Thunder", "Golden State", Hebrew nicknames, etc.
   for (const word of key.split(/[\s_-]+/)) {
     const wa = ABBR[word]
     if (wa) return `https://a.espncdn.com/i/teamlogos/nba/500/${wa}.png`
