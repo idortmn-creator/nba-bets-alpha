@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useLeague } from '@/hooks/useLeague'
 import { useLeagueStore } from '@/store/league.store'
+import { useAuthStore } from '@/store/auth.store'
 import LeagueHomeTab from './tabs/LeagueHomeTab'
 import LeaderboardTab from './tabs/LeaderboardTab'
 import BetsViewTab from './tabs/BetsViewTab'
@@ -10,10 +11,11 @@ import EnterBetsTab from './tabs/EnterBetsTab'
 import PreBetsTab from './tabs/PreBetsTab'
 import RulesTab from './tabs/RulesTab'
 import LiveResultsTab from './tabs/LiveResultsTab'
+import LeagueAdminTab from './tabs/LeagueAdminTab'
 import ProfileContent from '@/components/profile/ProfileContent'
 
-type Tab = 'home' | 'leaderboard' | 'bets' | 'enter-bets' | 'prebets' | 'rules' | 'profile' | 'live-results'
-type MobileTab = 'home' | 'standings' | 'bets' | 'my-bets' | 'live' | 'profile'
+type Tab = 'home' | 'leaderboard' | 'bets' | 'enter-bets' | 'prebets' | 'rules' | 'profile' | 'live-results' | 'league-admin'
+type MobileTab = 'home' | 'standings' | 'bets' | 'my-bets' | 'live' | 'league-admin' | 'profile'
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
@@ -25,7 +27,7 @@ function useIsMobile() {
   return isMobile
 }
 
-const DESKTOP_TABS: { key: Tab; label: string }[] = [
+const DESKTOP_TABS: { key: Tab; label: string; adminOnly?: boolean }[] = [
   { key: 'home',         label: '🏠 דף הבית' },
   { key: 'leaderboard',  label: '🏆 טבלה' },
   { key: 'bets',         label: '📋 הימורים' },
@@ -33,23 +35,27 @@ const DESKTOP_TABS: { key: Tab; label: string }[] = [
   { key: 'prebets',      label: '🏆 הימורים מוקדמים' },
   { key: 'live-results', label: '📅 תוצאות ומשחקים' },
   { key: 'rules',        label: '📖 שיטת הניקוד' },
+  { key: 'league-admin', label: '⚙️ ניהול ליגה', adminOnly: true },
 ]
 
-const MOBILE_TABS: { key: MobileTab; icon: string; label: string }[] = [
-  { key: 'home',      icon: '🏠', label: 'בית' },
-  { key: 'standings', icon: '🏆', label: 'טבלה' },
-  { key: 'bets',      icon: '📋', label: 'הימורים' },
-  { key: 'my-bets',   icon: '✍️', label: 'שלי' },
-  { key: 'live',      icon: '📅', label: 'משחקים' },
-  { key: 'profile',   icon: '👤', label: 'פרופיל' },
+const MOBILE_TABS: { key: MobileTab; icon: string; label: string; adminOnly?: boolean }[] = [
+  { key: 'home',         icon: '🏠', label: 'בית' },
+  { key: 'standings',    icon: '🏆', label: 'טבלה' },
+  { key: 'bets',         icon: '📋', label: 'הימורים' },
+  { key: 'my-bets',      icon: '✍️', label: 'שלי' },
+  { key: 'live',         icon: '📅', label: 'משחקים' },
+  { key: 'league-admin', icon: '⚙️', label: 'ניהול', adminOnly: true },
+  { key: 'profile',      icon: '👤', label: 'פרופיל' },
 ]
 
 export default function LeaguePage() {
   const { lid, tab: urlTab } = useParams<{ lid: string; tab?: string }>()
   const navigate = useNavigate()
   const { openLeague, closeLeague } = useLeague()
-  const leagueData = useLeagueStore((s) => s.currentLeagueData)
-  const isMobile = useIsMobile()
+  const leagueData  = useLeagueStore((s) => s.currentLeagueData)
+  const currentUser = useAuthStore((s) => s.currentUser)
+  const isMobile    = useIsMobile()
+  const isLeagueAdmin = !!leagueData && !!currentUser && leagueData.adminUid === currentUser.uid
 
   const [activeTab, setActiveTab] = useState<Tab>((urlTab as Tab) || 'home')
   const [betsSubTab, setBetsSubTab] = useState<'series' | 'prebets'>('series')
@@ -81,6 +87,7 @@ export default function LeaguePage() {
     if (activeTab === 'bets' || activeTab === 'prebets' || activeTab === 'rules') return 'bets'
     if (activeTab === 'enter-bets') return 'my-bets'
     if (activeTab === 'live-results') return 'live'
+    if (activeTab === 'league-admin') return 'league-admin'
     return 'profile'
   }
 
@@ -90,6 +97,7 @@ export default function LeaguePage() {
     else if (mt === 'bets') { switchTab('bets'); setBetsSubTab('series') }
     else if (mt === 'my-bets') { switchTab('enter-bets') }
     else if (mt === 'live') { switchTab('live-results') }
+    else if (mt === 'league-admin') { switchTab('league-admin') }
     else if (mt === 'profile') { setActiveTab('profile') }
   }
 
@@ -111,7 +119,7 @@ export default function LeaguePage() {
       {/* Desktop top nav — hidden on mobile */}
       <div className="desktop-nav-wrapper">
         <nav className="mb-3 flex flex-wrap gap-2">
-          {DESKTOP_TABS.map((t) => (
+          {DESKTOP_TABS.filter(t => !t.adminOnly || isLeagueAdmin).map((t) => (
             <button
               key={t.key}
               className={`main-nav-tab ${activeTab === t.key ? 'active' : ''}`}
@@ -148,13 +156,14 @@ export default function LeaguePage() {
 
       {activeTab === 'enter-bets'   && <EnterBetsTab />}
       {activeTab === 'prebets'      && <PreBetsTab />}
-      {activeTab === 'live-results' && <LiveResultsTab />}
+      {activeTab === 'live-results'  && <LiveResultsTab />}
+      {activeTab === 'league-admin' && <LeagueAdminTab />}
       {activeTab === 'rules'        && <RulesTab />}
       {activeTab === 'profile'      && <ProfileContent />}
 
       {/* Mobile bottom navigation bar */}
       <nav className="league-bottom-nav">
-        {MOBILE_TABS.map((t) => (
+        {MOBILE_TABS.filter(t => !t.adminOnly || isLeagueAdmin).map((t) => (
           <button
             key={t.key}
             className={`lbn-item ${mobileActiveTab === t.key ? 'active' : ''}`}

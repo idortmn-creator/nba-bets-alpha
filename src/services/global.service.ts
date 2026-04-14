@@ -187,6 +187,14 @@ export function getBonusStageKey(si: StageKey): string {
   return si === 0 || si === '0b' ? 'stage0' : `stage${si}`
 }
 
+export async function saveEmailJSSettings(serviceId: string, templateId: string, publicKey: string) {
+  await setDoc(doc(db, 'global', 'settings'), {
+    emailjsServiceId: serviceId,
+    emailjsTemplateId: templateId,
+    emailjsPublicKey: publicKey,
+  }, { merge: true })
+}
+
 export async function fetchESPNScores(dateVal: string) {
   const url = `https://corsproxy.io/?${encodeURIComponent(
     `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${dateVal}&limit=20`

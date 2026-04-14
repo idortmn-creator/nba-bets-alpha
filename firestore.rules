@@ -110,6 +110,11 @@ service cloud.firestore {
           // ③ A non-member (joining) may add themselves to members[]
           // and write their memberInfo entry — nothing else.
           || isJoiningLeague()
+
+          // ④ The league admin may remove a member (shrink members[],
+          // delete their memberInfo and bets entries).
+          // Core fields (adminUid, results, stageLocked, teams) are protected.
+          || isLeagueAdminRemovingMember()
       );
 
       // Nobody deletes leagues from the client.
@@ -138,6 +143,30 @@ service cloud.firestore {
           && request.resource.data.results == resource.data.results
           // stage locks must not change
           && request.resource.data.stageLocked == resource.data.stageLocked;
+    }
+
+    // ── League admin removing a member ───────────────────────────
+    // The league admin may remove any non-admin member:
+    //   - members[] shrinks (only removal, not addition)
+    //   - memberInfo and bets for the removed user are deleted
+    //   - adminUid, results, stageLocked, teams are unchanged
+    //   - admin remains in the members array after the operation
+    function isLeagueAdminRemovingMember() {
+      let uid = request.auth.uid;
+      let before = resource.data;
+      let after  = request.resource.data;
+      let changed = after.diff(before).affectedKeys();
+
+      return isLeagueAdmin(before)
+          && changed.hasOnly(['members', 'memberInfo', 'bets'])
+          && after.adminUid    == before.adminUid
+          && after.results     == before.results
+          && after.stageLocked == before.stageLocked
+          && after.teams       == before.teams
+          // Only removing members, never adding
+          && before.members.hasAll(after.members)
+          // Admin cannot remove themselves
+          && uid in after.members;
     }
 
     // ── Joining a league ─────────────────────────────────────────

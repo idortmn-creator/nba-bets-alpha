@@ -134,3 +134,18 @@ export async function removeUserFromLeague(lid: string, uid: string) {
   })
   await updateDoc(doc(db, 'users', uid), { leagues: arrayRemove(lid) })
 }
+
+/**
+ * League-admin variant: only updates the league doc.
+ * Does NOT update users/{uid}.leagues because Firestore rules
+ * prevent a league admin from writing to other users' docs.
+ * The removed user's leagues array is not cleaned up client-side;
+ * they will no longer appear as a member of the league.
+ */
+export async function removeLeagueMemberByAdmin(lid: string, uid: string) {
+  await updateDoc(doc(db, 'leagues', lid), {
+    members: arrayRemove(uid),
+    [`memberInfo.${uid}`]: deleteField(),
+    [`bets.${uid}`]: deleteField(),
+  })
+}
