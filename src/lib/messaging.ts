@@ -23,10 +23,6 @@ export async function initMessaging(uid: string): Promise<void> {
   if (typeof window === 'undefined') return
   if (!('Notification' in window)) return
   if (!('serviceWorker' in navigator)) return
-  if (VAPID_KEY === 'REPLACE_WITH_YOUR_VAPID_KEY') {
-    console.warn('[FCM] VAPID key not set — skipping push notification setup')
-    return
-  }
 
   try {
     const permission = await Notification.requestPermission()
@@ -58,7 +54,6 @@ export async function initMessaging(uid: string): Promise<void> {
  */
 export function setupForegroundListener(): () => void {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return () => {}
-  if (VAPID_KEY === 'REPLACE_WITH_YOUR_VAPID_KEY') return () => {}
 
   try {
     const messaging = getMessaging(app)
