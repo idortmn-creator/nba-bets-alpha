@@ -13,8 +13,9 @@ import LeagueManagementPanel from './panels/LeagueManagementPanel'
 import TiebreakerAdminPanel from './panels/TiebreakerAdminPanel'
 import EmailPanel from './panels/EmailPanel'
 import SubmissionStatusPanel from './panels/SubmissionStatusPanel'
+import PushNotificationPanel from './panels/PushNotificationPanel'
 
-type AdminTab = 'stages' | 'teams' | 'results' | 'bonus' | 'autolock' | 'espn' | 'nba' | 'leagues' | 'tiebreaker' | 'email' | 'submissions'
+type AdminTab = 'stages' | 'teams' | 'results' | 'bonus' | 'autolock' | 'espn' | 'nba' | 'leagues' | 'tiebreaker' | 'email' | 'submissions' | 'push'
 
 const TABS: { key: AdminTab; label: string }[] = [
   { key: 'stages',      label: '🔄 שלבים' },
@@ -25,6 +26,7 @@ const TABS: { key: AdminTab; label: string }[] = [
   { key: 'autolock',    label: '⏰ נעילה אוטו׳' },
   { key: 'submissions', label: '📋 סטטוס הגשות' },
   { key: 'email',       label: '📧 מיילים' },
+  { key: 'push',        label: '🔔 התראות' },
   { key: 'nba',         label: '🏀 NBA API' },
   { key: 'espn',        label: '📡 ESPN' },
   { key: 'leagues',     label: '🏟️ ליגות' },
@@ -68,6 +70,7 @@ export default function GlobalAdminPage() {
       {activeTab === 'espn'     && <ESPNPanel />}
       {activeTab === 'email'       && <EmailPanel />}
       {activeTab === 'submissions' && <SubmissionStatusPanel />}
+      {activeTab === 'push'        && <PushNotificationPanel />}
       {activeTab === 'leagues'  && (
         <>
           <LeagueManagementPanel />

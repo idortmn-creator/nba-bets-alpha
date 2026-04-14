@@ -6,3 +6,4 @@ initializeApp()
 export { syncTeams } from './syncTeams'
 export { syncResults, scheduledNBASync } from './syncResults'
 export { getLiveGames } from './liveGames'
+export { sendPushNotification } from './sendPushNotification'

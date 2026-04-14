@@ -1,6 +1,8 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { Toaster } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
+import { initMessaging, setupForegroundListener } from '@/lib/messaging'
 import { useAuthStore } from '@/store/auth.store'
 import { SUPER_ADMIN_UID } from '@/lib/constants'
 import Header from '@/components/layout/Header'
@@ -28,6 +30,13 @@ function BracketGuard({ children }: { children: React.ReactNode }) {
 
 function AppContent() {
   const { currentUser } = useAuth()
+
+  useEffect(() => {
+    if (!currentUser) return
+    initMessaging(currentUser.uid)
+    const unsub = setupForegroundListener()
+    return unsub
+  }, [currentUser?.uid])
 
   if (!currentUser) {
     return (
