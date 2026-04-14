@@ -43,7 +43,10 @@ export default function AutoLockPanel() {
 
   return (
     <Card>
-      <CardTitle>⏰ נעילה אוטומטית</CardTitle>
+      <CardTitle>⏰ שעות תחילת משחקים / נעילה אוטומטית</CardTitle>
+      <div className="mb-3 rounded-lg border border-[rgba(255,215,0,0.2)] bg-[rgba(255,215,0,0.05)] p-2.5 text-xs text-[var(--text2)] leading-relaxed">
+        <strong className="text-[var(--gold)]">שעת תחילת סדרה:</strong> בחר <em>סדרה</em> כסוג היעד והזן את שעת תחילת המשחק הראשון — הסדרה תינעל אוטומטית כשהמשחק יתחיל, וכל ההימורים יתגלו.
+      </div>
       <div className="mb-3 space-y-1.5">
         {Object.keys(locks).length === 0 ? (
           <div className="text-xs text-[var(--text2)]">אין נעילות אוטומטיות</div>

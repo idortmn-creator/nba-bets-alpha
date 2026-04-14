@@ -4,7 +4,7 @@ import { getRapidApiKey } from './secrets'
 import { SUPER_ADMIN_UID } from './constants'
 import { fetchSeasonGames, fetchGamesByDate, filterPlayoffGames } from './nbaApi'
 import type { NBAGame } from './nbaApi'
-import { buildResultsPayload } from './teamMap'
+import { buildResultsPayload, buildTeamsPayload } from './teamMap'
 
 type StageKeyInput = 0 | '0b' | 1 | 2 | 3 | 4
 
@@ -91,7 +91,7 @@ export const syncResults = functions.https.onCall(async (data, context) => {
 })
 
 export const scheduledNBASync = functions.pubsub
-  .schedule('30 23 * * *')
+  .schedule('0 * * * *')
   .timeZone('UTC')
   .onRun(async () => {
     const db = getFirestore()
@@ -109,8 +109,30 @@ export const scheduledNBASync = functions.pubsub
     if (stageIdx < 0) return
 
     const isLocked = (settings.stageLocked ?? [])[stageIdx] ?? false
-    if (isLocked) return
-
     const apiKey = getRapidApiKey()
-    await runSync(2025, currentStage as StageKeyInput, apiKey, false)
+
+    // 1. Sync teams — fetch all season games to detect new round matchups
+    try {
+      const allGames = await fetchSeasonGames(2025, apiKey)
+      const playoffGames = filterPlayoffGames(allGames, 2025)
+      const teamsPayload = buildTeamsPayload(playoffGames)
+      if (Object.keys(teamsPayload).length > 0) {
+        const updates: Record<string, unknown> = {}
+        for (const [stageKey, stageTeams] of Object.entries(teamsPayload)) {
+          updates[`teams.${stageKey}`] = stageTeams
+        }
+        await db.doc('global/settings').update(updates)
+      }
+    } catch (err) {
+      console.error('scheduledNBASync: team sync failed', err)
+    }
+
+    // 2. Sync results for current stage (skip if stage is fully locked)
+    if (!isLocked) {
+      try {
+        await runSync(2025, currentStage as StageKeyInput, apiKey, false)
+      } catch (err) {
+        console.error('scheduledNBASync: results sync failed', err)
+      }
+    }
   })

@@ -214,7 +214,7 @@ export default function NBAApiPanel() {
 
       {/* Scheduled sync note */}
       <div className="mt-4 rounded-lg bg-[var(--dark3)] p-2 text-xs text-[var(--text2)]">
-        ⏰ סנכרון אוטומטי פועל מדי יום בשעה 23:30 UTC (כל עוד השלב הנוכחי לא נעול)
+        ⏰ סנכרון אוטומטי פועל <strong>כל שעה</strong> — קבוצות ותוצאות מתרעננות מהAPI באופן אוטומטי (כל עוד השלב הנוכחי לא נעול)
       </div>
     </Card>
   )

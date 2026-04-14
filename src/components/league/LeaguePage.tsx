@@ -9,10 +9,11 @@ import BetsViewTab from './tabs/BetsViewTab'
 import EnterBetsTab from './tabs/EnterBetsTab'
 import PreBetsTab from './tabs/PreBetsTab'
 import RulesTab from './tabs/RulesTab'
+import LiveResultsTab from './tabs/LiveResultsTab'
 import ProfileContent from '@/components/profile/ProfileContent'
 
-type Tab = 'home' | 'leaderboard' | 'bets' | 'enter-bets' | 'prebets' | 'rules' | 'profile'
-type MobileTab = 'home' | 'standings' | 'bets' | 'my-bets' | 'rules' | 'profile'
+type Tab = 'home' | 'leaderboard' | 'bets' | 'enter-bets' | 'prebets' | 'rules' | 'profile' | 'live-results'
+type MobileTab = 'home' | 'standings' | 'bets' | 'my-bets' | 'live' | 'profile'
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
@@ -25,12 +26,13 @@ function useIsMobile() {
 }
 
 const DESKTOP_TABS: { key: Tab; label: string }[] = [
-  { key: 'home',        label: '🏠 דף הבית' },
-  { key: 'leaderboard', label: '🏆 טבלה' },
-  { key: 'bets',        label: '📋 הימורים' },
-  { key: 'enter-bets',  label: '✍️ הימורים שלי' },
-  { key: 'prebets',     label: '🏆 הימורים מוקדמים' },
-  { key: 'rules',       label: '📖 שיטת הניקוד' },
+  { key: 'home',         label: '🏠 דף הבית' },
+  { key: 'leaderboard',  label: '🏆 טבלה' },
+  { key: 'bets',         label: '📋 הימורים' },
+  { key: 'enter-bets',   label: '✍️ הימורים שלי' },
+  { key: 'prebets',      label: '🏆 הימורים מוקדמים' },
+  { key: 'live-results', label: '📺 תוצאות היום' },
+  { key: 'rules',        label: '📖 שיטת הניקוד' },
 ]
 
 const MOBILE_TABS: { key: MobileTab; icon: string; label: string }[] = [
@@ -38,6 +40,7 @@ const MOBILE_TABS: { key: MobileTab; icon: string; label: string }[] = [
   { key: 'standings', icon: '🏆', label: 'טבלה' },
   { key: 'bets',      icon: '📋', label: 'הימורים' },
   { key: 'my-bets',   icon: '✍️', label: 'שלי' },
+  { key: 'live',      icon: '📺', label: 'חי' },
   { key: 'profile',   icon: '👤', label: 'פרופיל' },
 ]
 
@@ -77,6 +80,7 @@ export default function LeaguePage() {
     if (activeTab === 'leaderboard') return 'standings'
     if (activeTab === 'bets' || activeTab === 'prebets' || activeTab === 'rules') return 'bets'
     if (activeTab === 'enter-bets') return 'my-bets'
+    if (activeTab === 'live-results') return 'live'
     return 'profile'
   }
 
@@ -85,6 +89,7 @@ export default function LeaguePage() {
     else if (mt === 'standings') { switchTab('leaderboard') }
     else if (mt === 'bets') { switchTab('bets'); setBetsSubTab('series') }
     else if (mt === 'my-bets') { switchTab('enter-bets') }
+    else if (mt === 'live') { switchTab('live-results') }
     else if (mt === 'profile') { setActiveTab('profile') }
   }
 
@@ -141,10 +146,11 @@ export default function LeaguePage() {
         </>
       )}
 
-      {activeTab === 'enter-bets' && <EnterBetsTab />}
-      {activeTab === 'prebets'    && <PreBetsTab />}
-      {activeTab === 'rules'      && <RulesTab />}
-      {activeTab === 'profile'    && <ProfileContent />}
+      {activeTab === 'enter-bets'   && <EnterBetsTab />}
+      {activeTab === 'prebets'      && <PreBetsTab />}
+      {activeTab === 'live-results' && <LiveResultsTab />}
+      {activeTab === 'rules'        && <RulesTab />}
+      {activeTab === 'profile'      && <ProfileContent />}
 
       {/* Mobile bottom navigation bar */}
       <nav className="league-bottom-nav">
