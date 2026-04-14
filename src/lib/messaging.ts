@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 // ── Replace this with your VAPID public key from:
 //    Firebase Console → Project Settings → Cloud Messaging
 //    → Web Push certificates → Generate key pair
-const VAPID_KEY = 'REPLACE_WITH_YOUR_VAPID_KEY'
+const VAPID_KEY = 'BDn9g14cbhTesCmJUTDT8GHRBfCn4cZ7Iu0XD9DyjAilP1azMb7tnDEU7yQ4uWN9L5Vj2d1FJ5RguwFQ8VUQhD8'
 
 let _initialized = false
 
