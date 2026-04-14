@@ -82,8 +82,10 @@ export default function LiveResultsTab() {
       const data = res.data as { ok: boolean; games: LiveGame[] }
       setGames(data.games ?? [])
       setLastRefresh(new Date())
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'שגיאה בטעינת המשחקים')
+    } catch (e: unknown) {
+      const err = e as { code?: string; message?: string }
+      const msg = err.message ?? err.code ?? String(e)
+      setError(msg)
     } finally {
       setLoading(false)
     }

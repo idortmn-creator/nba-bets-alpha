@@ -20,25 +20,16 @@ function filterPlayoffByDate(games: NBAGame[], season: number): NBAGame[] {
  * Used by the Live Results tab in the frontend.
  */
 export const getLiveGames = functions.https.onCall(async (data, _context) => {
-  const { season = 2025, date } = (data ?? {}) as { season?: number; date?: string }
-
-  let apiKey: string
   try {
-    apiKey = getRapidApiKey()
-  } catch (e) {
-    throw new functions.https.HttpsError('failed-precondition', 'RAPIDAPI_KEY not configured on server')
-  }
-
-  const targetDate = date ?? new Date().toISOString().slice(0, 10)
-
-  let allGames
-  try {
-    allGames = await fetchGamesByDate(targetDate, season, apiKey)
+    const { season = 2025, date } = (data ?? {}) as { season?: number; date?: string }
+    const apiKey = getRapidApiKey()
+    const targetDate = date ?? new Date().toISOString().slice(0, 10)
+    const allGames = await fetchGamesByDate(targetDate, season, apiKey)
+    const playoffGames = filterPlayoffByDate(allGames, season)
+    return { ok: true, games: playoffGames, date: targetDate }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
-    throw new functions.https.HttpsError('unavailable', `RapidAPI call failed: ${msg}`)
+    console.error('[getLiveGames] error:', msg)
+    throw new functions.https.HttpsError('internal', msg)
   }
-
-  const playoffGames = filterPlayoffByDate(allGames, season)
-  return { ok: true, games: playoffGames, date: targetDate }
 })
