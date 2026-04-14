@@ -201,6 +201,9 @@ const ABBR: Record<string, string> = {
   'בוסטון': 'bos',
   'ברוקלין': 'bkn',
   'שרלוט': 'cha',
+  'שארלוז': 'cha',
+  'שארלוט': 'cha',
+  'שארלט': 'cha',
   'שיקגו': 'chi',
   'קליבלנד': 'cle',
   'דאלאס': 'dal',
@@ -214,6 +217,7 @@ const ABBR: Record<string, string> = {
   'מילווקי': 'mil',
   'מינסוטה': 'min',
   'אורלנדו': 'orl',
+  'אורלאנדו': 'orl',
   'פילדלפיה': 'phi',
   'פניקס': 'phx',
   'פורטלנד': 'por',
@@ -272,7 +276,8 @@ export function getTeamLogoUrl(name: string): string | null {
   // so entries like "ג'אז" and "ג׳אז" both match the same ABBR key.
   const normalize = (s: string) =>
     s.toLowerCase().trim()
-      .replace(/[\u05F3\u2018\u2019\u02BC]/g, "'")
+      .replace(/[\u05F3\u2018\u2019\u02BC]/g, "'")     // Hebrew geresh + smart quotes → apostrophe
+      .replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '') // strip invisible RTL/Unicode marks
       .replace(/\s+/g, ' ')
 
   const key = normalize(name)
