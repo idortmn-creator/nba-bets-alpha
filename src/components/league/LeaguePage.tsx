@@ -31,7 +31,7 @@ const DESKTOP_TABS: { key: Tab; label: string }[] = [
   { key: 'bets',         label: '📋 הימורים' },
   { key: 'enter-bets',   label: '✍️ הימורים שלי' },
   { key: 'prebets',      label: '🏆 הימורים מוקדמים' },
-  { key: 'live-results', label: '📺 תוצאות היום' },
+  { key: 'live-results', label: '📅 תוצאות ומשחקים' },
   { key: 'rules',        label: '📖 שיטת הניקוד' },
 ]
 
@@ -40,7 +40,7 @@ const MOBILE_TABS: { key: MobileTab; icon: string; label: string }[] = [
   { key: 'standings', icon: '🏆', label: 'טבלה' },
   { key: 'bets',      icon: '📋', label: 'הימורים' },
   { key: 'my-bets',   icon: '✍️', label: 'שלי' },
-  { key: 'live',      icon: '📺', label: 'חי' },
+  { key: 'live',      icon: '📅', label: 'משחקים' },
   { key: 'profile',   icon: '👤', label: 'פרופיל' },
 ]
 

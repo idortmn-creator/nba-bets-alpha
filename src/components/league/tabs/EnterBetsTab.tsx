@@ -14,11 +14,23 @@ import { STAGE_MATCHES, STAGE_KEYS, GAPS, PREBETS } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
 import { TeamName } from '@/components/ui/TeamName'
 
+function formatSeriesTime(ts: number): string {
+  const d = new Date(ts)
+  const date = d.toLocaleDateString('en-US', {
+    weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Jerusalem',
+  })
+  const time = d.toLocaleTimeString('en-US', {
+    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Jerusalem',
+  })
+  return `${date}, ${time} IL`
+}
+
 export default function EnterBetsTab() {
   const leagueData = useLeagueStore((s) => s.currentLeagueData)
   const currentUser = useAuthStore((s) => s.currentUser)
   const { getGlobal, canBetOnStage, isSeriesLocked, isBonusLocked, isSingleBonusLocked, getTeams, teamLabel, getPlayinFinalTeams, getBonusBets, isPreBetsLocked } = useGlobalHelpers()
   const tiebreakerQuestion = getGlobal('tiebreakerQuestion', '') as string
+  const autoLocks = getGlobal('autoLocks', {} as Record<string, number>)
   const [stage, setStage] = useState<StageKey>(0)
   const [cbd, setCbd] = useState<Record<string, string>>({})
 
@@ -118,9 +130,9 @@ export default function EnterBetsTab() {
         <>
           <Separator />
           {(stage === 0 || stage === '0b') ? (
-            <PlayinForm stage={stage} matches={matches} cbd={cbd} pick={pick} getTeams={getTeams} getPlayinFinalTeams={getPlayinFinalTeams} isSeriesLocked={isSeriesLocked} />
+            <PlayinForm stage={stage} matches={matches} cbd={cbd} pick={pick} getTeams={getTeams} getPlayinFinalTeams={getPlayinFinalTeams} isSeriesLocked={isSeriesLocked} autoLocks={autoLocks} />
           ) : (
-            <SeriesForm stage={stage} matches={matches} cbd={cbd} pick={pick} getTeams={getTeams} isSeriesLocked={isSeriesLocked} />
+            <SeriesForm stage={stage} matches={matches} cbd={cbd} pick={pick} getTeams={getTeams} isSeriesLocked={isSeriesLocked} autoLocks={autoLocks} />
           )}
 
           {stage === 0 && tiebreakerQuestion && (
@@ -186,7 +198,7 @@ function TiebreakerForm({ question, value, onChange }: { question: string; value
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, isSeriesLocked }: any) {
+function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, isSeriesLocked, autoLocks }: any) {
   return (
     <div>
       <CardTitle>🎯 בחר מנצחת</CardTitle>
@@ -194,6 +206,7 @@ function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, 
         let t1: string, t2: string
         if (stage === '0b') { const ft = getPlayinFinalTeams(m.conf); t1 = ft.home; t2 = ft.away }
         else { const t = getTeams(stage, m.key); t1 = t.home || 'קבוצה 1'; t2 = t.away || 'קבוצה 2' }
+        const lockTs: number | undefined = autoLocks?.[`${stage}_${m.key}`]
         if (isSeriesLocked(stage, m.key)) {
           return (
             <div key={m.key} className="playin-card opacity-50 pointer-events-none">
@@ -205,6 +218,11 @@ function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, 
         return (
           <div key={m.key} className="playin-card">
             <div className="match-label">🏀 {t1 && t2 ? `${t1} מול ${t2}` : m.label}</div>
+            {lockTs && (
+              <div className="text-[0.68rem] text-[var(--text2)] mb-1 pr-1">
+                🕐 {formatSeriesTime(lockTs)}
+              </div>
+            )}
             <div className="team-btns">
               <button className={`team-btn ${cbd[m.key] === t1 ? 'selected' : ''}`} onClick={() => pick(m.key, t1)}><TeamName name={t1} size={28} vertical /></button>
               <button className={`team-btn ${cbd[m.key] === t2 ? 'selected' : ''}`} onClick={() => pick(m.key, t2)}><TeamName name={t2} size={28} vertical /></button>
@@ -217,19 +235,25 @@ function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, 
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function SeriesForm({ stage, matches, cbd, pick, getTeams, isSeriesLocked }: any) {
+function SeriesForm({ stage, matches, cbd, pick, getTeams, isSeriesLocked, autoLocks }: any) {
   return (
     <div>
       <CardTitle>🎯 בחר תוצאה</CardTitle>
       {matches.map((m: any) => {
         const t = getTeams(stage, m.key)
         const home = t.home || 'ביתית', away = t.away || 'אורחת'
+        const lockTs: number | undefined = autoLocks?.[`${stage}_${m.key}`]
         if (isSeriesLocked(stage, m.key)) {
           return <div key={m.key} className="matchup-bet-card opacity-50 pointer-events-none"><div className="match-label">🏀 {home} מול {away} 🔒</div><div className="p-2 text-center text-sm text-[var(--text2)]">סדרה זו ננעלה</div></div>
         }
         return (
           <div key={m.key} className="matchup-bet-card">
             <div className="match-label">🏀 {home && away ? `${home} מול ${away}` : m.label}</div>
+            {lockTs && (
+              <div className="text-[0.68rem] text-[var(--text2)] mb-2 pr-1">
+                🕐 {formatSeriesTime(lockTs)}
+              </div>
+            )}
             <div className="mt-2 flex gap-2.5">
               <div className="flex flex-1 flex-col gap-1 rounded-lg border border-[var(--blue)]/15 bg-[var(--blue)]/5 p-2">
                 <div className="mb-0.5 text-center text-[0.7rem] font-bold text-[var(--blue)]"><TeamName name={home} size={16} /> 🏠</div>

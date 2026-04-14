@@ -1,8 +1,12 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '@/lib/firebase'
+import { useGlobalStore } from '@/store/global.store'
+import { STAGE_KEYS, STAGE_SHORT } from '@/lib/constants'
+import type { StageKey } from '@/lib/constants'
+import { TeamName } from '@/components/ui/TeamName'
 
-// ── Types (mirrors functions/src/nbaApi.ts NBAGame) ─────────────────────────
+// ── Types ────────────────────────────────────────────────────────────────────
 
 interface LiveGame {
   id: number
@@ -45,20 +49,61 @@ function translatePeriod(long: string): string {
     'Q4': 'רבע 4', '4th Qtr': 'רבע 4',
     'Half Time': 'הפסקה', 'Halftime': 'הפסקה',
     'Over Time': 'הארכה', 'OT': 'הארכה',
-    'In Play': 'חי',
-    'Finished': 'סופי',
-    'Not Started': 'טרם החל',
-    'Scheduled': 'מתוכנן',
+    'In Play': 'חי', 'Finished': 'סופי',
+    'Not Started': 'טרם החל', 'Scheduled': 'מתוכנן',
   }
   return map[long] ?? long
 }
 
-function gameTime(dateStr: string): string {
+function gameTimeIL(dateStr: string): string {
   return new Date(dateStr).toLocaleTimeString('he-IL', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Asia/Jerusalem',
+    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jerusalem',
   })
+}
+
+function formatDateHeader(dateStr: string): string {
+  const today = new Date()
+  const todayStr = today.toISOString().slice(0, 10)
+  const yesterdayStr = new Date(today.getTime() - 86400000).toISOString().slice(0, 10)
+  const tomorrowStr  = new Date(today.getTime() + 86400000).toISOString().slice(0, 10)
+  const day2Str      = new Date(today.getTime() + 2 * 86400000).toISOString().slice(0, 10)
+
+  if (dateStr === todayStr)     return 'היום'
+  if (dateStr === yesterdayStr) return 'אתמול'
+  if (dateStr === tomorrowStr)  return 'מחר'
+  if (dateStr === day2Str)      return 'מחרתיים'
+
+  return new Date(dateStr + 'T12:00:00Z').toLocaleDateString('he-IL', {
+    weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC',
+  })
+}
+
+function getDateRange(): string[] {
+  const today = new Date()
+  return [-1, 0, 1, 2].map((offset) => {
+    const d = new Date(today)
+    d.setDate(d.getDate() + offset)
+    return d.toISOString().slice(0, 10)
+  })
+}
+
+/** Returns ms until the next scheduled refresh at 06:00 or 08:00 Israel time. */
+function getNextRefreshDelayMs(): number {
+  const now = new Date()
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Jerusalem',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(now)
+
+  const h = parseInt(parts.find(p => p.type === 'hour')!.value)
+  const m = parseInt(parts.find(p => p.type === 'minute')!.value)
+  const nowMinutes = h * 60 + m
+
+  for (const rt of [6 * 60, 8 * 60]) {
+    if (nowMinutes < rt) return (rt - nowMinutes) * 60 * 1000
+  }
+  // Past 08:00 IL — next refresh is tomorrow at 06:00
+  return (24 * 60 - nowMinutes + 6 * 60) * 60 * 1000
 }
 
 function sortGames(games: LiveGame[]): LiveGame[] {
@@ -69,23 +114,36 @@ function sortGames(games: LiveGame[]): LiveGame[] {
 // ── Component ────────────────────────────────────────────────────────────────
 
 export default function LiveResultsTab() {
-  const [games, setGames] = useState<LiveGame[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [gamesByDate, setGamesByDate] = useState<Record<string, LiveGame[]>>({})
+  const [loading, setLoading]         = useState(false)
+  const [error, setError]             = useState<string | null>(null)
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const globalData   = useGlobalStore(s => s.globalData)
+  const currentStage = (globalData?.currentStage ?? 0) as StageKey
+  const stageIdx     = STAGE_KEYS.indexOf(currentStage)
+  const stageName    = stageIdx >= 0 ? STAGE_SHORT[stageIdx] : 'פלייאוף'
 
   const loadGames = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await getLiveGamesFn({ season: 2025 })
-      const data = res.data as { ok: boolean; games: LiveGame[]; error?: string }
-      if (!data.ok) {
-        setError(data.error ?? 'שגיאה לא ידועה')
-      } else {
-        setGames(data.games ?? [])
-        setLastRefresh(new Date())
-      }
+      const dates = getDateRange()
+      const results: Record<string, LiveGame[]> = {}
+
+      await Promise.all(dates.map(async (date) => {
+        try {
+          const res  = await getLiveGamesFn({ season: 2025, date })
+          const data = res.data as { ok: boolean; games: LiveGame[]; error?: string }
+          if (data.ok && data.games?.length) results[date] = data.games
+        } catch {
+          // skip failed date silently
+        }
+      }))
+
+      setGamesByDate(results)
+      setLastRefresh(new Date())
     } catch (e: unknown) {
       const err = e as { code?: string; message?: string }
       setError(err.message ?? err.code ?? String(e))
@@ -94,20 +152,28 @@ export default function LiveResultsTab() {
     }
   }, [])
 
-  // Initial load + auto-refresh every 5 minutes
-  useEffect(() => {
-    loadGames()
-    const interval = setInterval(loadGames, 5 * 60 * 1000)
-    return () => clearInterval(interval)
+  const scheduleNextRefresh = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      loadGames()
+      scheduleNextRefresh()
+    }, getNextRefreshDelayMs())
   }, [loadGames])
 
-  const sorted = sortGames(games)
+  useEffect(() => {
+    loadGames()
+    scheduleNextRefresh()
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [loadGames, scheduleNextRefresh])
+
+  const datesWithGames = getDateRange().filter(d => gamesByDate[d]?.length)
+  const hasGames = datesWithGames.length > 0
 
   return (
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <div className="text-sm font-bold text-[var(--orange)]">📺 תוצאות היום — פלייאוף</div>
+        <div className="text-sm font-bold text-[var(--orange)]">📅 תוצאות ומשחקים קרובים</div>
         <div className="flex items-center gap-2">
           {lastRefresh && (
             <span className="text-xs text-[var(--text2)]">
@@ -131,134 +197,137 @@ export default function LiveResultsTab() {
         </div>
       )}
 
-      {/* Loading skeleton */}
-      {loading && games.length === 0 && (
+      {/* Loading */}
+      {loading && !hasGames && (
         <div className="flex items-center justify-center py-12">
           <div className="spinner" />
         </div>
       )}
 
       {/* Empty state */}
-      {!loading && games.length === 0 && !error && (
+      {!loading && !hasGames && !error && (
         <div className="py-12 text-center text-[var(--text2)] text-sm">
-          אין משחקי פלייאוף היום
+          אין משחקי פלייאוף בטווח הקרוב
         </div>
       )}
 
-      {/* Games */}
-      <div className="space-y-3">
-        {sorted.map((game) => {
-          const isLive     = game.status.short === 2
-          const isFinished = game.status.short === 3
-          const hp = game.scores.home.points
-          const ap = game.scores.visitors.points
-          const hasScore   = hp !== null && ap !== null
-          const homeLeads  = hasScore && hp! > ap!
-          const awayLeads  = hasScore && ap! > hp!
-          const hw = game.scores.home.series?.win ?? 0
-          const aw = game.scores.visitors.series?.win ?? 0
-          const hasSeriesRecord = hw > 0 || aw > 0
-
-          return (
-            <div
-              key={game.id}
-              className={`rounded-2xl border p-4 transition-colors ${
-                isLive
-                  ? 'border-[rgba(0,220,100,0.35)] bg-[rgba(0,220,100,0.04)]'
-                  : 'border-[var(--card-border)] bg-[var(--card-bg)]'
-              }`}
-            >
-              {/* Status + meta row */}
-              <div className="flex items-center justify-between mb-3">
-                <span
-                  className="text-[0.62rem] font-bold tracking-wider px-2 py-0.5 rounded-full"
-                  style={{
-                    color: isLive ? 'var(--green)' : isFinished ? 'var(--text2)' : 'var(--orange)',
-                    background: isLive
-                      ? 'rgba(0,220,100,0.15)'
-                      : isFinished
-                      ? 'rgba(255,255,255,0.06)'
-                      : 'rgba(255,165,0,0.15)',
-                  }}
-                >
-                  {isLive && <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--green)] mr-1 animate-pulse" />}
-                  {statusLabel(game)}
-                </span>
-
-                <div className="flex items-center gap-3 text-xs text-[var(--text2)]">
-                  {!isLive && !isFinished && (
-                    <span>{gameTime(game.date.start)}</span>
-                  )}
-                  {hasSeriesRecord && (
-                    <span>
-                      סדרה: {game.teams.home.nickname} {hw}–{aw} {game.teams.visitors.nickname}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Teams + Score */}
-              <div className="flex items-center gap-2">
-                {/* Home */}
-                <div className="flex-1 min-w-0">
-                  <div
-                    className={`font-bold text-sm truncate ${
-                      homeLeads ? 'text-[var(--text1)]' : hasScore ? 'text-[var(--text2)]' : 'text-[var(--text1)]'
-                    }`}
-                  >
-                    {game.teams.home.name}
-                  </div>
-                  {hasSeriesRecord && (
-                    <div className="text-[0.6rem] text-[var(--text2)] mt-0.5">{hw} נצחונות</div>
-                  )}
-                </div>
-
-                {/* Score / vs */}
-                <div className="flex-shrink-0 text-center px-2">
-                  {hasScore ? (
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`text-2xl font-oswald font-bold leading-none ${homeLeads ? 'text-[var(--orange)]' : 'text-[var(--text2)]'}`}
-                      >
-                        {hp}
-                      </span>
-                      <span className="text-[var(--text2)] text-xs">—</span>
-                      <span
-                        className={`text-2xl font-oswald font-bold leading-none ${awayLeads ? 'text-[var(--orange)]' : 'text-[var(--text2)]'}`}
-                      >
-                        {ap}
-                      </span>
-                    </div>
-                  ) : (
-                    <span className="text-[var(--text2)] text-sm font-bold">מול</span>
-                  )}
-                </div>
-
-                {/* Away */}
-                <div className="flex-1 min-w-0 text-end">
-                  <div
-                    className={`font-bold text-sm truncate ${
-                      awayLeads ? 'text-[var(--text1)]' : hasScore ? 'text-[var(--text2)]' : 'text-[var(--text1)]'
-                    }`}
-                  >
-                    {game.teams.visitors.name}
-                  </div>
-                  {hasSeriesRecord && (
-                    <div className="text-[0.6rem] text-[var(--text2)] mt-0.5">{aw} נצחונות</div>
-                  )}
-                </div>
-              </div>
+      {/* Games grouped by date */}
+      <div className="space-y-5">
+        {datesWithGames.map((date) => (
+          <div key={date}>
+            {/* Date header */}
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-sm font-bold text-[var(--text1)]">
+                {formatDateHeader(date)}
+              </span>
+              <span className="text-[0.6rem] font-bold tracking-wider px-2 py-0.5 rounded-full bg-[rgba(255,165,0,0.15)] text-[var(--orange)]">
+                {stageName}
+              </span>
             </div>
-          )
-        })}
+
+            <div className="space-y-2">
+              {sortGames(gamesByDate[date]).map((game) => (
+                <GameCard key={game.id} game={game} />
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Footer note */}
-      {games.length > 0 && (
+      {hasGames && (
         <div className="mt-4 text-xs text-[var(--text2)] text-center">
-          מתרענן אוטומטית כל 5 דקות
+          מתרענן אוטומטית בשעות 06:00 ו-08:00 (שעון ישראל)
         </div>
       )}
+    </div>
+  )
+}
+
+// ── GameCard sub-component ────────────────────────────────────────────────────
+
+function GameCard({ game }: { game: LiveGame }) {
+  const isLive     = game.status.short === 2
+  const isFinished = game.status.short === 3
+  const hp = game.scores.home.points
+  const ap = game.scores.visitors.points
+  const hasScore  = hp !== null && ap !== null
+  const homeLeads = hasScore && hp! > ap!
+  const awayLeads = hasScore && ap! > hp!
+
+  return (
+    <div
+      className={`rounded-2xl border p-3 transition-colors ${
+        isLive
+          ? 'border-[rgba(0,220,100,0.35)] bg-[rgba(0,220,100,0.04)]'
+          : 'border-[var(--card-border)] bg-[var(--card-bg)]'
+      }`}
+    >
+      {/* Status + time row */}
+      <div className="flex items-center justify-between mb-2">
+        <span
+          className="text-[0.62rem] font-bold tracking-wider px-2 py-0.5 rounded-full"
+          style={{
+            color: isLive ? 'var(--green)' : isFinished ? 'var(--text2)' : 'var(--orange)',
+            background: isLive
+              ? 'rgba(0,220,100,0.15)'
+              : isFinished
+              ? 'rgba(255,255,255,0.06)'
+              : 'rgba(255,165,0,0.15)',
+          }}
+        >
+          {isLive && (
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--green)] mr-1 animate-pulse" />
+          )}
+          {statusLabel(game)}
+        </span>
+
+        {!isLive && !isFinished && (
+          <span className="text-xs text-[var(--text2)]">{gameTimeIL(game.date.start)}</span>
+        )}
+      </div>
+
+      {/* Teams + Score */}
+      <div className="flex items-center gap-2">
+        {/* Home */}
+        <div className="flex-1 min-w-0">
+          <div
+            className={`text-sm font-bold ${
+              homeLeads ? 'text-[var(--text1)]' : hasScore ? 'text-[var(--text2)]' : 'text-[var(--text1)]'
+            }`}
+          >
+            <TeamName name={game.teams.home.name} size={16} />
+          </div>
+        </div>
+
+        {/* Score / vs */}
+        <div className="flex-shrink-0 text-center px-1">
+          {hasScore ? (
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`text-2xl font-oswald font-bold leading-none ${homeLeads ? 'text-[var(--orange)]' : 'text-[var(--text2)]'}`}
+              >{hp}</span>
+              <span className="text-[var(--text2)] text-xs">—</span>
+              <span
+                className={`text-2xl font-oswald font-bold leading-none ${awayLeads ? 'text-[var(--orange)]' : 'text-[var(--text2)]'}`}
+              >{ap}</span>
+            </div>
+          ) : (
+            <span className="text-[var(--text2)] text-sm font-bold">מול</span>
+          )}
+        </div>
+
+        {/* Away */}
+        <div className="flex-1 min-w-0 text-end">
+          <div
+            className={`text-sm font-bold ${
+              awayLeads ? 'text-[var(--text1)]' : hasScore ? 'text-[var(--text2)]' : 'text-[var(--text1)]'
+            }`}
+          >
+            <TeamName name={game.teams.visitors.name} size={16} />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
