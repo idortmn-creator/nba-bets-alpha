@@ -65,6 +65,16 @@ async function fetchScheduleRaw(
 
   const data = await resp.json() as { schedule?: Record<string, ScheduleGame[]> }
   const schedule = data.schedule ?? {}
+
+  // When a specific day was requested, only return games for that exact date key
+  // (the API sometimes returns multiple date keys in a single response, which causes
+  // duplicates when the caller fetches consecutive dates)
+  if (day !== null) {
+    const dateKey = `${year}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`
+    return schedule[dateKey] ?? []
+  }
+
+  // Full-month fetch (day === null) — flatten all date keys
   const games: ScheduleGame[] = []
   for (const dayGames of Object.values(schedule)) {
     if (Array.isArray(dayGames)) games.push(...dayGames)

@@ -210,14 +210,14 @@ function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, 
         if (isSeriesLocked(stage, m.key)) {
           return (
             <div key={m.key} className="playin-card opacity-50 pointer-events-none">
-              <div className="match-label">🏀 {t1 && t2 ? `${t1} מול ${t2}` : m.label} 🔒</div>
+              <div className="match-label">🏀 {t1 && t2 ? <><TeamName name={t1} size={14} /> מול <TeamName name={t2} size={14} /></> : m.label} 🔒</div>
               <div className="p-2 text-center text-sm text-[var(--text2)]">משחק זה ננעל</div>
             </div>
           )
         }
         return (
           <div key={m.key} className="playin-card">
-            <div className="match-label">🏀 {t1 && t2 ? `${t1} מול ${t2}` : m.label}</div>
+            <div className="match-label">🏀 {t1 && t2 ? <><TeamName name={t1} size={14} /> מול <TeamName name={t2} size={14} /></> : m.label}</div>
             {lockTs && (
               <div className="text-[0.68rem] text-[var(--text2)] mb-1 pr-1">
                 🕐 {formatSeriesTime(lockTs)}
@@ -244,11 +244,11 @@ function SeriesForm({ stage, matches, cbd, pick, getTeams, isSeriesLocked, autoL
         const home = t.home || 'ביתית', away = t.away || 'אורחת'
         const lockTs: number | undefined = autoLocks?.[`${stage}_${m.key}`]
         if (isSeriesLocked(stage, m.key)) {
-          return <div key={m.key} className="matchup-bet-card opacity-50 pointer-events-none"><div className="match-label">🏀 {home} מול {away} 🔒</div><div className="p-2 text-center text-sm text-[var(--text2)]">סדרה זו ננעלה</div></div>
+          return <div key={m.key} className="matchup-bet-card opacity-50 pointer-events-none"><div className="match-label">🏀 <TeamName name={home} size={14} /> מול <TeamName name={away} size={14} /> 🔒</div><div className="p-2 text-center text-sm text-[var(--text2)]">סדרה זו ננעלה</div></div>
         }
         return (
           <div key={m.key} className="matchup-bet-card">
-            <div className="match-label">🏀 {home && away ? `${home} מול ${away}` : m.label}</div>
+            <div className="match-label">🏀 {home && away ? <><TeamName name={home} size={14} /> מול <TeamName name={away} size={14} /></> : m.label}</div>
             {lockTs && (
               <div className="text-[0.68rem] text-[var(--text2)] mb-2 pr-1">
                 🕐 {formatSeriesTime(lockTs)}

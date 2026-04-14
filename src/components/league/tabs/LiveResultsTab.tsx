@@ -61,17 +61,19 @@ function gameTimeIL(dateStr: string): string {
   })
 }
 
+function toILDate(d: Date): string {
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })
+}
+
 function formatDateHeader(dateStr: string): string {
-  const today = new Date()
-  const todayStr = today.toISOString().slice(0, 10)
-  const yesterdayStr = new Date(today.getTime() - 86400000).toISOString().slice(0, 10)
-  const tomorrowStr  = new Date(today.getTime() + 86400000).toISOString().slice(0, 10)
-  const day2Str      = new Date(today.getTime() + 2 * 86400000).toISOString().slice(0, 10)
+  const now = new Date()
+  const todayStr     = toILDate(now)
+  const yesterdayStr = toILDate(new Date(now.getTime() - 86400000))
+  const tomorrowStr  = toILDate(new Date(now.getTime() + 86400000))
 
   if (dateStr === todayStr)     return 'היום'
   if (dateStr === yesterdayStr) return 'אתמול'
   if (dateStr === tomorrowStr)  return 'מחר'
-  if (dateStr === day2Str)      return 'מחרתיים'
 
   return new Date(dateStr + 'T12:00:00Z').toLocaleDateString('he-IL', {
     weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC',
@@ -79,12 +81,10 @@ function formatDateHeader(dateStr: string): string {
 }
 
 function getDateRange(): string[] {
-  const today = new Date()
-  return [-1, 0, 1, 2].map((offset) => {
-    const d = new Date(today)
-    d.setDate(d.getDate() + offset)
-    return d.toISOString().slice(0, 10)
-  })
+  const now = new Date()
+  return [-1, 0, 1].map((offset) =>
+    toILDate(new Date(now.getTime() + offset * 86400000))
+  )
 }
 
 /** Returns ms until the next scheduled refresh at 06:00 or 08:00 Israel time. */
