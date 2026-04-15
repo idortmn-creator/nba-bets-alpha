@@ -4,7 +4,7 @@ import { useGlobalStore } from '@/store/global.store'
 import { useBracketLeagueStore } from '../bracketLeague.store'
 import { Card } from '@/components/ui/card'
 import { TeamName } from '@/components/ui/TeamName'
-import { getBracketTeamsWithActual, BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES, CARD_W, CARD_H, TOTAL_H, TOTAL_W } from '../bracketConstants'
+import { getBracketTeams, BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES, CARD_W, CARD_H, TOTAL_H, TOTAL_W } from '../bracketConstants'
 import type { BracketPick, BracketSeriesMap } from '../bracketConstants'
 import { STAGE_KEYS } from '@/lib/constants'
 
@@ -32,12 +32,12 @@ interface ReadonlyCardProps {
 }
 
 function ReadonlySeriesCard({ seriesKey, pick, globalR1, bracketSeries }: ReadonlyCardProps) {
-  const teams = getBracketTeamsWithActual(seriesKey, pick, globalR1, bracketSeries)
+  const teams = getBracketTeams(seriesKey, pick, globalR1, bracketSeries)
   const p = pick[seriesKey] || { homeWins: 0, awayWins: 0 }
   const { homeWins, awayWins } = p
   const homeWon = homeWins === 4
   const awayWon = awayWins === 4
-  const noTeams = !teams.home && !teams.away
+  const noTeams = !teams.home || !teams.away
 
   const def = BRACKET_SERIES.find((s) => s.key === seriesKey)
   const conf = def?.conf || ''

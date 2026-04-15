@@ -8,7 +8,7 @@ import { saveBracketBet, clearBracketBet } from '../bracketLeague.service'
 import {
   BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES,
   CARD_W, CARD_H, TOTAL_H, TOTAL_W,
-  getBracketTeamsWithActual, getBracketWinner, clearDownstreamPicks,
+  getBracketTeams, getBracketWinner, clearDownstreamPicks,
 } from '../bracketConstants'
 import type { BracketPick, BracketSeriesMap } from '../bracketConstants'
 import { TeamName } from '@/components/ui/TeamName'
@@ -59,13 +59,15 @@ interface SeriesCardProps {
 }
 
 function SeriesCard({ seriesKey, pick, globalR1, bracketSeries, locked, onAdjust, readonly }: SeriesCardProps) {
-  const teams = getBracketTeamsWithActual(seriesKey, pick, globalR1, bracketSeries)
+  const teams = getBracketTeams(seriesKey, pick, globalR1, bracketSeries)
   const p = pick[seriesKey] || { homeWins: 0, awayWins: 0 }
   const actual = bracketSeries[seriesKey]
   const { homeWins, awayWins } = p
   const homeWon = homeWins === 4
   const awayWon = awayWins === 4
-  const noTeams = !teams.home && !teams.away
+  // Show placeholder until BOTH teams are resolved — prevents "?" appearing
+  // when only one feeder series has a winner yet.
+  const noTeams = !teams.home || !teams.away
 
   const def = BRACKET_SERIES.find((s) => s.key === seriesKey)
   const isReadonly = readonly || locked
@@ -234,9 +236,12 @@ export default function BracketMyBetsTab() {
 
       const newPick: BracketPick = { ...prev, [seriesKey]: { homeWins, awayWins } }
 
-      // Check if winner changed — if so, clear downstream
-      const prevWinner = getBracketWinner(seriesKey, prev, globalR1)
-      const newWinner = getBracketWinner(seriesKey, newPick, globalR1)
+      // Check if winner changed — if so, clear downstream.
+      // Must pass bracketSeries so winner detection uses the same team resolution
+      // as the display (getBracketTeamsWithActual). Without it, winner detection
+      // fails when API has R2+ teams but user hasn't filled prior-round picks.
+      const prevWinner = getBracketWinner(seriesKey, prev, globalR1, bracketSeries)
+      const newWinner = getBracketWinner(seriesKey, newPick, globalR1, bracketSeries)
       if (newWinner !== prevWinner) {
         return clearDownstreamPicks(seriesKey, newPick)
       }

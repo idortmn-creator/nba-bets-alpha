@@ -77,16 +77,35 @@ export type BracketSeriesMap = Record<string, BracketSeriesState>
 
 // ── Team resolution helpers ──
 
+/**
+ * Resolve the two teams for a series.
+ *
+ * Resolution order:
+ *   1. If `bracketSeries` has actual API teams for this series, use them.
+ *   2. Otherwise recurse into user picks (R1 from globalR1, R2+ from prior-round winners).
+ *
+ * Passing `bracketSeries` propagates actual data all the way down the chain so
+ * that R2/CF/Finals teams resolve even when the user hasn't filled in prior rounds.
+ */
 export function getBracketTeams(
   seriesKey: string,
   pick: BracketPick,
-  globalR1: Record<string, { home: string; away: string }>
+  globalR1: Record<string, { home: string; away: string }>,
+  bracketSeries?: BracketSeriesMap,
 ): { home: string; away: string } {
+  // Actual API data takes priority
+  if (bracketSeries?.[seriesKey]) {
+    const actual = bracketSeries[seriesKey]
+    if (actual.homeTeam || actual.awayTeam) {
+      return { home: actual.homeTeam, away: actual.awayTeam }
+    }
+  }
+
   const def = BRACKET_SERIES.find((s) => s.key === seriesKey)
   if (!def) return { home: '', away: '' }
   const resolve = (src: TeamSource): string => {
     if (src.type === 'global') return (globalR1[src.mk] || {})[src.slot] || ''
-    return getBracketWinner(src.from, pick, globalR1)
+    return getBracketWinner(src.from, pick, globalR1, bracketSeries)
   }
   return { home: resolve(def.homeSource), away: resolve(def.awaySource) }
 }
@@ -94,9 +113,10 @@ export function getBracketTeams(
 export function getBracketWinner(
   seriesKey: string,
   pick: BracketPick,
-  globalR1: Record<string, { home: string; away: string }>
+  globalR1: Record<string, { home: string; away: string }>,
+  bracketSeries?: BracketSeriesMap,
 ): string {
-  const teams = getBracketTeams(seriesKey, pick, globalR1)
+  const teams = getBracketTeams(seriesKey, pick, globalR1, bracketSeries)
   const p = pick[seriesKey]
   if (!p || !teams.home || !teams.away) return ''
   if (p.homeWins === 4) return teams.home
@@ -110,24 +130,14 @@ export function clearDownstreamPicks(seriesKey: string, picks: BracketPick): Bra
   return newPicks
 }
 
-/**
- * Resolve teams for a series — uses actual API results (bracketSeries) as the
- * authoritative source for R2+ teams, falling back to user-pick-based resolution
- * when actual data is not yet available.
- */
+/** @deprecated Use getBracketTeams with bracketSeries param instead */
 export function getBracketTeamsWithActual(
   seriesKey: string,
   pick: BracketPick,
   globalR1: Record<string, { home: string; away: string }>,
   bracketSeries?: BracketSeriesMap,
 ): { home: string; away: string } {
-  if (bracketSeries?.[seriesKey]) {
-    const actual = bracketSeries[seriesKey]
-    if (actual.homeTeam || actual.awayTeam) {
-      return { home: actual.homeTeam, away: actual.awayTeam }
-    }
-  }
-  return getBracketTeams(seriesKey, pick, globalR1)
+  return getBracketTeams(seriesKey, pick, globalR1, bracketSeries)
 }
 
 // ── Visual layout constants ──
