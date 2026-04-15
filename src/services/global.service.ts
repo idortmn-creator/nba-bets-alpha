@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, deleteField } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, deleteField, runTransaction } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { STAGE_KEYS, STAGE_MATCHES } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
@@ -178,33 +178,57 @@ export async function saveBet(
 }
 
 /**
- * Admin-only bet override. Unlike saveBet (which uses three-level dot-notation),
- * this function reads the current league document first to handle the case where
- * bets.{uid} is null, a non-map, or missing — all of which cause updateDoc with
- * a deeply-nested path to throw "Cannot set a value on a non-map field".
- * It writes bets.{uid} as a whole merged object, which is safe regardless of the
- * current field type.
+ * Admin-only bet override.
+ *
+ * Uses a Firestore transaction that reads the full league document, merges the
+ * new bets for this user+stage, and writes back the entire `bets` map as a
+ * plain top-level field (no dot-notation at all).
+ *
+ * This is the most reliable approach because:
+ * - Dot-notation paths (bets.uid or bets.uid.stageN) fail when any intermediate
+ *   field is null, missing, or a non-map type (old app data, corrupted data).
+ * - Writing `bets` as a whole top-level field bypasses all path resolution.
+ * - The transaction prevents races if any other client writes concurrently.
+ * - Returns the verified post-write bets data so the caller can confirm the write.
  */
 export async function adminSaveBet(
   leagueId: string,
   uid: string,
   stage: StageKey,
   betData: Record<string, string>
-) {
-  const snap = await getDoc(doc(db, 'leagues', leagueId))
-  if (!snap.exists()) throw new Error('ליגה לא נמצאה')
-  const d = snap.data()
-  const rawUserBets = d.bets?.[uid]
-  // If the stored value is not a plain object (e.g. null, string, array from old
-  // app version), discard it and start fresh rather than failing the write.
-  const currentUserBets: Record<string, unknown> =
-    rawUserBets && typeof rawUserBets === 'object' && !Array.isArray(rawUserBets)
-      ? { ...rawUserBets }
-      : {}
-  currentUserBets[`stage${stage}`] = betData
-  await updateDoc(doc(db, 'leagues', leagueId), {
-    [`bets.${uid}`]: currentUserBets,
+): Promise<Record<string, unknown>> {
+  const ref = doc(db, 'leagues', leagueId)
+
+  let writtenUserBets: Record<string, unknown> = {}
+
+  await runTransaction(db, async (t) => {
+    const snap = await t.get(ref)
+    if (!snap.exists()) throw new Error('ליגה לא נמצאה')
+    const d = snap.data()
+
+    // Clone the entire bets map so we don't mutate Firestore snapshot data
+    const allBets: Record<string, unknown> = { ...(d.bets ?? {}) }
+
+    // Normalize this user's slot — discard non-map values (null, string, array)
+    // that would cause nested dot-notation writes to fail
+    const rawUserBets = allBets[uid]
+    const currentUserBets: Record<string, unknown> =
+      rawUserBets !== null &&
+      rawUserBets !== undefined &&
+      typeof rawUserBets === 'object' &&
+      !Array.isArray(rawUserBets)
+        ? { ...(rawUserBets as Record<string, unknown>) }
+        : {}
+
+    currentUserBets[`stage${stage}`] = betData
+    allBets[uid] = currentUserBets
+    writtenUserBets = currentUserBets
+
+    // Write bets as a whole top-level field — NO dot-notation, no path issues
+    t.update(ref, { bets: allBets })
   })
+
+  return writtenUserBets
 }
 
 export async function clearBet(leagueId: string, uid: string, stage: StageKey) {

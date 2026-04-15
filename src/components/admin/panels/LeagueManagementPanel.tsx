@@ -90,18 +90,17 @@ export default function LeagueManagementPanel() {
     const stage: StageKey = betEdit.stage === '0b' ? '0b' : (parseInt(betEdit.stage) as StageKey)
     const data: Record<string, string> = Object.fromEntries(betFields.filter(([k]) => k.trim()))
     try {
-      await adminSaveBet(leagueId, betEdit.uid, stage, data)
-      // Update local league bets state
+      const written = await adminSaveBet(leagueId, betEdit.uid, stage, data)
+      console.log('[adminSaveBet] success — written user bets:', written)
+      // Update local league bets state from what was actually committed
+      const capturedUid = betEdit.uid
       setLeagues((prev) => prev.map((l) => {
         if (l.id !== leagueId) return l
         return {
           ...l,
           bets: {
             ...(l.bets || {}),
-            [betEdit.uid]: {
-              ...((l.bets || {})[betEdit.uid] || {}),
-              ['stage' + stage]: data,
-            },
+            [capturedUid]: written,
           },
         }
       }))
