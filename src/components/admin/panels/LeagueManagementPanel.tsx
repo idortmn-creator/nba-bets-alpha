@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SelectNative } from '@/components/ui/select-native'
-import { loadAllLeagues, deleteLeague, removeUserFromLeague } from '@/services/league.service'
+import { loadAllLeagues, deleteLeague, removeUserFromLeague, relinkLeagueMember } from '@/services/league.service'
 import { saveBet } from '@/services/global.service'
 import type { StageKey } from '@/lib/constants'
 
@@ -25,6 +25,8 @@ export default function LeagueManagementPanel() {
   const [betFields, setBetFields] = useState<[string, string][]>([])
   const [newKey, setNewKey] = useState('')
   const [newVal, setNewVal] = useState('')
+  const [relinkTarget, setRelinkTarget] = useState<{ leagueId: string; uid: string } | null>(null)
+  const [newUidInput, setNewUidInput] = useState('')
 
   async function handleLoad() {
     setLoading(true)
@@ -109,6 +111,37 @@ export default function LeagueManagementPanel() {
     }
   }
 
+  async function handleRelink(leagueId: string) {
+    if (!relinkTarget || !newUidInput.trim()) return
+    const newUid = newUidInput.trim()
+    const oldUid = relinkTarget.uid
+    try {
+      await relinkLeagueMember(leagueId, oldUid, newUid)
+      // Mirror the migration in local state so the UI refreshes immediately
+      setLeagues((prev) => prev.map((l) => {
+        if (l.id !== leagueId) return l
+        const mi = { ...(l.memberInfo || {}) }
+        mi[newUid] = mi[oldUid] ?? {}
+        delete mi[oldUid]
+        const b = { ...(l.bets || {}) }
+        b[newUid] = b[oldUid] ?? {}
+        delete b[oldUid]
+        return {
+          ...l,
+          members: (l.members || []).map((u: string) => u === oldUid ? newUid : u),
+          memberInfo: mi,
+          bets: b,
+        }
+      }))
+      if (betEdit?.leagueId === leagueId && betEdit?.uid === oldUid) closeBetEdit()
+      setRelinkTarget(null)
+      setNewUidInput('')
+      toast('✅ UID עודכן — המשתתף יכול עכשיו לשמור הימורים')
+    } catch (e: unknown) {
+      toast('❌ ' + (e instanceof Error ? e.message : String(e)))
+    }
+  }
+
   return (
     <Card>
       <CardTitle>🏟️ ניהול ליגות</CardTitle>
@@ -162,11 +195,37 @@ export default function LeagueManagementPanel() {
                         <div>
                           <span className="font-semibold">{info.username || uid}</span>
                           {info.displayName && <span className="ml-2 text-xs text-[var(--text2)]">{info.displayName}</span>}
+                          <div className="mt-0.5 font-mono text-[0.6rem] text-[var(--text2)] opacity-60 select-all">{uid}</div>
                         </div>
-                        <Button variant="destructive" size="sm" onClick={() => handleRemoveMember(league, uid, info.username || uid)}>
-                          הסר
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            title="שנה UID — לתיקון משתמש שחשבונו שונה"
+                            onClick={() => { setRelinkTarget({ leagueId: league.id, uid }); setNewUidInput('') }}
+                          >
+                            🔗
+                          </Button>
+                          <Button variant="destructive" size="sm" onClick={() => handleRemoveMember(league, uid, info.username || uid)}>
+                            הסר
+                          </Button>
+                        </div>
                       </div>
+                      {relinkTarget?.leagueId === league.id && relinkTarget?.uid === uid && (
+                        <div className="mt-2 rounded border border-[rgba(255,215,0,0.25)] bg-[rgba(255,215,0,0.05)] p-2">
+                          <div className="mb-1.5 text-[0.7rem] text-[var(--gold)]">🔗 החלפת UID — הזן את ה-UID החדש של המשתמש מ-Firebase Auth</div>
+                          <div className="flex gap-1.5">
+                            <Input
+                              className="!h-7 flex-1 !text-xs font-mono"
+                              placeholder="UID חדש (מ-Firebase Auth)..."
+                              value={newUidInput}
+                              onChange={(e) => setNewUidInput(e.target.value)}
+                            />
+                            <Button variant="secondary" size="sm" onClick={() => handleRelink(league.id)}>✓ אשר</Button>
+                            <Button variant="secondary" size="sm" onClick={() => setRelinkTarget(null)}>ביטול</Button>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Bet edit selector */}
                       <div className="mt-2 flex flex-wrap items-center gap-2">

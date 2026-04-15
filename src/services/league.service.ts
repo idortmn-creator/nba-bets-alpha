@@ -149,3 +149,45 @@ export async function removeLeagueMemberByAdmin(lid: string, uid: string) {
     [`bets.${uid}`]: deleteField(),
   })
 }
+
+/**
+ * Super-admin operation: replace all references to `oldUid` with `newUid` in
+ * a league document (members[], memberInfo map, bets map).
+ *
+ * Use when a participant's Firebase Auth UID changed (account re-created or
+ * different auth provider) so their current UID is no longer in members[].
+ */
+export async function relinkLeagueMember(
+  lid: string,
+  oldUid: string,
+  newUid: string
+) {
+  const snap = await getDoc(doc(db, 'leagues', lid))
+  if (!snap.exists()) throw new Error('ליגה לא נמצאה')
+  const data = snap.data()
+
+  const members: string[] = data.members || []
+  if (!members.includes(oldUid)) throw new Error('ה-UID הישן לא נמצא ב-members')
+  if (members.includes(newUid)) throw new Error('ה-UID החדש כבר קיים ב-members')
+
+  const memberInfo = data.memberInfo || {}
+  const bets = data.bets || {}
+  const newMembers = members.map((uid) => (uid === oldUid ? newUid : uid))
+
+  await updateDoc(doc(db, 'leagues', lid), {
+    members: newMembers,
+    // memberInfo: copy entry to new key, delete old
+    [`memberInfo.${newUid}`]: memberInfo[oldUid] ?? {},
+    [`memberInfo.${oldUid}`]: deleteField(),
+    // bets: copy all stage bets to new key, delete old
+    [`bets.${newUid}`]: bets[oldUid] ?? {},
+    [`bets.${oldUid}`]: deleteField(),
+  })
+
+  // Best-effort: add league to the new user's leagues list
+  try {
+    await updateDoc(doc(db, 'users', newUid), { leagues: arrayUnion(lid) })
+  } catch {
+    // New user doc may not exist yet — harmless, they can still bet
+  }
+}
