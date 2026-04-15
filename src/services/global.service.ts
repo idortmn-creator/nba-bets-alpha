@@ -258,14 +258,6 @@ export async function saveEmailJSSettings(serviceId: string, templateId: string,
   }, { merge: true })
 }
 
-export async function fetchESPNScores(dateVal: string) {
-  const url = `https://corsproxy.io/?${encodeURIComponent(
-    `https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=${dateVal}&limit=20`
-  )}`
-  const resp = await fetch(url)
-  if (!resp.ok) throw new Error('Failed to fetch')
-  const data = await resp.json()
-  return (data.events || []).filter(
-    (e: { status?: { type?: { completed?: boolean } } }) => e.status?.type?.completed
-  )
+export async function saveTiebreakerLocked(locked: boolean) {
+  await setDoc(doc(db, 'global', 'settings'), { tiebreakerLocked: locked }, { merge: true })
 }

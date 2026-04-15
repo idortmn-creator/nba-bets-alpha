@@ -7,7 +7,6 @@ import TeamSetupPanel from './panels/TeamSetupPanel'
 import ResultsPanel from './panels/ResultsPanel'
 import BonusAdminPanel from './panels/BonusAdminPanel'
 import AutoLockPanel from './panels/AutoLockPanel'
-import ESPNPanel from './panels/ESPNPanel'
 import NBAApiPanel from './panels/NBAApiPanel'
 import LeagueManagementPanel from './panels/LeagueManagementPanel'
 import TiebreakerAdminPanel from './panels/TiebreakerAdminPanel'
@@ -15,27 +14,23 @@ import EmailPanel from './panels/EmailPanel'
 import SubmissionStatusPanel from './panels/SubmissionStatusPanel'
 import PushNotificationPanel from './panels/PushNotificationPanel'
 
-type AdminTab = 'stages' | 'teams' | 'results' | 'bonus' | 'autolock' | 'espn' | 'nba' | 'leagues' | 'tiebreaker' | 'email' | 'submissions' | 'push'
+type AdminTab = 'locks' | 'teams' | 'results' | 'bonus' | 'tiebreaker' | 'notify' | 'leagues' | 'nba'
 
 const TABS: { key: AdminTab; label: string }[] = [
-  { key: 'stages',      label: '🔄 שלבים' },
-  { key: 'teams',       label: '🏀 קבוצות' },
-  { key: 'results',     label: '📊 תוצאות' },
-  { key: 'bonus',       label: '⭐ בונוס' },
-  { key: 'tiebreaker',  label: '🎯 שובר שוויון' },
-  { key: 'autolock',    label: '⏰ נעילה אוטו׳' },
-  { key: 'submissions', label: '📋 סטטוס הגשות' },
-  { key: 'email',       label: '📧 מיילים' },
-  { key: 'push',        label: '🔔 התראות' },
-  { key: 'nba',         label: '🏀 NBA API' },
-  { key: 'espn',        label: '📡 ESPN' },
-  { key: 'leagues',     label: '🏟️ ליגות' },
+  { key: 'locks',      label: '🔒 נעילות' },
+  { key: 'teams',      label: '🏀 קבוצות' },
+  { key: 'results',    label: '📊 תוצאות' },
+  { key: 'bonus',      label: '⭐ בונוס' },
+  { key: 'tiebreaker', label: '🎯 שובר שוויון' },
+  { key: 'notify',     label: '📣 תקשורת' },
+  { key: 'leagues',    label: '🏟️ ליגות' },
+  { key: 'nba',        label: '🏀 NBA API' },
 ]
 
 export default function GlobalAdminPage() {
   const navigate = useNavigate()
   const { isSuperAdmin } = useGlobalHelpers()
-  const [activeTab, setActiveTab] = useState<AdminTab>('stages')
+  const [activeTab, setActiveTab] = useState<AdminTab>('locks')
 
   if (!isSuperAdmin()) {
     return <div className="py-12 text-center text-[var(--red)]">⛔ אין גישה</div>
@@ -60,27 +55,29 @@ export default function GlobalAdminPage() {
         ))}
       </nav>
 
-      {activeTab === 'stages'   && <StagePanel />}
-      {activeTab === 'teams'    && <TeamSetupPanel />}
-      {activeTab === 'results'  && <ResultsPanel />}
-      {activeTab === 'bonus'    && <BonusAdminPanel />}
-      {activeTab === 'tiebreaker' && <TiebreakerAdminPanel />}
-      {activeTab === 'autolock' && <AutoLockPanel />}
-      {activeTab === 'nba'      && <NBAApiPanel />}
-      {activeTab === 'espn'     && <ESPNPanel />}
-      {activeTab === 'email'       && <EmailPanel />}
-      {activeTab === 'submissions' && <SubmissionStatusPanel />}
-      {activeTab === 'push'        && <PushNotificationPanel />}
-      {activeTab === 'leagues'  && (
-        <>
-          <LeagueManagementPanel />
-          <ReminderCard />
-        </>
+      {activeTab === 'locks' && (
+        <div className="space-y-4">
+          <StagePanel />
+          <AutoLockPanel />
+        </div>
       )}
+      {activeTab === 'teams'      && <TeamSetupPanel />}
+      {activeTab === 'results'    && <ResultsPanel />}
+      {activeTab === 'bonus'      && <BonusAdminPanel />}
+      {activeTab === 'tiebreaker' && <TiebreakerAdminPanel />}
+      {activeTab === 'notify' && (
+        <div className="space-y-4">
+          <PushNotificationPanel />
+          <EmailPanel />
+        </div>
+      )}
+      {activeTab === 'leagues' && (
+        <div className="space-y-4">
+          <SubmissionStatusPanel />
+          <LeagueManagementPanel />
+        </div>
+      )}
+      {activeTab === 'nba' && <NBAApiPanel />}
     </div>
   )
-}
-
-function ReminderCard() {
-  return null
 }

@@ -5,12 +5,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useGlobalHelpers } from '@/hooks/useGlobalHelpers'
-import { saveTiebreakerQuestion, saveTiebreakerAnswer } from '@/services/global.service'
+import { saveTiebreakerQuestion, saveTiebreakerAnswer, saveTiebreakerLocked } from '@/services/global.service'
 
 export default function TiebreakerAdminPanel() {
   const { globalData, getGlobal } = useGlobalHelpers()
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState('')
+
+  const locked = getGlobal('tiebreakerLocked', false) as boolean
 
   useEffect(() => {
     setQuestion(getGlobal('tiebreakerQuestion', ''))
@@ -36,6 +38,11 @@ export default function TiebreakerAdminPanel() {
     toast('✅ תשובת שובר שוויון נשמרה!')
   }
 
+  async function handleToggleLock() {
+    await saveTiebreakerLocked(!locked)
+    toast(locked ? '🔓 שובר שוויון נפתח' : '🔒 שובר שוויון ננעל — משתמשים לא יוכלו לשנות את תשובתם')
+  }
+
   return (
     <Card>
       <CardTitle>🎯 שאלת שובר שוויון</CardTitle>
@@ -53,6 +60,27 @@ export default function TiebreakerAdminPanel() {
           />
         </div>
         <Button onClick={handleSaveQuestion}>💾 שמור שאלה</Button>
+      </div>
+
+      <hr className="my-4 border-[var(--border)]" />
+
+      <div className="space-y-3">
+        <div>
+          <Label>נעילת שאלת שובר שוויון</Label>
+          <p className="mb-2 text-xs text-[var(--text2)]">
+            כאשר נעול, משתמשים לא יוכלו לשנות את תשובתם לשאלת שובר השוויון.
+          </p>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleToggleLock}
+            className={locked
+              ? '!bg-[rgba(255,80,80,0.1)] !border-[rgba(255,80,80,0.3)] !text-[var(--red)]'
+              : '!bg-[rgba(0,200,100,0.1)] !border-[rgba(0,200,100,0.3)] !text-[var(--green)]'}
+          >
+            {locked ? '🔒 נעול — לחץ לפתוח' : '🔓 פתוח — לחץ לנעול'}
+          </Button>
+        </div>
       </div>
 
       <hr className="my-4 border-[var(--border)]" />

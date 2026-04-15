@@ -11,6 +11,7 @@ export interface GlobalData {
   autoLocks?: Record<string, number>
   tiebreakerQuestion?: string
   tiebreakerAnswer?: number | null
+  tiebreakerLocked?: boolean
   [key: string]: unknown
 }
 
