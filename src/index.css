@@ -280,7 +280,7 @@
   margin-right: 4px;
 }
 
-/* ── BET CARD ── */
+/* ── BET CARD (legacy) ── */
 .bet-card {
   background: var(--card-bg);
   border: 1px solid rgba(255,255,255,0.06);
@@ -299,6 +299,28 @@
 .bet-player-username { font-weight: 700; font-size: 0.95rem; }
 .bet-player-name { font-size: 0.75rem; color: var(--text2); }
 .bet-pts { font-family: 'Oswald', sans-serif; font-size: 1.1rem; color: var(--orange); font-weight: 700; }
+
+/* ── BET CARD COMPACT ── */
+.bet-card-compact {
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.bet-header-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  gap: 8px;
+}
+.bet-username-compact { font-weight: 700; font-size: 0.88rem; line-height: 1.2; }
+.bet-displayname-compact { font-size: 0.7rem; color: var(--text2); line-height: 1.2; }
+.bet-pts-compact { font-family: 'Oswald', sans-serif; font-size: 1rem; color: var(--orange); font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+.bet-rows-compact { padding: 6px 10px 8px; }
 
 /* ── TALLY ── */
 .series-tally-row {
