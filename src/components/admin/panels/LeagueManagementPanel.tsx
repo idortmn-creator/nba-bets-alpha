@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { SelectNative } from '@/components/ui/select-native'
 import { loadAllLeagues, deleteLeague, removeUserFromLeague, relinkLeagueMember } from '@/services/league.service'
-import { saveBet } from '@/services/global.service'
+import { adminSaveBet } from '@/services/global.service'
 import type { StageKey } from '@/lib/constants'
 
 type AnyLeague = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -90,7 +90,7 @@ export default function LeagueManagementPanel() {
     const stage: StageKey = betEdit.stage === '0b' ? '0b' : (parseInt(betEdit.stage) as StageKey)
     const data: Record<string, string> = Object.fromEntries(betFields.filter(([k]) => k.trim()))
     try {
-      await saveBet(leagueId, betEdit.uid, stage, data)
+      await adminSaveBet(leagueId, betEdit.uid, stage, data)
       // Update local league bets state
       setLeagues((prev) => prev.map((l) => {
         if (l.id !== leagueId) return l
@@ -107,6 +107,7 @@ export default function LeagueManagementPanel() {
       }))
       toast('✅ הימורים עודכנו')
     } catch (e: unknown) {
+      console.error('[adminSaveBet] failed:', e)
       toast('❌ ' + (e instanceof Error ? e.message : String(e)))
     }
   }

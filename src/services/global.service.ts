@@ -1,4 +1,4 @@
-import { doc, setDoc, updateDoc, deleteField } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, deleteField } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { STAGE_KEYS, STAGE_MATCHES } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
@@ -174,6 +174,36 @@ export async function saveBet(
 ) {
   await updateDoc(doc(db, 'leagues', leagueId), {
     [`bets.${uid}.stage${stage}`]: betData,
+  })
+}
+
+/**
+ * Admin-only bet override. Unlike saveBet (which uses three-level dot-notation),
+ * this function reads the current league document first to handle the case where
+ * bets.{uid} is null, a non-map, or missing — all of which cause updateDoc with
+ * a deeply-nested path to throw "Cannot set a value on a non-map field".
+ * It writes bets.{uid} as a whole merged object, which is safe regardless of the
+ * current field type.
+ */
+export async function adminSaveBet(
+  leagueId: string,
+  uid: string,
+  stage: StageKey,
+  betData: Record<string, string>
+) {
+  const snap = await getDoc(doc(db, 'leagues', leagueId))
+  if (!snap.exists()) throw new Error('ליגה לא נמצאה')
+  const d = snap.data()
+  const rawUserBets = d.bets?.[uid]
+  // If the stored value is not a plain object (e.g. null, string, array from old
+  // app version), discard it and start fresh rather than failing the write.
+  const currentUserBets: Record<string, unknown> =
+    rawUserBets && typeof rawUserBets === 'object' && !Array.isArray(rawUserBets)
+      ? { ...rawUserBets }
+      : {}
+  currentUserBets[`stage${stage}`] = betData
+  await updateDoc(doc(db, 'leagues', leagueId), {
+    [`bets.${uid}`]: currentUserBets,
   })
 }
 
