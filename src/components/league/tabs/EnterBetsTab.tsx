@@ -36,7 +36,8 @@ export default function EnterBetsTab() {
   const [cbd, setCbd] = useState<Record<string, string>>({})
 
   const stageIdx = STAGE_KEYS.indexOf(stage)
-  const locked = (getGlobal('stageLocked', [] as boolean[]))[stageIdx] || false
+  const stageLocked = getGlobal('stageLocked', [] as boolean[]) as boolean[]
+  const locked = stageLocked[stageIdx] || false
   const matches = STAGE_MATCHES[stage] || []
 
   // Load existing bets when stage changes
@@ -104,27 +105,48 @@ export default function EnterBetsTab() {
     toast('🎲 מילוי אוטומטי הושלם')
   }
 
-  const stageOptions: { value: string; label: string }[] = [
-    { value: '0', label: 'פליי-אין סיבוב א (4 משחקים)' },
-    { value: '0b', label: 'פליי-אין גמר (2 משחקים)' },
-    { value: '1', label: 'סיבוב ראשון' },
-    { value: '2', label: 'סיבוב שני' },
-    { value: '3', label: 'גמר איזורי' },
-    { value: '4', label: 'גמר NBA' },
+  const stageOptions: { value: StageKey; label: string }[] = [
+    { value: 0,    label: 'פליי-אין א' },
+    { value: '0b', label: 'פליי-אין ב' },
+    { value: 1,    label: 'סיבוב 1' },
+    { value: 2,    label: 'סיבוב 2' },
+    { value: 3,    label: 'גמר איזורי' },
+    { value: 4,    label: 'גמר NBA' },
   ]
 
   return (
-    <Card>
-      <div className="mb-3 rounded-lg border border-[var(--orange-border)] bg-[var(--dark3)] p-3 text-xs font-semibold"><strong>📌</strong> בחר שלב ולחץ על ההימורים שלך.</div>
-      <div className="mb-4">
-        <Label>שלב</Label>
-        <SelectNative value={String(stage)} onChange={(e) => setStage(e.target.value === '0b' ? '0b' : (parseInt(e.target.value) as StageKey))}>
-          {stageOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </SelectNative>
+    <Card className="!p-0 overflow-hidden">
+      {/* Stage tab bar */}
+      <div className="flex overflow-x-auto border-b border-[var(--border)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {stageOptions.map((o) => {
+          const idx = STAGE_KEYS.indexOf(o.value as StageKey)
+          const isLocked = (stageLocked)[idx] ?? false
+          const isActive = stage === o.value
+          return (
+            <button
+              key={String(o.value)}
+              onClick={() => setStage(o.value)}
+              className={[
+                'flex-shrink-0 px-3.5 py-3 text-sm font-medium transition-colors whitespace-nowrap',
+                'border-b-2 -mb-px',
+                isActive
+                  ? 'border-[var(--orange)] text-white'
+                  : 'border-transparent text-[var(--text2)] hover:text-[var(--text1)]',
+              ].join(' ')}
+            >
+              {o.label}{isLocked ? ' 🔒' : ''}
+            </button>
+          )
+        })}
       </div>
 
+      <div className="p-4">
+      <div className="mb-3 rounded-lg border border-[var(--orange-border)] bg-[var(--dark3)] p-3 text-xs font-semibold"><strong>📌</strong> בחר שלב ולחץ על ההימורים שלך.</div>
+
       {locked ? (
-        <LockedView stage={stage} cbd={cbd} matches={matches} teamLabel={teamLabel} tiebreakerQuestion={tiebreakerQuestion} tiebreakerLocked={tiebreakerLocked} />
+        <>
+          <LockedView stage={stage} cbd={cbd} matches={matches} teamLabel={teamLabel} tiebreakerQuestion={tiebreakerQuestion} tiebreakerLocked={tiebreakerLocked} />
+        </>
       ) : !canBetOnStage(stage) ? (
         <div className="text-sm text-[var(--text2)]">⏳ ניתן להמר רק לאחר הזנת תוצאות השלב הקודם</div>
       ) : (
@@ -165,6 +187,7 @@ export default function EnterBetsTab() {
           </div>
         </>
       )}
+      </div>
     </Card>
   )
 }
