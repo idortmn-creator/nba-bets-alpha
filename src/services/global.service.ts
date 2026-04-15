@@ -25,14 +25,17 @@ export async function toggleStageLock(
   while (newLocked.length < 6) newLocked.push(false)
   const locking = !newLocked[sIdx]
   newLocked[sIdx] = locking
+  // Use updateDoc so the write is an atomic patch:
+  // - stageLocked array is written whole (Firestore has no array-element dot-notation)
+  // - each seriesLocked entry is written with its own dot-notation path so concurrent
+  //   writes to *different* series keys never overwrite each other
   const updates: Record<string, unknown> = { stageLocked: newLocked }
   if (STAGE_MATCHES[stage]) {
-    const curSL = globalData.seriesLocked || {}
-    const newSL = { ...curSL }
-    for (const m of STAGE_MATCHES[stage]) newSL[stage + '_' + m.key] = locking
-    updates.seriesLocked = newSL
+    for (const m of STAGE_MATCHES[stage]) {
+      updates[`seriesLocked.${stage}_${m.key}`] = locking
+    }
   }
-  await setDoc(doc(db, 'global', 'settings'), updates, { merge: true })
+  await updateDoc(doc(db, 'global', 'settings'), updates)
   return locking
 }
 
@@ -44,11 +47,13 @@ export async function toggleSeriesLock(
   const curSL = globalData.seriesLocked || {}
   const lockKey = stage + '_' + matchKey
   const newVal = !curSL[lockKey]
-  await setDoc(
-    doc(db, 'global', 'settings'),
-    { seriesLocked: { ...curSL, [lockKey]: newVal } },
-    { merge: true }
-  )
+  // Atomic dot-notation write — only touches this one key.
+  // The old setDoc+spread pattern replaced the entire seriesLocked map, causing
+  // concurrent calls (e.g. multiple auto-locks firing at the same tick) to
+  // overwrite each other and produce random lock/unlock side effects.
+  await updateDoc(doc(db, 'global', 'settings'), {
+    [`seriesLocked.${lockKey}`]: newVal,
+  })
   return newVal
 }
 
@@ -129,17 +134,10 @@ export async function saveBonusBets(
   )
 }
 
-export async function addAutoLock(
-  targetVal: string,
-  timestamp: number,
-  globalData: GlobalData
-) {
-  const curLocks = globalData.autoLocks || {}
-  await setDoc(
-    doc(db, 'global', 'settings'),
-    { autoLocks: { ...curLocks, [targetVal]: timestamp } },
-    { merge: true }
-  )
+export async function addAutoLock(targetVal: string, timestamp: number) {
+  await updateDoc(doc(db, 'global', 'settings'), {
+    [`autoLocks.${targetVal}`]: timestamp,
+  })
 }
 
 export async function removeAutoLock(key: string) {

@@ -5,12 +5,12 @@ import { auth, db } from '@/lib/firebase'
 import { useAuthStore } from '@/store/auth.store'
 import { useGlobalStore } from '@/store/global.store'
 import { getUserDoc, ensureGoogleUserDoc } from '@/services/auth.service'
-import { STAGE_KEYS } from '@/lib/constants'
+import { STAGE_KEYS, SUPER_ADMIN_UID } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
 
 export function useAuth() {
   const { setUser, setUserDoc } = useAuthStore()
-  const { setGlobalData, globalData } = useGlobalStore()
+  const { setGlobalData } = useGlobalStore()
   const globalUnsub = useRef<(() => void) | null>(null)
   const autoLockInterval = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -48,8 +48,13 @@ export function useAuth() {
             setGlobalData(snap.exists() ? (snap.data() as Record<string, unknown>) : {})
           })
         }
-        // Start auto-lock checker
-        startAutoLockChecker()
+        // Start auto-lock checker — super admin only.
+        // Running it for every user caused all active clients to fire
+        // concurrent toggleSeriesLock / toggleStageLock calls simultaneously,
+        // which clobbered each other's writes due to stale read-modify-write.
+        if (user.uid === SUPER_ADMIN_UID) {
+          startAutoLockChecker()
+        }
       } else {
         setUser(null)
         setUserDoc(null)
@@ -71,7 +76,7 @@ export function useAuth() {
 
   function startAutoLockChecker() {
     if (autoLockInterval.current) return
-    autoLockInterval.current = setInterval(() => {
+    autoLockInterval.current = setInterval(() => {  // 10s for ≤10s firing latency
       const gd = useGlobalStore.getState().globalData
       const locks = gd.autoLocks || {}
       const now = Date.now()
@@ -102,7 +107,7 @@ export function useAuth() {
           })
         }
       }
-    }, 30000)
+    }, 10000)
   }
 
   function stopAutoLockChecker() {

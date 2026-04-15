@@ -11,7 +11,7 @@ import { STAGE_NAMES, STAGE_SHORT, STAGE_KEYS, STAGE_MATCHES } from '@/lib/const
 import type { StageKey } from '@/lib/constants'
 
 export default function AutoLockPanel() {
-  const { globalData, getGlobal, getTeams, isSeriesLocked } = useGlobalHelpers()
+  const { getGlobal, getTeams, isSeriesLocked } = useGlobalHelpers()
   const [lockType, setLockType] = useState<'stage' | 'series'>('stage')
   const [target, setTarget] = useState('0')
   const [time, setTime] = useState('')
@@ -22,7 +22,7 @@ export default function AutoLockPanel() {
     if (!time) { toast('⚠️ בחר תאריך ושעה'); return }
     const ts = new Date(time).getTime()
     if (ts <= Date.now()) { toast('⚠️ הזמן חייב להיות בעתיד'); return }
-    await addAutoLock(target, ts, globalData)
+    await addAutoLock(target, ts)
     setTime('')
     toast('✅ נעילה אוטומטית נקבעה!')
   }
