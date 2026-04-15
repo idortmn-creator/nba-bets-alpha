@@ -269,20 +269,33 @@ const ABBR: Record<string, string> = {
   'wsh': 'wsh',
 }
 
+function normalizeName(s: string): string {
+  return s.toLowerCase().trim()
+    .replace(/[\u05F3\u2018\u2019\u02BC]/g, "'")        // Hebrew geresh + smart quotes → apostrophe
+    .replace(/[\u0591-\u05C7]/g, '')                    // strip Hebrew nikud (vowel points) & cantillation marks
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF\u061C]/g, '') // strip invisible Unicode/RTL marks
+    .replace(/\s+/g, ' ')
+}
+
+export function getTeamAbbr(name: string): string | null {
+  if (!name || name === '-') return null
+  const key = normalizeName(name)
+  const abbr = ABBR[key]
+  if (abbr) return abbr
+  for (const word of key.split(/[\s_-]+/)) {
+    const wa = ABBR[word]
+    if (wa) return wa
+  }
+  return null
+}
+
 export function getTeamLogoUrl(name: string): string | null {
   if (!name || name === '-') return null
 
   // Normalize: lowercase + trim + collapse spaces + replace
   // Hebrew geresh (׳ U+05F3) and typographic apostrophes with ASCII apostrophe
   // so entries like "ג'אז" and "ג׳אז" both match the same ABBR key.
-  const normalize = (s: string) =>
-    s.toLowerCase().trim()
-      .replace(/[\u05F3\u2018\u2019\u02BC]/g, "'")        // Hebrew geresh + smart quotes → apostrophe
-      .replace(/[\u0591-\u05C7]/g, '')                    // strip Hebrew nikud (vowel points) & cantillation marks
-      .replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF\u061C]/g, '') // strip invisible Unicode/RTL marks
-      .replace(/\s+/g, ' ')
-
-  const key = normalize(name)
+  const key = normalizeName(name)
 
   // 1. Exact match
   const abbr = ABBR[key]

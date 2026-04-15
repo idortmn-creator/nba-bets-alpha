@@ -60,6 +60,13 @@ export const BRACKET_DOWNSTREAM: Record<string, string[]> = {
 
 export type BracketPick = Record<string, { homeWins: number; awayWins: number }>
 
+// MVP picks — one player name per eligible series (CF East, CF West, Finals)
+export type BracketMvpPick = {
+  cf_east?: string
+  cf_west?: string
+  finals?: string
+}
+
 // ── Actual series state (populated from NBA API sync) ──
 
 export interface BracketSeriesState {

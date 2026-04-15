@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { BracketPick } from './bracketConstants'
+import type { BracketPick, BracketMvpPick } from './bracketConstants'
 
 export interface BracketMemberInfo {
   username: string
@@ -14,6 +14,7 @@ export interface BracketLeagueData {
   members: string[]
   memberInfo: Record<string, BracketMemberInfo>
   bets: Record<string, BracketPick>
+  mvpBets?: Record<string, BracketMvpPick>
   createdAt?: unknown
 }
 

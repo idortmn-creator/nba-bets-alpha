@@ -5,6 +5,7 @@ import {
   updateDoc,
   getDocs,
   deleteDoc,
+  deleteField,
   query,
   collection,
   where,
@@ -14,7 +15,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import type { UserDoc } from '@/store/auth.store'
-import type { BracketPick } from './bracketConstants'
+import type { BracketPick, BracketMvpPick } from './bracketConstants'
 
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -96,6 +97,27 @@ export async function saveBracketBet(
 export async function clearBracketBet(lid: string, uid: string): Promise<void> {
   await updateDoc(doc(db, 'bracket_leagues', lid), {
     [`bets.${uid}`]: {},
+  })
+}
+
+export async function saveMvpBet(
+  lid: string,
+  uid: string,
+  seriesKey: 'cf_east' | 'cf_west' | 'finals',
+  player: string,
+): Promise<void> {
+  await updateDoc(doc(db, 'bracket_leagues', lid), {
+    [`mvpBets.${uid}.${seriesKey}`]: player,
+  })
+}
+
+export async function clearMvpBet(
+  lid: string,
+  uid: string,
+  seriesKey: 'cf_east' | 'cf_west' | 'finals',
+): Promise<void> {
+  await updateDoc(doc(db, 'bracket_leagues', lid), {
+    [`mvpBets.${uid}.${seriesKey}`]: deleteField(),
   })
 }
 

@@ -1,18 +1,19 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/auth.store'
 import { useGlobalStore } from '@/store/global.store'
 import { useBracketLeagueStore } from '../bracketLeague.store'
-import { saveBracketBet, clearBracketBet } from '../bracketLeague.service'
+import { saveBracketBet, clearBracketBet, saveMvpBet } from '../bracketLeague.service'
 import {
   BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES,
   CARD_W, CARD_H, TOTAL_H, TOTAL_W,
   getBracketTeams, getBracketWinner, clearDownstreamPicks,
 } from '../bracketConstants'
-import type { BracketPick, BracketSeriesMap } from '../bracketConstants'
+import type { BracketPick, BracketSeriesMap, BracketMvpPick } from '../bracketConstants'
 import { TeamName } from '@/components/ui/TeamName'
 import { STAGE_KEYS } from '@/lib/constants'
+import { fetchTwoTeamRoster } from '@/lib/espnRoster'
 
 function useGlobalR1Teams() {
   const globalData = useGlobalStore((s) => s.globalData)
@@ -138,6 +139,113 @@ function SeriesCard({ seriesKey, pick, globalR1, bracketSeries, locked, onAdjust
   )
 }
 
+// ── MVP Picker ───────────────────────────────────────────────────────────────
+
+const MVP_SERIES: { key: 'cf_east' | 'cf_west' | 'finals'; label: string }[] = [
+  { key: 'cf_east', label: 'גמר מזרח — MVP' },
+  { key: 'cf_west', label: 'גמר מערב — MVP' },
+  { key: 'finals',  label: 'גמר NBA — MVP' },
+]
+
+interface MvpPickerProps {
+  label: string
+  home: string
+  away: string
+  selected: string
+  locked: boolean
+  onSelect: (player: string) => void
+}
+
+function MvpPicker({ label, home, away, selected, locked, onSelect }: MvpPickerProps) {
+  const [open, setOpen] = useState(false)
+  const [players, setPlayers] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
+  const [search, setSearch] = useState('')
+  const dropRef = useRef<HTMLDivElement>(null)
+  const prevTeamsRef = useRef('')
+
+  const teamsKey = `${home}|${away}`
+  const teamsKnown = !!(home && away)
+
+  // Fetch roster whenever both teams are known and changed
+  useEffect(() => {
+    if (!teamsKnown || prevTeamsRef.current === teamsKey) return
+    prevTeamsRef.current = teamsKey
+    setPlayers([])
+    setLoading(true)
+    fetchTwoTeamRoster(home, away).then((p) => {
+      setPlayers(p)
+      setLoading(false)
+    })
+  }, [teamsKey, teamsKnown, home, away])
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    function handle(e: MouseEvent) {
+      if (dropRef.current && !dropRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [open])
+
+  const filtered = search
+    ? players.filter((p) => p.toLowerCase().includes(search.toLowerCase()))
+    : players
+
+  if (!teamsKnown) return null
+
+  return (
+    <div className="mvp-picker-row" ref={dropRef}>
+      <span className="mvp-picker-label">{label}</span>
+      <div className="mvp-picker-teams">
+        <TeamName name={home} size={11} />
+        <span className="mvp-picker-vs">מול</span>
+        <TeamName name={away} size={11} />
+      </div>
+      {locked ? (
+        <span className="mvp-picker-value">{selected || '—'}</span>
+      ) : (
+        <div style={{ position: 'relative' }}>
+          <button
+            className="mvp-picker-btn"
+            onClick={() => setOpen((v) => !v)}
+            disabled={loading}
+          >
+            {loading ? '⏳' : selected ? selected : 'בחר MVP'}
+            <span style={{ marginRight: 4, opacity: 0.6 }}>{open ? '▲' : '▼'}</span>
+          </button>
+          {open && (
+            <div className="mvp-dropdown">
+              <input
+                className="mvp-search"
+                autoFocus
+                placeholder="חיפוש שחקן..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <div className="mvp-list">
+                {filtered.length === 0 && (
+                  <div className="mvp-empty">{loading ? 'טוען...' : 'לא נמצאו שחקנים'}</div>
+                )}
+                {filtered.map((p) => (
+                  <div
+                    key={p}
+                    className={`mvp-item${p === selected ? ' mvp-item-selected' : ''}`}
+                    onClick={() => { onSelect(p); setOpen(false); setSearch('') }}
+                  >
+                    {p}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main bracket canvas ──────────────────────────────────────────────────────
 
 interface BracketCanvasProps {
@@ -212,12 +320,15 @@ export default function BracketMyBetsTab() {
   const locked = useBracketLocked()
 
   const [pick, setPick] = useState<BracketPick>({})
+  const [mvpPick, setMvpPick] = useState<BracketMvpPick>({})
 
   // Load existing bets
   useEffect(() => {
     if (!leagueData || !currentUser) return
     const existing = (leagueData.bets || {})[currentUser.uid] || {}
     setPick({ ...existing })
+    const existingMvp = (leagueData.mvpBets || {})[currentUser.uid] || {}
+    setMvpPick({ ...existingMvp })
   }, [leagueData?.id, currentUser?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function adjustWins(seriesKey: string, side: 'home' | 'away', delta: number) {
@@ -268,6 +379,16 @@ export default function BracketMyBetsTab() {
     toast('✅ הברקט נוקה!')
   }
 
+  async function handleMvpSelect(seriesKey: 'cf_east' | 'cf_west' | 'finals', player: string) {
+    if (!leagueData || !currentUser) return
+    setMvpPick((prev) => ({ ...prev, [seriesKey]: player }))
+    try {
+      await saveMvpBet(leagueData.id, currentUser.uid, seriesKey, player)
+    } catch (e: unknown) {
+      toast('❌ ' + (e instanceof Error ? e.message : String(e)))
+    }
+  }
+
   const r1TeamsReady = Object.keys(globalR1).length >= 8
   const completedCount = Object.keys(pick).filter((k) => {
     const p = pick[k]
@@ -304,6 +425,27 @@ export default function BracketMyBetsTab() {
         onAdjust={adjustWins}
         readonly={locked || !r1TeamsReady}
       />
+
+      {/* MVP pickers — shown once R1 teams are known */}
+      {r1TeamsReady && (
+        <div className="mvp-section">
+          <div className="mvp-section-title">🏆 בחירת MVP לסדרה</div>
+          {MVP_SERIES.map(({ key, label }) => {
+            const teams = getBracketTeams(key, pick, globalR1, bracketSeries)
+            return (
+              <MvpPicker
+                key={key}
+                label={label}
+                home={teams.home}
+                away={teams.away}
+                selected={mvpPick[key] || ''}
+                locked={locked}
+                onSelect={(player) => handleMvpSelect(key, player)}
+              />
+            )
+          })}
+        </div>
+      )}
 
       {/* Save buttons */}
       {!locked && r1TeamsReady && (

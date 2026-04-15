@@ -5,8 +5,14 @@ import { useBracketLeagueStore } from '../bracketLeague.store'
 import { Card } from '@/components/ui/card'
 import { TeamName } from '@/components/ui/TeamName'
 import { getBracketTeams, BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES, CARD_W, CARD_H, TOTAL_H, TOTAL_W } from '../bracketConstants'
-import type { BracketPick, BracketSeriesMap } from '../bracketConstants'
+import type { BracketPick, BracketSeriesMap, BracketMvpPick } from '../bracketConstants'
 import { STAGE_KEYS } from '@/lib/constants'
+
+const MVP_SERIES_LABELS: Record<string, string> = {
+  cf_east: 'גמר מזרח',
+  cf_west: 'גמר מערב',
+  finals: 'גמר NBA',
+}
 
 function useGlobalR1Teams() {
   const globalData = useGlobalStore((s) => s.globalData)
@@ -73,13 +79,15 @@ function ReadonlySeriesCard({ seriesKey, pick, globalR1, bracketSeries }: Readon
   )
 }
 
-function MemberBracket({ uid, pick, globalR1, bracketSeries, username }: {
-  uid: string; pick: BracketPick; globalR1: Record<string, { home: string; away: string }>; bracketSeries: BracketSeriesMap; username: string
+function MemberBracket({ uid, pick, globalR1, bracketSeries, username, mvpPick }: {
+  uid: string; pick: BracketPick; globalR1: Record<string, { home: string; away: string }>; bracketSeries: BracketSeriesMap; username: string; mvpPick: BracketMvpPick
 }) {
   const [expanded, setExpanded] = useState(false)
   const completed = Object.keys(pick).filter((k) => {
     const p = pick[k]; return p && (p.homeWins === 4 || p.awayWins === 4)
   }).length
+
+  const mvpEntries = Object.entries(MVP_SERIES_LABELS).filter(([k]) => mvpPick[k as keyof BracketMvpPick])
 
   return (
     <Card className="mb-3">
@@ -94,20 +102,33 @@ function MemberBracket({ uid, pick, globalR1, bracketSeries, username }: {
         <span className="text-[var(--orange)]">{expanded ? '▲' : '▼'}</span>
       </div>
       {expanded && (
-        <div className="mt-3 overflow-x-auto" style={{ direction: 'ltr' }}>
-          <div style={{ position: 'relative', width: TOTAL_W, height: TOTAL_H + 30 }}>
-            <svg style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }} width={TOTAL_W} height={TOTAL_H + 30}>
-              <g transform="translate(0,0)">
-                {BRACKET_CONNECTOR_LINES.map(([x1, y1, x2, y2], i) => (
-                  <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(255,255,255,0.15)" strokeWidth={1.5} />
-                ))}
-              </g>
-            </svg>
-            {BRACKET_SERIES.map((s) => (
-              <ReadonlySeriesCard key={s.key} seriesKey={s.key} pick={pick} globalR1={globalR1} bracketSeries={bracketSeries} />
-            ))}
+        <>
+          <div className="mt-3 overflow-x-auto" style={{ direction: 'ltr' }}>
+            <div style={{ position: 'relative', width: TOTAL_W, height: TOTAL_H + 30 }}>
+              <svg style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }} width={TOTAL_W} height={TOTAL_H + 30}>
+                <g transform="translate(0,0)">
+                  {BRACKET_CONNECTOR_LINES.map(([x1, y1, x2, y2], i) => (
+                    <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(255,255,255,0.15)" strokeWidth={1.5} />
+                  ))}
+                </g>
+              </svg>
+              {BRACKET_SERIES.map((s) => (
+                <ReadonlySeriesCard key={s.key} seriesKey={s.key} pick={pick} globalR1={globalR1} bracketSeries={bracketSeries} />
+              ))}
+            </div>
           </div>
-        </div>
+          {mvpEntries.length > 0 && (
+            <div className="mvp-readonly-section">
+              <div className="mvp-section-title">🏆 MVP לסדרה</div>
+              {mvpEntries.map(([k, label]) => (
+                <div key={k} className="mvp-readonly-row">
+                  <span className="mvp-readonly-label">{label}</span>
+                  <span className="mvp-readonly-value">{mvpPick[k as keyof BracketMvpPick]}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </Card>
   )
@@ -136,6 +157,7 @@ export default function BracketBetsViewTab() {
   const members = leagueData.members || []
   const memberInfo = leagueData.memberInfo || {}
   const bets = leagueData.bets || {}
+  const mvpBets = leagueData.mvpBets || {}
   const myUid = currentUser?.uid || ''
 
   // My bracket first, then others
@@ -154,6 +176,7 @@ export default function BracketBetsViewTab() {
           globalR1={globalR1}
           bracketSeries={bracketSeries}
           username={(memberInfo[uid]?.username) || uid}
+          mvpPick={mvpBets[uid] || {}}
         />
       ))}
     </div>
