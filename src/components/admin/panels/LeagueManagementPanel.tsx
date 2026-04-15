@@ -3,10 +3,10 @@ import { toast } from 'sonner'
 import { Card, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { SelectNative } from '@/components/ui/select-native'
 import { loadAllLeagues, deleteLeague, removeUserFromLeague, relinkLeagueMember } from '@/services/league.service'
 import { adminSaveBet } from '@/services/global.service'
+import { STAGE_MATCHES, PREBETS } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
 
 type AnyLeague = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -17,14 +17,57 @@ interface BetEdit {
   stage: string
 }
 
+interface FieldDef {
+  key: string
+  label: string
+  placeholder?: string
+}
+
+/** Returns the structured field definitions for a given stage. */
+function getStageFieldDefs(stageStr: string): FieldDef[] {
+  const stage: StageKey = stageStr === '0b' ? '0b' : (parseInt(stageStr) as StageKey)
+  const matches = STAGE_MATCHES[stage] || []
+  const fields: FieldDef[] = []
+
+  if (stage === 0) {
+    for (const m of matches) {
+      fields.push({ key: m.key, label: m.label + ' — מנצח', placeholder: 'שם קבוצה' })
+    }
+    fields.push({ key: 'tiebreaker', label: '🎯 שובר שוויון', placeholder: 'מספר' })
+  } else if (stage === '0b') {
+    for (const m of matches) {
+      fields.push({ key: m.key, label: m.label + ' — מנצח', placeholder: 'שם קבוצה' })
+    }
+  } else if (stage === 1) {
+    for (const m of matches) {
+      fields.push({ key: m.key + '_winner', label: m.label + ' — מנצח', placeholder: 'שם קבוצה' })
+      fields.push({ key: m.key + '_result', label: m.label + ' — תוצאה', placeholder: '4-0 / 4-1 / 4-2 / 4-3' })
+    }
+    for (const p of PREBETS) {
+      fields.push({ key: p.key, label: p.label + ' (פרי-בט)', placeholder: 'שם קבוצה' })
+    }
+  } else if (stage === 2) {
+    for (const m of matches) {
+      fields.push({ key: m.key + '_winner', label: m.label + ' — מנצח', placeholder: 'שם קבוצה' })
+      fields.push({ key: m.key + '_result', label: m.label + ' — תוצאה', placeholder: '4-0 / 4-1 / 4-2 / 4-3' })
+    }
+  } else if (stage === 3 || stage === 4) {
+    for (const m of matches) {
+      fields.push({ key: m.key + '_winner', label: m.label + ' — מנצח', placeholder: 'שם קבוצה' })
+      fields.push({ key: m.key + '_result', label: m.label + ' — תוצאה', placeholder: '4-0 / 4-1 / 4-2 / 4-3' })
+      if (m.hasMvp) fields.push({ key: m.key + '_mvp', label: m.label + ' — MVP', placeholder: 'שם שחקן' })
+    }
+  }
+
+  return fields
+}
+
 export default function LeagueManagementPanel() {
   const [leagues, setLeagues] = useState<AnyLeague[]>([])
   const [loading, setLoading] = useState(false)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [betEdit, setBetEdit] = useState<BetEdit | null>(null)
-  const [betFields, setBetFields] = useState<[string, string][]>([])
-  const [newKey, setNewKey] = useState('')
-  const [newVal, setNewVal] = useState('')
+  const [betData, setBetData] = useState<Record<string, string>>({})
   const [relinkTarget, setRelinkTarget] = useState<{ leagueId: string; uid: string } | null>(null)
   const [newUidInput, setNewUidInput] = useState('')
 
@@ -73,26 +116,29 @@ export default function LeagueManagementPanel() {
     const stage: StageKey = stageStr === '0b' ? '0b' : (parseInt(stageStr) as StageKey)
     const existing: Record<string, string> = ((league.bets || {})[uid] || {})['stage' + stage] || {}
     setBetEdit({ leagueId: league.id, uid, stage: stageStr })
-    setBetFields(Object.entries(existing))
-    setNewKey('')
-    setNewVal('')
+    // Seed betData with all existing values (even keys not in the structured fields)
+    setBetData({ ...existing })
   }
 
   function closeBetEdit() {
     setBetEdit(null)
-    setBetFields([])
-    setNewKey('')
-    setNewVal('')
+    setBetData({})
+  }
+
+  function setField(key: string, val: string) {
+    setBetData((prev) => ({ ...prev, [key]: val }))
   }
 
   async function handleSaveBet(leagueId: string) {
     if (!betEdit) return
     const stage: StageKey = betEdit.stage === '0b' ? '0b' : (parseInt(betEdit.stage) as StageKey)
-    const data: Record<string, string> = Object.fromEntries(betFields.filter(([k]) => k.trim()))
+    // Remove empty strings so we don't write blank values over existing data
+    const data: Record<string, string> = Object.fromEntries(
+      Object.entries(betData).filter(([, v]) => v !== '')
+    )
     try {
       const written = await adminSaveBet(leagueId, betEdit.uid, stage, data)
       console.log('[adminSaveBet] success — written user bets:', written)
-      // Update local league bets state from what was actually committed
       const capturedUid = betEdit.uid
       setLeagues((prev) => prev.map((l) => {
         if (l.id !== leagueId) return l
@@ -117,7 +163,6 @@ export default function LeagueManagementPanel() {
     const oldUid = relinkTarget.uid
     try {
       await relinkLeagueMember(leagueId, oldUid, newUid)
-      // Mirror the migration in local state so the UI refreshes immediately
       setLeagues((prev) => prev.map((l) => {
         if (l.id !== leagueId) return l
         const mi = { ...(l.memberInfo || {}) }
@@ -248,57 +293,51 @@ export default function LeagueManagementPanel() {
                         </SelectNative>
                       </div>
 
-                      {/* Bet fields editor */}
+                      {/* Structured bet fields editor */}
                       {isEditing && (
-                        <div className="mt-2 space-y-1">
-                          {betFields.length === 0 && (
-                            <div className="text-xs text-[var(--text2)]">אין הימורים קיימים לשלב זה</div>
-                          )}
-                          {betFields.map(([key, val], i) => (
-                            <div key={i} className="flex items-center gap-1.5">
-                              <Input
-                                className="!h-7 !w-36 !text-xs font-mono"
-                                value={key}
-                                onChange={(e) => setBetFields((prev) => prev.map((f, fi) => fi === i ? [e.target.value, f[1]] : f))}
-                              />
-                              <span className="text-[var(--text2)]">→</span>
+                        <div className="mt-2 space-y-1.5">
+                          <div className="mb-1 text-[0.65rem] text-[var(--text2)] opacity-70">
+                            שדות ריקים לא נשמרים. ניקוי ערך — מחק את הטקסט ושמור.
+                          </div>
+                          {getStageFieldDefs(betEdit!.stage).map((f) => (
+                            <div key={f.key} className="flex items-center gap-1.5">
+                              <span className="w-52 shrink-0 truncate text-[0.65rem] text-[var(--text2)]" title={f.key}>
+                                <span className="font-mono text-[var(--orange)] opacity-70">[{f.key}]</span> {f.label}
+                              </span>
                               <Input
                                 className="!h-7 flex-1 !text-xs"
-                                value={val}
-                                onChange={(e) => setBetFields((prev) => prev.map((f, fi) => fi === i ? [f[0], e.target.value] : f))}
+                                placeholder={f.placeholder || ''}
+                                value={betData[f.key] ?? ''}
+                                onChange={(e) => setField(f.key, e.target.value)}
                               />
-                              <button
-                                className="text-xs text-[var(--red)] hover:opacity-80"
-                                onClick={() => setBetFields((prev) => prev.filter((_, fi) => fi !== i))}
-                              >✕</button>
                             </div>
                           ))}
 
-                          {/* Add new field */}
-                          <div className="mt-1 flex items-center gap-1.5">
-                            <Input
-                              className="!h-7 !w-36 !text-xs font-mono"
-                              placeholder="מפתח..."
-                              value={newKey}
-                              onChange={(e) => setNewKey(e.target.value)}
-                            />
-                            <span className="text-[var(--text2)]">→</span>
-                            <Input
-                              className="!h-7 flex-1 !text-xs"
-                              placeholder="ערך..."
-                              value={newVal}
-                              onChange={(e) => setNewVal(e.target.value)}
-                            />
-                            <button
-                              className="text-xs text-[var(--green-light)] hover:opacity-80"
-                              onClick={() => {
-                                if (!newKey.trim()) return
-                                setBetFields((prev) => [...prev, [newKey.trim(), newVal]])
-                                setNewKey('')
-                                setNewVal('')
-                              }}
-                            >＋</button>
-                          </div>
+                          {/* Show any extra keys in betData not covered by the structured fields */}
+                          {(() => {
+                            const knownKeys = new Set(getStageFieldDefs(betEdit!.stage).map((f) => f.key))
+                            const extraEntries = Object.entries(betData).filter(([k]) => !knownKeys.has(k))
+                            if (extraEntries.length === 0) return null
+                            return (
+                              <div className="mt-2">
+                                <div className="mb-1 text-[0.65rem] font-bold text-[var(--gold)]">שדות נוספים (בונוס / אחר)</div>
+                                {extraEntries.map(([k, v]) => (
+                                  <div key={k} className="mb-1 flex items-center gap-1.5">
+                                    <span className="w-52 shrink-0 truncate font-mono text-[0.65rem] text-[var(--text2)]">{k}</span>
+                                    <Input
+                                      className="!h-7 flex-1 !text-xs"
+                                      value={v}
+                                      onChange={(e) => setField(k, e.target.value)}
+                                    />
+                                    <button
+                                      className="text-xs text-[var(--red)] hover:opacity-80"
+                                      onClick={() => setBetData((prev) => { const n = { ...prev }; delete n[k]; return n })}
+                                    >✕</button>
+                                  </div>
+                                ))}
+                              </div>
+                            )
+                          })()}
 
                           <div className="mt-2 flex gap-2">
                             <Button variant="secondary" size="sm" onClick={() => handleSaveBet(league.id)}>💾 שמור</Button>
