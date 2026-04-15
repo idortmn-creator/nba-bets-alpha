@@ -220,7 +220,16 @@ export async function adminSaveBet(
         ? { ...(rawUserBets as Record<string, unknown>) }
         : {}
 
-    currentUserBets[`stage${stage}`] = betData
+    // MERGE new data into the existing stage bets — do NOT replace the whole stage.
+    // Replacing would wipe fields the admin didn't touch (e.g. the admin edits e4_winner
+    // but all other series' bets should survive unchanged).
+    const existingStage = currentUserBets[`stage${stage}`]
+    const existingStageSafe: Record<string, unknown> =
+      existingStage !== null && existingStage !== undefined &&
+      typeof existingStage === 'object' && !Array.isArray(existingStage)
+        ? { ...(existingStage as Record<string, unknown>) }
+        : {}
+    currentUserBets[`stage${stage}`] = { ...existingStageSafe, ...betData }
     allBets[uid] = currentUserBets
     writtenUserBets = currentUserBets
 

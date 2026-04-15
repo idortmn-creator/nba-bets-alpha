@@ -4,7 +4,7 @@ import { Card, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SelectNative } from '@/components/ui/select-native'
-import { loadAllLeagues, deleteLeague, removeUserFromLeague, relinkLeagueMember } from '@/services/league.service'
+import { loadAllLeagues, deleteLeague, removeUserFromLeague, relinkLeagueMember, getLeagueFromServer } from '@/services/league.service'
 import { adminSaveBet } from '@/services/global.service'
 import { STAGE_MATCHES, PREBETS } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
@@ -70,6 +70,25 @@ export default function LeagueManagementPanel() {
   const [betData, setBetData] = useState<Record<string, string>>({})
   const [relinkTarget, setRelinkTarget] = useState<{ leagueId: string; uid: string } | null>(null)
   const [newUidInput, setNewUidInput] = useState('')
+  // Diagnostic: raw bets fetched directly from server for a specific member
+  const [diagTarget, setDiagTarget] = useState<{ leagueId: string; uid: string } | null>(null)
+  const [diagData, setDiagData] = useState<unknown>(null)
+  const [diagLoading, setDiagLoading] = useState(false)
+
+  async function handleReadFirestore(leagueId: string, uid: string) {
+    setDiagTarget({ leagueId, uid })
+    setDiagData(null)
+    setDiagLoading(true)
+    try {
+      const fresh = await getLeagueFromServer(leagueId)
+      const bets = (fresh as AnyLeague).bets || {}
+      setDiagData(bets[uid] ?? '(no bets entry for this UID)')
+    } catch (e: unknown) {
+      setDiagData('❌ ' + (e instanceof Error ? e.message : String(e)))
+    } finally {
+      setDiagLoading(false)
+    }
+  }
 
   async function handleLoad() {
     setLoading(true)
@@ -112,12 +131,23 @@ export default function LeagueManagementPanel() {
     }
   }
 
-  function openBetEdit(league: AnyLeague, uid: string, stageStr: string) {
+  async function openBetEdit(league: AnyLeague, uid: string, stageStr: string) {
     const stage: StageKey = stageStr === '0b' ? '0b' : (parseInt(stageStr) as StageKey)
-    const existing: Record<string, string> = ((league.bets || {})[uid] || {})['stage' + stage] || {}
     setBetEdit({ leagueId: league.id, uid, stage: stageStr })
-    // Seed betData with all existing values (even keys not in the structured fields)
-    setBetData({ ...existing })
+    setBetData({}) // clear while loading
+    try {
+      // Always read from server — local cache can be stale and cause the editor
+      // to show empty fields, which would wipe real bets on save.
+      const fresh = await getLeagueFromServer(league.id)
+      const existing: Record<string, string> = ((fresh as AnyLeague).bets?.[uid] || {})['stage' + stage] || {}
+      setBetData({ ...existing })
+      // Also sync the local league state so the UI stays consistent
+      setLeagues((prev) => prev.map((l) => l.id === league.id ? { ...l, ...(fresh as AnyLeague) } : l))
+    } catch {
+      // Fallback to local state if server read fails
+      const existing: Record<string, string> = ((league.bets || {})[uid] || {})['stage' + stage] || {}
+      setBetData({ ...existing })
+    }
   }
 
   function closeBetEdit() {
@@ -140,6 +170,10 @@ export default function LeagueManagementPanel() {
       const written = await adminSaveBet(leagueId, betEdit.uid, stage, data)
       console.log('[adminSaveBet] success — written user bets:', written)
       const capturedUid = betEdit.uid
+      // Refresh the editor to show the actual committed stage bets
+      const committedStage = (written[`stage${stage}`] as Record<string, string> | undefined) || {}
+      setBetData({ ...committedStage })
+      // Sync local league state so the UI reflects what was written
       setLeagues((prev) => prev.map((l) => {
         if (l.id !== leagueId) return l
         return {
@@ -246,6 +280,14 @@ export default function LeagueManagementPanel() {
                           <Button
                             variant="secondary"
                             size="sm"
+                            title="קרא נתונים ישירות מ-Firestore (עוקף Cache)"
+                            onClick={() => handleReadFirestore(league.id, uid)}
+                          >
+                            🔍
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
                             title="שנה UID — לתיקון משתמש שחשבונו שונה"
                             onClick={() => { setRelinkTarget({ leagueId: league.id, uid }); setNewUidInput('') }}
                           >
@@ -269,6 +311,23 @@ export default function LeagueManagementPanel() {
                             <Button variant="secondary" size="sm" onClick={() => handleRelink(league.id)}>✓ אשר</Button>
                             <Button variant="secondary" size="sm" onClick={() => setRelinkTarget(null)}>ביטול</Button>
                           </div>
+                        </div>
+                      )}
+
+                      {/* Diagnostic: raw Firestore data for this member */}
+                      {diagTarget?.leagueId === league.id && diagTarget?.uid === uid && (
+                        <div className="mt-2 rounded border border-[rgba(100,200,255,0.2)] bg-[rgba(100,200,255,0.05)] p-2">
+                          <div className="mb-1 flex items-center justify-between">
+                            <span className="text-[0.7rem] font-bold text-[var(--blue)]">🔍 נתוני Firestore (ישירות מהשרת)</span>
+                            <button className="text-xs text-[var(--text2)]" onClick={() => { setDiagTarget(null); setDiagData(null) }}>✕</button>
+                          </div>
+                          {diagLoading ? (
+                            <div className="text-xs text-[var(--text2)]">⏳ טוען...</div>
+                          ) : (
+                            <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all font-mono text-[0.6rem] text-[var(--text)]">
+                              {JSON.stringify(diagData, null, 2)}
+                            </pre>
+                          )}
                         </div>
                       )}
 

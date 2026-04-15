@@ -1,9 +1,11 @@
 import {
   doc,
   getDoc,
+  getDocFromServer,
   setDoc,
   updateDoc,
   getDocs,
+  getDocsFromServer,
   deleteDoc,
   query,
   collection,
@@ -113,8 +115,18 @@ export async function openLeague(lid: string) {
 }
 
 export async function loadAllLeagues() {
-  const snap = await getDocs(collection(db, 'leagues'))
+  // Force a server read so the admin always sees live data, not IndexedDB cache.
+  // With persistentLocalCache, getDocs() can return stale cached data which would
+  // cause the bet editor to show empty fields and then wipe real bets on save.
+  const snap = await getDocsFromServer(collection(db, 'leagues'))
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
+/** Read a single league document direct from the server (bypasses local cache). */
+export async function getLeagueFromServer(lid: string) {
+  const snap = await getDocFromServer(doc(db, 'leagues', lid))
+  if (!snap.exists()) throw new Error('ליגה לא נמצאה')
+  return { id: snap.id, ...snap.data() }
 }
 
 export async function deleteLeague(lid: string, memberUids: string[]) {
