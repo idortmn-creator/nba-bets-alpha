@@ -244,8 +244,8 @@ function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, 
         const lockTs: number | undefined = autoLocks?.[`${stage}_${m.key}`]
         if (isSeriesLocked(stage, m.key)) {
           return (
-            <div key={m.key} className="playin-card opacity-50 pointer-events-none">
-              <div className="match-label">🏀 {t1 && t2 ? <><TeamName name={t1} size={14} /> מול <TeamName name={t2} size={14} /></> : m.label} 🔒</div>
+            <div key={m.key} className="playin-card bet-card-locked opacity-50 pointer-events-none">
+              <div className="match-label">🏀 {t1 && t2 ? <><TeamName name={t1} size={14} /> מול <TeamName name={t2} size={14} /></> : m.label}</div>
               <div className="p-2 text-center text-sm text-[var(--text2)]">משחק זה ננעל</div>
             </div>
           )
@@ -279,7 +279,12 @@ function SeriesForm({ stage, matches, cbd, pick, getTeams, isSeriesLocked, autoL
         const home = t.home || 'ביתית', away = t.away || 'אורחת'
         const lockTs: number | undefined = autoLocks?.[`${stage}_${m.key}`]
         if (isSeriesLocked(stage, m.key)) {
-          return <div key={m.key} className="matchup-bet-card opacity-50 pointer-events-none"><div className="match-label">🏀 <TeamName name={home} size={14} /> מול <TeamName name={away} size={14} /> 🔒</div><div className="p-2 text-center text-sm text-[var(--text2)]">סדרה זו ננעלה</div></div>
+          return (
+            <div key={m.key} className="matchup-bet-card bet-card-locked opacity-50 pointer-events-none">
+              <div className="match-label">🏀 <TeamName name={home} size={14} /> מול <TeamName name={away} size={14} /></div>
+              <div className="p-2 text-center text-sm text-[var(--text2)]">סדרה זו ננעלה</div>
+            </div>
+          )
         }
         return (
           <div key={m.key} className="matchup-bet-card">
@@ -290,12 +295,12 @@ function SeriesForm({ stage, matches, cbd, pick, getTeams, isSeriesLocked, autoL
               </div>
             )}
             <div className="mt-2 flex gap-2.5">
-              <div className="flex flex-1 flex-col gap-1 rounded-lg border border-[var(--blue)]/15 bg-[var(--blue)]/5 p-2">
-                <div className="mb-0.5 text-center text-[0.7rem] font-bold text-[var(--blue)]"><TeamName name={home} size={16} /> 🏠</div>
+              <div className="flex flex-1 flex-col gap-2 rounded-lg border border-[var(--blue)]/15 bg-[var(--blue)]/5 p-2">
+                <div className="flex items-center justify-center gap-1 text-[0.7rem] font-bold text-[var(--blue)]"><TeamName name={home} size={16} /><span>🏠</span></div>
                 {GAPS.map((r) => <button key={r} className={`bet-opt ${cbd[m.key + '_winner'] === home && cbd[m.key + '_result'] === r ? 'sel-home' : ''}`} onClick={() => { pick(m.key + '_winner', home); pick(m.key + '_result', r) }}><span className="opt-res">{r}</span></button>)}
               </div>
-              <div className="flex flex-1 flex-col gap-1 rounded-lg border border-[var(--orange)]/15 bg-[var(--orange)]/5 p-2">
-                <div className="mb-0.5 text-center text-[0.7rem] font-bold text-[var(--orange)]"><TeamName name={away} size={16} /> ✈️</div>
+              <div className="flex flex-1 flex-col gap-2 rounded-lg border border-[var(--orange)]/15 bg-[var(--orange)]/5 p-2">
+                <div className="flex items-center justify-center gap-1 text-[0.7rem] font-bold text-[var(--orange)]"><TeamName name={away} size={16} /><span>✈️</span></div>
                 {GAPS.map((r) => <button key={r} className={`bet-opt ${cbd[m.key + '_winner'] === away && cbd[m.key + '_result'] === r ? 'sel-away' : ''}`} onClick={() => { pick(m.key + '_winner', away); pick(m.key + '_result', r) }}><span className="opt-res">{r}</span></button>)}
               </div>
             </div>

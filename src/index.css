@@ -386,7 +386,13 @@
   display: inline-block;
 }
 .team-btn:hover { border-color: var(--orange); background: var(--orange-dim); }
-.team-btn.selected { background: var(--orange); color: #fff; border-color: var(--orange); }
+.team-btn:active { transform: scale(0.95); }
+.team-btn.selected {
+  background: var(--orange);
+  color: #fff;
+  border-color: var(--orange);
+  box-shadow: 0 0 14px rgba(255,107,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.15);
+}
 
 /* ── BET FORM: SERIES ── */
 .matchup-bet-card {
@@ -413,8 +419,21 @@
   gap: 4px;
 }
 .bet-opt:hover { background: rgba(255,255,255,0.07); color: var(--text); }
-.bet-opt.sel-home { background: rgba(79,195,247,0.2); border-color: var(--blue); color: var(--blue); font-weight: 700; }
-.bet-opt.sel-away { background: var(--orange-dim); border-color: var(--orange); color: var(--orange); font-weight: 700; }
+.bet-opt:active { transform: scale(0.95); }
+.bet-opt.sel-home {
+  background: rgba(79,195,247,0.28);
+  border-color: var(--blue);
+  color: var(--blue);
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(79,195,247,0.4);
+}
+.bet-opt.sel-away {
+  background: rgba(255,107,0,0.28);
+  border-color: var(--orange);
+  color: var(--orange);
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(255,107,0,0.4);
+}
 .opt-res { font-family: 'Oswald', sans-serif; font-size: 0.85rem; letter-spacing: 1px; }
 
 /* ── BONUS BET ── */
@@ -441,7 +460,35 @@
   transition: all 0.15s;
 }
 .bonus-opt:hover { background: rgba(255,215,0,0.1); }
-.bonus-opt.selected { background: rgba(255,215,0,0.2); border-color: var(--gold); color: var(--gold); font-weight: 700; }
+.bonus-opt:active { transform: scale(0.95); }
+.bonus-opt.selected {
+  background: rgba(255,215,0,0.22);
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(255,215,0,0.35);
+}
+
+/* ── LOCKED CARD OVERLAY ── */
+.bet-card-locked {
+  position: relative;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(0,0,0,0.055) 0px,
+    rgba(0,0,0,0.055) 4px,
+    transparent 4px,
+    transparent 14px
+  ) !important;
+}
+.bet-card-locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 0.8rem;
+  opacity: 0.55;
+  pointer-events: none;
+}
 
 /* ── ADMIN BONUS CARD ── */
 .bonus-admin-card {
@@ -834,6 +881,18 @@
   color: var(--text2);
 }
 .br-win-num-ro.br-win-bold { color: var(--green); font-weight: 700; }
+
+/* Next game time chip — shown below team rows when series is upcoming */
+.br-next-game {
+  font-size: 0.6rem;
+  color: var(--blue, #4fc3f7);
+  text-align: center;
+  padding: 1px 0 2px;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* ── UTILS ── */
 .text-orange { color: var(--orange); }
