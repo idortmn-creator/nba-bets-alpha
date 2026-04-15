@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
+import { Lock, Loader2 } from 'lucide-react'
 import { Card, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,6 +35,7 @@ export default function EnterBetsTab() {
   const autoLocks = getGlobal('autoLocks', {} as Record<string, number>)
   const [stage, setStage] = useState<StageKey>(0)
   const [cbd, setCbd] = useState<Record<string, string>>({})
+  const [saving, setSaving] = useState(false)
 
   const stageIdx = STAGE_KEYS.indexOf(stage)
   const stageLocked = getGlobal('stageLocked', [] as boolean[]) as boolean[]
@@ -50,11 +52,16 @@ export default function EnterBetsTab() {
   function pick(key: string, val: string) { setCbd((p) => ({ ...p, [key]: val })) }
 
   async function handleSave() {
-    if (!leagueData || !currentUser) return
+    if (!leagueData || !currentUser || saving) return
+    setSaving(true)
     try {
       await saveBet(leagueData.id, currentUser.uid, stage, cbd)
       toast('✅ הימורים נשמרו!')
-    } catch (e: unknown) { toast('❌ שגיאה: ' + (e instanceof Error ? e.message : String(e))) }
+    } catch (e: unknown) {
+      toast('❌ שגיאה: ' + (e instanceof Error ? e.message : String(e)))
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleClear() {
@@ -120,14 +127,14 @@ export default function EnterBetsTab() {
       <div className="flex overflow-x-auto border-b border-[var(--border)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {stageOptions.map((o) => {
           const idx = STAGE_KEYS.indexOf(o.value as StageKey)
-          const isLocked = (stageLocked)[idx] ?? false
+          const isLocked = stageLocked[idx] ?? false
           const isActive = stage === o.value
           return (
             <button
               key={String(o.value)}
               onClick={() => setStage(o.value)}
               className={[
-                'flex-shrink-0 px-3.5 py-3 text-sm font-medium transition-colors whitespace-nowrap',
+                'flex-shrink-0 px-5 py-3 text-sm font-medium transition-colors whitespace-nowrap',
                 'border-b-2 -mb-px',
                 isActive
                   ? 'border-[var(--orange)] text-white'
@@ -180,14 +187,22 @@ export default function EnterBetsTab() {
 
           <BonusBetsForm stage={stage} cbd={cbd} pick={pick} getBonusBets={getBonusBets} isBonusLocked={isBonusLocked} isSingleBonusLocked={isSingleBonusLocked} />
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={handleSave}>💾 שמור הימורים</Button>
-            <Button variant="secondary" size="sm" onClick={autoFill} className="!bg-[rgba(255,215,0,0.1)] !border-[rgba(255,215,0,0.3)] !text-[var(--gold)]">🎲 מילוי אוטומטי</Button>
-            <Button variant="secondary" size="sm" onClick={handleClear}>🔄 נקה ושמור</Button>
-          </div>
+          {/* bottom spacer so content isn't hidden behind the sticky bar */}
+          <div className="h-20" />
         </>
       )}
       </div>
+
+      {/* Sticky action bar — only shown when stage is open for betting */}
+      {!locked && canBetOnStage(stage) && (
+        <div className="sticky bottom-0 z-50 flex flex-wrap items-center gap-2 border-t border-white/10 bg-[var(--dark2)]/90 p-4 backdrop-blur-md">
+          <Button disabled={saving} onClick={handleSave} className="min-w-[120px]">
+            {saving ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />שומר...</> : '💾 שמור הימורים'}
+          </Button>
+          <Button variant="secondary" size="sm" onClick={autoFill} className="!bg-[rgba(255,215,0,0.1)] !border-[rgba(255,215,0,0.3)] !text-[var(--gold)]">🎲 מילוי אוטומטי</Button>
+          <Button variant="secondary" size="sm" onClick={handleClear}>🔄 נקה ושמור</Button>
+        </div>
+      )}
     </Card>
   )
 }
@@ -246,7 +261,9 @@ function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, 
           return (
             <div key={m.key} className="playin-card bet-card-locked opacity-50 pointer-events-none">
               <div className="match-label">🏀 {t1 && t2 ? <><TeamName name={t1} size={14} /> מול <TeamName name={t2} size={14} /></> : m.label}</div>
-              <div className="p-2 text-center text-sm text-[var(--text2)]">משחק זה ננעל</div>
+              <div className="flex items-center justify-center gap-1.5 p-2 text-sm text-[var(--text2)]">
+                <Lock size={13} />משחק זה ננעל
+              </div>
             </div>
           )
         }
@@ -282,7 +299,9 @@ function SeriesForm({ stage, matches, cbd, pick, getTeams, isSeriesLocked, autoL
           return (
             <div key={m.key} className="matchup-bet-card bet-card-locked opacity-50 pointer-events-none">
               <div className="match-label">🏀 <TeamName name={home} size={14} /> מול <TeamName name={away} size={14} /></div>
-              <div className="p-2 text-center text-sm text-[var(--text2)]">סדרה זו ננעלה</div>
+              <div className="flex items-center justify-center gap-1.5 p-2 text-sm text-[var(--text2)]">
+                <Lock size={13} />סדרה זו ננעלה
+              </div>
             </div>
           )
         }
