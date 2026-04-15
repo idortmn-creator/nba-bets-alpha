@@ -8,6 +8,8 @@ export interface UserDoc {
   email: string
   leagues?: string[]
   createdAt?: unknown
+  reminderBefore?: number | null
+  fcmToken?: string
 }
 
 interface AuthState {

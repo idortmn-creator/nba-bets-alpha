@@ -139,6 +139,44 @@
 .lb-sticky-name { flex: 1; font-weight: 700; font-size: 0.9rem; }
 .lb-sticky-score { font-family: 'Oswald', sans-serif; font-size: 1rem; color: var(--orange); font-weight: 700; white-space: nowrap; }
 
+/* ── SKELETON / SHIMMER ── */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.7;  }
+}
+.skeleton-item {
+  background: rgba(255,255,255,0.08);
+  animation: skeletonPulse 1.6s ease-in-out infinite;
+}
+
+/* ── PLAYER CARD ── */
+@keyframes cardShimmer {
+  0%   { transform: translateX(120%); }
+  100% { transform: translateX(-120%); }
+}
+.player-card-glow {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgba(255,107,0,0.09) 0%,
+    rgba(255,107,0,0.04) 50%,
+    rgba(79,195,247,0.04) 100%
+  );
+  border: 1px solid rgba(255,107,0,0.22);
+  border-radius: 16px;
+  box-shadow: 0 0 40px rgba(255,107,0,0.1), inset 0 1px 0 rgba(255,255,255,0.06);
+  padding: 18px;
+}
+.player-card-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.045) 50%, transparent 100%);
+  animation: cardShimmer 5s ease-in-out infinite;
+  pointer-events: none;
+}
+
 /* ── LEAGUE HOME TAB ── */
 .lh-wrap { display: flex; flex-direction: column; gap: 14px; }
 .lh-card {
@@ -916,6 +954,138 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ── MVP PICKER ── */
+.mvp-section {
+  margin-top: 16px;
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 10px;
+  background: rgba(255,215,0,0.04);
+  padding: 12px 14px;
+}
+.mvp-section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--gold, #ffd700);
+  margin-bottom: 10px;
+}
+.mvp-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.mvp-picker-row:last-child { border-bottom: none; }
+.mvp-picker-label {
+  font-size: 0.72rem;
+  color: var(--text2);
+  min-width: 90px;
+  flex-shrink: 0;
+}
+.mvp-picker-teams {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text2);
+  flex: 1;
+  min-width: 120px;
+}
+.mvp-picker-vs {
+  font-size: 0.65rem;
+  color: var(--text2);
+  opacity: 0.6;
+  margin: 0 2px;
+}
+.mvp-picker-btn {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--dark3, #1e1e2e);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 6px;
+  color: var(--gold, #ffd700);
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s;
+}
+.mvp-picker-btn:hover { border-color: rgba(255,215,0,0.6); }
+.mvp-picker-btn:disabled { opacity: 0.5; cursor: default; }
+.mvp-picker-value {
+  font-size: 0.72rem;
+  color: var(--gold, #ffd700);
+  font-weight: 600;
+}
+.mvp-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 100;
+  background: var(--dark2, #18182a);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 8px;
+  min-width: 220px;
+  max-width: 300px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+.mvp-search {
+  width: 100%;
+  background: var(--dark3, #1e1e2e);
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  color: var(--text1);
+  font-size: 0.75rem;
+  padding: 7px 10px;
+  outline: none;
+  box-sizing: border-box;
+}
+.mvp-list {
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.mvp-item {
+  padding: 7px 12px;
+  font-size: 0.75rem;
+  color: var(--text1);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.mvp-item:hover { background: rgba(255,255,255,0.06); }
+.mvp-item-selected {
+  color: var(--gold, #ffd700);
+  font-weight: 700;
+  background: rgba(255,215,0,0.08);
+}
+.mvp-empty {
+  padding: 10px 12px;
+  font-size: 0.72rem;
+  color: var(--text2);
+  text-align: center;
+}
+
+/* Read-only MVP display (BracketBetsViewTab) */
+.mvp-readonly-section {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255,215,0,0.15);
+  border-radius: 8px;
+  background: rgba(255,215,0,0.03);
+}
+.mvp-readonly-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 0.72rem;
+}
+.mvp-readonly-label { color: var(--text2); }
+.mvp-readonly-value { color: var(--gold, #ffd700); font-weight: 600; }
 
 /* ── UTILS ── */
 .text-orange { color: var(--orange); }
