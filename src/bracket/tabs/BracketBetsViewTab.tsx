@@ -4,8 +4,8 @@ import { useGlobalStore } from '@/store/global.store'
 import { useBracketLeagueStore } from '../bracketLeague.store'
 import { Card } from '@/components/ui/card'
 import { TeamName } from '@/components/ui/TeamName'
-import { getBracketTeams, BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES, CARD_W, CARD_H, TOTAL_H, TOTAL_W } from '../bracketConstants'
-import type { BracketPick } from '../bracketConstants'
+import { getBracketTeamsWithActual, BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES, CARD_W, CARD_H, TOTAL_H, TOTAL_W } from '../bracketConstants'
+import type { BracketPick, BracketSeriesMap } from '../bracketConstants'
 import { STAGE_KEYS } from '@/lib/constants'
 
 function useGlobalR1Teams() {
@@ -20,14 +20,19 @@ function useBracketLocked() {
   return stageLocked[STAGE_KEYS.indexOf(1)] || false
 }
 
+function useBracketSeries(): BracketSeriesMap {
+  return (useGlobalStore((s) => s.globalData).bracketSeries as BracketSeriesMap | undefined) || {}
+}
+
 interface ReadonlyCardProps {
   seriesKey: string
   pick: BracketPick
   globalR1: Record<string, { home: string; away: string }>
+  bracketSeries: BracketSeriesMap
 }
 
-function ReadonlySeriesCard({ seriesKey, pick, globalR1 }: ReadonlyCardProps) {
-  const teams = getBracketTeams(seriesKey, pick, globalR1)
+function ReadonlySeriesCard({ seriesKey, pick, globalR1, bracketSeries }: ReadonlyCardProps) {
+  const teams = getBracketTeamsWithActual(seriesKey, pick, globalR1, bracketSeries)
   const p = pick[seriesKey] || { homeWins: 0, awayWins: 0 }
   const { homeWins, awayWins } = p
   const homeWon = homeWins === 4
@@ -68,8 +73,8 @@ function ReadonlySeriesCard({ seriesKey, pick, globalR1 }: ReadonlyCardProps) {
   )
 }
 
-function MemberBracket({ uid, pick, globalR1, username }: {
-  uid: string; pick: BracketPick; globalR1: Record<string, { home: string; away: string }>; username: string
+function MemberBracket({ uid, pick, globalR1, bracketSeries, username }: {
+  uid: string; pick: BracketPick; globalR1: Record<string, { home: string; away: string }>; bracketSeries: BracketSeriesMap; username: string
 }) {
   const [expanded, setExpanded] = useState(false)
   const completed = Object.keys(pick).filter((k) => {
@@ -99,7 +104,7 @@ function MemberBracket({ uid, pick, globalR1, username }: {
               </g>
             </svg>
             {BRACKET_SERIES.map((s) => (
-              <ReadonlySeriesCard key={s.key} seriesKey={s.key} pick={pick} globalR1={globalR1} />
+              <ReadonlySeriesCard key={s.key} seriesKey={s.key} pick={pick} globalR1={globalR1} bracketSeries={bracketSeries} />
             ))}
           </div>
         </div>
@@ -112,6 +117,7 @@ export default function BracketBetsViewTab() {
   const leagueData = useBracketLeagueStore((s) => s.currentBracketLeagueData)
   const currentUser = useAuthStore((s) => s.currentUser)
   const globalR1 = useGlobalR1Teams()
+  const bracketSeries = useBracketSeries()
   const locked = useBracketLocked()
 
   if (!leagueData) return null
@@ -146,6 +152,7 @@ export default function BracketBetsViewTab() {
           uid={uid}
           pick={bets[uid] || {}}
           globalR1={globalR1}
+          bracketSeries={bracketSeries}
           username={(memberInfo[uid]?.username) || uid}
         />
       ))}

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { BracketSeriesMap } from '@/bracket/bracketConstants'
 
 export interface GlobalData {
   currentStage?: number | string
@@ -12,6 +13,7 @@ export interface GlobalData {
   tiebreakerQuestion?: string
   tiebreakerAnswer?: number | null
   tiebreakerLocked?: boolean
+  bracketSeries?: BracketSeriesMap
   [key: string]: unknown
 }
 

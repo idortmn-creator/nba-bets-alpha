@@ -9,6 +9,7 @@ import { functions } from '@/lib/firebase'
 
 const syncTeamsFn = httpsCallable(functions, 'syncTeams')
 const syncResultsFn = httpsCallable(functions, 'syncResults')
+const syncBracketFn = httpsCallable(functions, 'syncBracketData')
 
 interface SyncResult {
   updated: string[]
@@ -75,6 +76,19 @@ export default function NBAApiPanel() {
       } else {
         toast('⚠️ לא נמצאו סדרות שהסתיימו לשלב זה')
       }
+    } catch (e: unknown) {
+      toast('❌ ' + (e instanceof Error ? e.message : String(e)))
+    } finally { setLoading(null) }
+  }
+
+  async function handleSyncBracket() {
+    setLoading('bracket')
+    try {
+      const res = await syncBracketFn({})
+      const data = res.data as { ok: boolean; bracketSeries: Record<string, unknown> }
+      const count = Object.keys(data.bracketSeries || {}).length
+      toast(`✅ ברקט עודכן — ${count} סדרות`)
+      setLastResult({ action: 'syncBracket', data: { updated: [], skipped: [] } })
     } catch (e: unknown) {
       toast('❌ ' + (e instanceof Error ? e.message : String(e)))
     } finally { setLoading(null) }
@@ -148,6 +162,15 @@ export default function NBAApiPanel() {
           disabled={!!loading}
         >
           {loading === 'results' ? '⏳' : '📊'} סנכרן תוצאות
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={handleSyncBracket}
+          disabled={!!loading}
+          className="!bg-[rgba(168,85,247,0.1)] !border-[rgba(168,85,247,0.3)] !text-[var(--purple,#a855f7)]"
+        >
+          {loading === 'bracket' ? '⏳' : '🏆'} סנכרן ברקט
         </Button>
       </div>
 

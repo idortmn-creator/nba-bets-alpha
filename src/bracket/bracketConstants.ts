@@ -60,6 +60,21 @@ export const BRACKET_DOWNSTREAM: Record<string, string[]> = {
 
 export type BracketPick = Record<string, { homeWins: number; awayWins: number }>
 
+// ── Actual series state (populated from NBA API sync) ──
+
+export interface BracketSeriesState {
+  homeTeam: string
+  awayTeam: string
+  homeWins: number
+  awayWins: number
+  winner?: string
+  result?: string    // "4-2"
+  nextGame?: string  // ISO timestamp (UTC)
+  gameNumber?: number
+}
+
+export type BracketSeriesMap = Record<string, BracketSeriesState>
+
 // ── Team resolution helpers ──
 
 export function getBracketTeams(
@@ -93,6 +108,26 @@ export function clearDownstreamPicks(seriesKey: string, picks: BracketPick): Bra
   const newPicks = { ...picks }
   for (const k of BRACKET_DOWNSTREAM[seriesKey] || []) delete newPicks[k]
   return newPicks
+}
+
+/**
+ * Resolve teams for a series — uses actual API results (bracketSeries) as the
+ * authoritative source for R2+ teams, falling back to user-pick-based resolution
+ * when actual data is not yet available.
+ */
+export function getBracketTeamsWithActual(
+  seriesKey: string,
+  pick: BracketPick,
+  globalR1: Record<string, { home: string; away: string }>,
+  bracketSeries?: BracketSeriesMap,
+): { home: string; away: string } {
+  if (bracketSeries?.[seriesKey]) {
+    const actual = bracketSeries[seriesKey]
+    if (actual.homeTeam || actual.awayTeam) {
+      return { home: actual.homeTeam, away: actual.awayTeam }
+    }
+  }
+  return getBracketTeams(seriesKey, pick, globalR1)
 }
 
 // ── Visual layout constants ──

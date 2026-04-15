@@ -5,5 +5,6 @@ initializeApp()
 // Export all Cloud Functions (these are what Firebase deploys)
 export { syncTeams } from './syncTeams'
 export { syncResults, scheduledNBASync } from './syncResults'
+export { syncBracketData } from './syncBracketData'
 export { getLiveGames } from './liveGames'
 export { sendPushNotification } from './sendPushNotification'

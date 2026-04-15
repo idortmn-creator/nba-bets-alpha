@@ -8,9 +8,9 @@ import { saveBracketBet, clearBracketBet } from '../bracketLeague.service'
 import {
   BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES,
   CARD_W, CARD_H, TOTAL_H, TOTAL_W,
-  getBracketTeams, getBracketWinner, clearDownstreamPicks,
+  getBracketTeamsWithActual, getBracketWinner, clearDownstreamPicks,
 } from '../bracketConstants'
-import type { BracketPick } from '../bracketConstants'
+import type { BracketPick, BracketSeriesMap } from '../bracketConstants'
 import { TeamName } from '@/components/ui/TeamName'
 import { STAGE_KEYS } from '@/lib/constants'
 
@@ -18,6 +18,24 @@ function useGlobalR1Teams() {
   const globalData = useGlobalStore((s) => s.globalData)
   const teams = (globalData.teams as Record<string, Record<string, { home: string; away: string }>> | undefined) || {}
   return teams['stage1'] || {}
+}
+
+function useBracketSeries(): BracketSeriesMap {
+  return (useGlobalStore((s) => s.globalData).bracketSeries as BracketSeriesMap | undefined) || {}
+}
+
+function formatIsraelTime(iso: string): string {
+  try {
+    return new Intl.DateTimeFormat('he-IL', {
+      timeZone: 'Asia/Jerusalem',
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(iso))
+  } catch {
+    return ''
+  }
 }
 
 function useBracketLocked() {
@@ -34,14 +52,16 @@ interface SeriesCardProps {
   seriesKey: string
   pick: BracketPick
   globalR1: Record<string, { home: string; away: string }>
+  bracketSeries: BracketSeriesMap
   locked: boolean
   onAdjust?: (seriesKey: string, side: 'home' | 'away', delta: number) => void
   readonly?: boolean
 }
 
-function SeriesCard({ seriesKey, pick, globalR1, locked, onAdjust, readonly }: SeriesCardProps) {
-  const teams = getBracketTeams(seriesKey, pick, globalR1)
+function SeriesCard({ seriesKey, pick, globalR1, bracketSeries, locked, onAdjust, readonly }: SeriesCardProps) {
+  const teams = getBracketTeamsWithActual(seriesKey, pick, globalR1, bracketSeries)
   const p = pick[seriesKey] || { homeWins: 0, awayWins: 0 }
+  const actual = bracketSeries[seriesKey]
   const { homeWins, awayWins } = p
   const homeWon = homeWins === 4
   const awayWon = awayWins === 4
@@ -102,6 +122,12 @@ function SeriesCard({ seriesKey, pick, globalR1, locked, onAdjust, readonly }: S
             )}
             {isReadonly && <span className={`br-win-num-ro${awayWon ? ' br-win-bold' : ''}`}>{awayWins}</span>}
           </div>
+          {/* Next game time (only when series is still in progress) */}
+          {actual?.nextGame && !actual.winner && (
+            <div className="br-next-game">
+              {formatIsraelTime(actual.nextGame)}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -113,12 +139,13 @@ function SeriesCard({ seriesKey, pick, globalR1, locked, onAdjust, readonly }: S
 interface BracketCanvasProps {
   pick: BracketPick
   globalR1: Record<string, { home: string; away: string }>
+  bracketSeries: BracketSeriesMap
   locked: boolean
   onAdjust?: (seriesKey: string, side: 'home' | 'away', delta: number) => void
   readonly?: boolean
 }
 
-function BracketCanvas({ pick, globalR1, locked, onAdjust, readonly }: BracketCanvasProps) {
+function BracketCanvas({ pick, globalR1, bracketSeries, locked, onAdjust, readonly }: BracketCanvasProps) {
   const CONF_LABELS = [
     { text: '🔵 מזרח', x: TOTAL_W - CARD_W / 2, y: -18, anchor: 'middle' },
     { text: '🔴 מערב', x: CARD_W / 2, y: -18, anchor: 'middle' },
@@ -159,6 +186,7 @@ function BracketCanvas({ pick, globalR1, locked, onAdjust, readonly }: BracketCa
               seriesKey={s.key}
               pick={pick}
               globalR1={globalR1}
+              bracketSeries={bracketSeries}
               locked={locked}
               onAdjust={onAdjust}
               readonly={readonly}
@@ -176,6 +204,7 @@ export default function BracketMyBetsTab() {
   const leagueData = useBracketLeagueStore((s) => s.currentBracketLeagueData)
   const currentUser = useAuthStore((s) => s.currentUser)
   const globalR1 = useGlobalR1Teams()
+  const bracketSeries = useBracketSeries()
   const locked = useBracketLocked()
 
   const [pick, setPick] = useState<BracketPick>({})
@@ -263,6 +292,7 @@ export default function BracketMyBetsTab() {
       <BracketCanvas
         pick={pick}
         globalR1={globalR1}
+        bracketSeries={bracketSeries}
         locked={locked}
         onAdjust={adjustWins}
         readonly={locked || !r1TeamsReady}
