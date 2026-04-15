@@ -65,9 +65,11 @@ function SeriesCard({ seriesKey, pick, globalR1, bracketSeries, locked, onAdjust
   const { homeWins, awayWins } = p
   const homeWon = homeWins === 4
   const awayWon = awayWins === 4
-  // Show placeholder until BOTH teams are resolved — prevents "?" appearing
-  // when only one feeder series has a winner yet.
-  const noTeams = !teams.home || !teams.away
+  // Show placeholder only when neither team is known yet.
+  // Partial state (one team known, one "?") is intentional — it happens when
+  // the opponent hasn't been set (e.g. 8-seed pending play-in) and the user
+  // still needs to enter win counts for that series.
+  const noTeams = !teams.home && !teams.away
 
   const def = BRACKET_SERIES.find((s) => s.key === seriesKey)
   const isReadonly = readonly || locked

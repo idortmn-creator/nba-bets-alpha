@@ -118,9 +118,12 @@ export function getBracketWinner(
 ): string {
   const teams = getBracketTeams(seriesKey, pick, globalR1, bracketSeries)
   const p = pick[seriesKey]
-  if (!p || !teams.home || !teams.away) return ''
-  if (p.homeWins === 4) return teams.home
-  if (p.awayWins === 4) return teams.away
+  if (!p) return ''
+  // Only require the WINNING team's name to be known — this allows a team with a
+  // known name to advance even when its opponent's name hasn't been set yet
+  // (e.g. an R1 8-seed whose identity depends on play-in results not yet entered).
+  if (p.homeWins === 4 && teams.home) return teams.home
+  if (p.awayWins === 4 && teams.away) return teams.away
   return ''
 }
 

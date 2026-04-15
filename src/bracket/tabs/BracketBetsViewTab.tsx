@@ -37,7 +37,7 @@ function ReadonlySeriesCard({ seriesKey, pick, globalR1, bracketSeries }: Readon
   const { homeWins, awayWins } = p
   const homeWon = homeWins === 4
   const awayWon = awayWins === 4
-  const noTeams = !teams.home || !teams.away
+  const noTeams = !teams.home && !teams.away
 
   const def = BRACKET_SERIES.find((s) => s.key === seriesKey)
   const conf = def?.conf || ''
