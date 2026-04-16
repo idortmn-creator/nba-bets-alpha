@@ -17,7 +17,7 @@ export default function BracketHomePage() {
   // Redirect returning users who already started their bracket
   useEffect(() => {
     if (!userDoc) return
-    const bracketLeagues: string[] = (userDoc as Record<string, unknown>).bracketLeagues as string[] || []
+    const bracketLeagues: string[] = (userDoc as unknown as Record<string, unknown>).bracketLeagues as string[] || []
     if (bracketLeagues.includes(GLOBAL_BRACKET_LEAGUE_ID)) {
       navigate('/bracket/saved', { replace: true })
     }
