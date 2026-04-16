@@ -43,10 +43,10 @@ export default function BracketHomePage() {
           <div className="hc-sub">ליגות הברקט שלך</div>
         </div>
         {isSuperAdmin && (
-          <div className="home-card !border-[var(--orange)]" onClick={() => navigate('/admin')}>
+          <div className="home-card !border-[var(--orange)]" onClick={() => navigate('/bracket/admin')}>
             <div className="hc-icon">⚙️</div>
             <div className="hc-title">ניהול גלובלי</div>
-            <div className="hc-sub">ניהול שלבים ותוצאות</div>
+            <div className="hc-sub">נעילה, תוצאות וניהול ליגות</div>
           </div>
         )}
       </div>

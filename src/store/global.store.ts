@@ -16,6 +16,14 @@ export interface GlobalData {
   bracketSeries?: BracketSeriesMap
   /** Actual MVP for each eligible bracket series — set by admin */
   bracketActualMvp?: BracketMvpPick
+  /** Bracket format lock (manual) */
+  bracketLocked?: boolean
+  /** Bracket format scheduled auto-lock (Unix ms timestamp) */
+  bracketAutoLock?: number
+  /** Bracket tiebreaker */
+  bracketTiebreakerQuestion?: string
+  bracketTiebreakerAnswer?: number | null
+  bracketTiebreakerLocked?: boolean
   [key: string]: unknown
 }
 

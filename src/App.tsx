@@ -22,6 +22,7 @@ import BracketCreatePage from '@/bracket/BracketCreatePage'
 import BracketJoinPage from '@/bracket/BracketJoinPage'
 import BracketMyLeaguesPage from '@/bracket/BracketMyLeaguesPage'
 import BracketLeaguePage from '@/bracket/BracketLeaguePage'
+import BracketAdminPage from '@/bracket/admin/BracketAdminPage'
 
 function BracketGuard({ children }: { children: React.ReactNode }) {
   const uid = useAuthStore((s) => s.currentUser?.uid)
@@ -70,6 +71,7 @@ function AppContent() {
           <Route path="/bracket/leagues" element={<BracketGuard><BracketMyLeaguesPage /></BracketGuard>} />
           <Route path="/bracket/league/:lid" element={<BracketGuard><BracketLeaguePage /></BracketGuard>} />
           <Route path="/bracket/league/:lid/:tab" element={<BracketGuard><BracketLeaguePage /></BracketGuard>} />
+          <Route path="/bracket/admin" element={<BracketGuard><BracketAdminPage /></BracketGuard>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

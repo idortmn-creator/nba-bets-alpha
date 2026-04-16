@@ -12,7 +12,6 @@ import {
 } from '../bracketConstants'
 import type { BracketPick, BracketSeriesMap, BracketMvpPick } from '../bracketConstants'
 import { TeamName } from '@/components/ui/TeamName'
-import { STAGE_KEYS } from '@/lib/constants'
 import { fetchTwoTeamRoster } from '@/lib/espnRoster'
 
 function useGlobalR1Teams() {
@@ -41,10 +40,9 @@ function formatIsraelTime(iso: string): string {
 
 function useBracketLocked() {
   const globalData = useGlobalStore((s) => s.globalData)
-  const stageLocked = (globalData.stageLocked as boolean[] | undefined) || []
-  // Locked when stage 1 (First Round, index 2 in STAGE_KEYS) is locked
-  const stage1Idx = STAGE_KEYS.indexOf(1)
-  return stageLocked[stage1Idx] || false
+  const manualLocked = (globalData.bracketLocked as boolean | undefined) || false
+  const autoLockTs   = (globalData.bracketAutoLock as number | undefined) || 0
+  return manualLocked || (autoLockTs > 0 && Date.now() >= autoLockTs)
 }
 
 // ── Series card ──────────────────────────────────────────────────────────────

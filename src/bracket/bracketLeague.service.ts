@@ -121,6 +121,60 @@ export async function clearMvpBet(
   })
 }
 
+// ── Admin functions ───────────────────────────────────────────────────────────
+
+export async function loadAllBracketLeagues(): Promise<Record<string, unknown>[]> {
+  const snap = await getDocs(collection(db, 'bracket_leagues'))
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
+export async function getBracketLeagueFromServer(lid: string): Promise<Record<string, unknown> | null> {
+  const snap = await getDoc(doc(db, 'bracket_leagues', lid))
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() }
+}
+
+export async function removeBracketLeagueMember(lid: string, uid: string): Promise<void> {
+  await updateDoc(doc(db, 'bracket_leagues', lid), {
+    members: arrayRemove(uid),
+    [`memberInfo.${uid}`]: deleteField(),
+    [`bets.${uid}`]: deleteField(),
+    [`mvpBets.${uid}`]: deleteField(),
+  })
+  try {
+    await updateDoc(doc(db, 'users', uid), { bracketLeagues: arrayRemove(lid) })
+  } catch { /* user doc may not exist */ }
+}
+
+export async function relinkBracketLeagueMember(
+  lid: string,
+  oldUid: string,
+  newUid: string,
+): Promise<void> {
+  const snap = await getDoc(doc(db, 'bracket_leagues', lid))
+  if (!snap.exists()) throw new Error('Bracket league not found')
+  const data = snap.data() as Record<string, unknown>
+
+  const members = ((data.members as string[]) || []).map((u) => (u === oldUid ? newUid : u))
+
+  function remapKeys(obj: Record<string, unknown>): Record<string, unknown> {
+    const out: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(obj)) out[k === oldUid ? newUid : k] = v
+    return out
+  }
+
+  await updateDoc(doc(db, 'bracket_leagues', lid), {
+    members,
+    memberInfo: remapKeys((data.memberInfo as Record<string, unknown>) || {}),
+    bets: remapKeys((data.bets as Record<string, unknown>) || {}),
+    mvpBets: remapKeys((data.mvpBets as Record<string, unknown>) || {}),
+  })
+}
+
+export async function adminSaveBracketBet(lid: string, uid: string, pick: BracketPick): Promise<void> {
+  await updateDoc(doc(db, 'bracket_leagues', lid), { [`bets.${uid}`]: pick })
+}
+
 export async function deleteBracketLeague(lid: string, memberUids: string[]): Promise<void> {
   await Promise.all(
     memberUids.map((uid) =>

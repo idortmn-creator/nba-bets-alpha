@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/card'
 import { TeamName } from '@/components/ui/TeamName'
 import { getBracketTeams, BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES, CARD_W, CARD_H, TOTAL_H, TOTAL_W } from '../bracketConstants'
 import type { BracketPick, BracketSeriesMap, BracketMvpPick } from '../bracketConstants'
-import { STAGE_KEYS } from '@/lib/constants'
 
 const MVP_SERIES_LABELS: Record<string, string> = {
   cf_east: 'גמר מזרח',
@@ -22,8 +21,9 @@ function useGlobalR1Teams() {
 
 function useBracketLocked() {
   const globalData = useGlobalStore((s) => s.globalData)
-  const stageLocked = (globalData.stageLocked as boolean[] | undefined) || []
-  return stageLocked[STAGE_KEYS.indexOf(1)] || false
+  const manualLocked = (globalData.bracketLocked as boolean | undefined) || false
+  const autoLockTs   = (globalData.bracketAutoLock as number | undefined) || 0
+  return manualLocked || (autoLockTs > 0 && Date.now() >= autoLockTs)
 }
 
 function useBracketSeries(): BracketSeriesMap {
