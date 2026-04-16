@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useGlobalHelpers } from '@/hooks/useGlobalHelpers'
-import StagePanel from './panels/StagePanel'
+import LocksPanel from './panels/LocksPanel'
 import TeamSetupPanel from './panels/TeamSetupPanel'
 import ResultsPanel from './panels/ResultsPanel'
 import BonusAdminPanel from './panels/BonusAdminPanel'
@@ -57,7 +57,7 @@ export default function GlobalAdminPage() {
 
       {activeTab === 'locks' && (
         <div className="space-y-4">
-          <StagePanel />
+          <LocksPanel />
           <AutoLockPanel />
         </div>
       )}
