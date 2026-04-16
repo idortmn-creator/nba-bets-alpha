@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { useGlobalStore } from '@/store/global.store'
 import { useBracketLeagueStore } from '../bracketLeague.store'
 import { Card } from '@/components/ui/card'
+import { SelectNative } from '@/components/ui/select-native'
 import { TeamName } from '@/components/ui/TeamName'
 import { getBracketTeams, BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES, CARD_W, CARD_H, TOTAL_H, TOTAL_W } from '../bracketConstants'
 import { GLOBAL_BRACKET_LEAGUE_ID } from '../bracketLeague.service'
@@ -189,21 +190,17 @@ export default function BracketBetsViewTab() {
     <div>
       {/* League selector */}
       {allLeagues.length > 1 && (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-[var(--text2)]">ליגה:</span>
-          {allLeagues.map((l) => (
-            <button
-              key={l.id}
-              onClick={() => setSelectedLid(l.id)}
-              className={`rounded border px-2.5 py-1 text-xs transition-colors ${
-                selectedLid === l.id
-                  ? 'border-[var(--orange)] bg-[rgba(255,107,0,0.1)] text-[var(--orange)]'
-                  : 'border-[rgba(255,255,255,0.15)] text-[var(--text2)] hover:border-[var(--orange-border)]'
-              }`}
-            >
-              {l.name}
-            </button>
-          ))}
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-xs text-[var(--text2)] shrink-0">ליגה:</span>
+          <SelectNative
+            value={selectedLid}
+            onChange={(e) => setSelectedLid(e.target.value)}
+            className="!py-1.5 !text-xs"
+          >
+            {allLeagues.map((l) => (
+              <option key={l.id} value={l.id}>{l.name}</option>
+            ))}
+          </SelectNative>
         </div>
       )}
 
