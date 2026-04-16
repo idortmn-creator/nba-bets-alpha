@@ -40,7 +40,7 @@ export async function ensureGlobalLeagueMember(
       id: GLOBAL_BRACKET_LEAGUE_ID,
       name: 'ליגה גלובלית',
       code: 'GLOBAL',
-      adminUid: 'SYSTEM',
+      adminUid: user.uid,  // must equal request.auth.uid for create rule
       members: [user.uid],
       memberInfo: {
         [user.uid]: { username: userDoc.username, displayName: userDoc.displayName },

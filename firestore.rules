@@ -204,9 +204,9 @@ service cloud.firestore {
 
       allow update: if isAuth() && (
           isSuperAdmin()
-          // Member can update their own bets
+          // Member can update their own bets and mvpBets
           || (request.auth.uid in resource.data.members
-              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bets', 'memberInfo'])
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bets', 'mvpBets', 'memberInfo'])
               && request.resource.data.adminUid == resource.data.adminUid
               && request.resource.data.members == resource.data.members)
           // Non-member joining
