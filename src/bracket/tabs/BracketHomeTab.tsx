@@ -13,18 +13,24 @@ function useActualMvp(): BracketMvpPick {
 }
 
 export default function BracketHomeTab({ onViewRules }: { onViewRules?: () => void }) {
-  const leagueData    = useBracketLeagueStore((s) => s.currentBracketLeagueData)
-  const currentUser   = useAuthStore((s) => s.currentUser)
-  const bracketSeries = useBracketSeries()
-  const actualMvp     = useActualMvp()
+  // currentBracketLeagueData drives the member list (league-specific)
+  // globalBracketLeagueData drives the actual bet data (shared across leagues)
+  const leagueData       = useBracketLeagueStore((s) => s.currentBracketLeagueData)
+  const globalLeagueData = useBracketLeagueStore((s) => s.globalBracketLeagueData)
+  const currentUser      = useAuthStore((s) => s.currentUser)
+  const bracketSeries    = useBracketSeries()
+  const actualMvp        = useActualMvp()
 
   if (!leagueData || !currentUser) return null
 
   const myUid      = currentUser.uid
-  const members    = leagueData.members    || []
-  const memberInfo = leagueData.memberInfo || {}
-  const bets       = leagueData.bets       || {}
-  const mvpBets    = leagueData.mvpBets    || {}
+  const members    = leagueData.members || []
+
+  // Use global league for bets — falls back to current league for the global league page itself
+  const source     = globalLeagueData ?? leagueData
+  const memberInfo = source.memberInfo || {}
+  const bets       = source.bets       || {}
+  const mvpBets    = source.mvpBets    || {}
 
   const scores  = scoreBracketAll(members, bets, mvpBets, bracketSeries, actualMvp)
   const myRank  = scores.findIndex((s) => s.uid === myUid) + 1
@@ -34,7 +40,6 @@ export default function BracketHomeTab({ onViewRules }: { onViewRules?: () => vo
 
   const medal = (r: number) => r === 1 ? '🥇' : r === 2 ? '🥈' : r === 3 ? '🥉' : String(r)
 
-  // Bracket submission status
   const myPick        = bets[myUid] || {}
   const completedCount = Object.keys(myPick).filter((k) => {
     const p = myPick[k]; return p && (p.homeWins === 4 || p.awayWins === 4)

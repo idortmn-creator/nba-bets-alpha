@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useBracketLeagueStore } from '../bracketLeague.store'
 import { useAuthStore } from '@/store/auth.store'
 import { useGlobalStore } from '@/store/global.store'
 import { Card } from '@/components/ui/card'
 import { scoreBracketAll } from '../bracketScoring'
+import { GLOBAL_BRACKET_LEAGUE_ID } from '../bracketLeague.service'
 import type { BracketSeriesMap, BracketMvpPick } from '../bracketConstants'
 
 function useBracketSeries(): BracketSeriesMap {
@@ -14,26 +16,64 @@ function useActualMvp(): BracketMvpPick {
 }
 
 export default function BracketLeaderboardTab() {
-  const leagueData    = useBracketLeagueStore((s) => s.currentBracketLeagueData)
-  const currentUser   = useAuthStore((s) => s.currentUser)
-  const bracketSeries = useBracketSeries()
-  const actualMvp     = useActualMvp()
+  const globalLeagueData  = useBracketLeagueStore((s) => s.globalBracketLeagueData)
+  const leaguesMeta       = useBracketLeagueStore((s) => s.myBracketLeaguesMeta)
+  const currentUser       = useAuthStore((s) => s.currentUser)
+  const bracketSeries     = useBracketSeries()
+  const actualMvp         = useActualMvp()
 
-  if (!leagueData) return null
+  const [selectedLid, setSelectedLid] = useState(GLOBAL_BRACKET_LEAGUE_ID)
 
-  const myUid     = currentUser?.uid || ''
-  const members   = leagueData.members   || []
-  const memberInfo = leagueData.memberInfo || {}
-  const bets       = leagueData.bets      || {}
-  const mvpBets    = leagueData.mvpBets   || {}
+  if (!globalLeagueData) return null
+
+  const myUid = currentUser?.uid || ''
+
+  // Determine which members to show: all global members, or filtered to private league
+  const selectedMeta = leaguesMeta?.find((l) => l.id === selectedLid)
+  const members: string[] = selectedLid === GLOBAL_BRACKET_LEAGUE_ID
+    ? (globalLeagueData.members || [])
+    : (selectedMeta?.members || [])
+
+  const memberInfo = globalLeagueData.memberInfo || {}
+  const bets       = globalLeagueData.bets      || {}
+  const mvpBets    = globalLeagueData.mvpBets   || {}
 
   const scores = scoreBracketAll(members, bets, mvpBets, bracketSeries, actualMvp)
 
-  // Has any result been published yet?
   const anyFinished = Object.values(bracketSeries).some((s) => s.winner)
+
+  // Build leagues list for selector: global first, then private leagues
+  const allLeagues = leaguesMeta
+    ? [
+        { id: GLOBAL_BRACKET_LEAGUE_ID, name: 'ליגה גלובלית' },
+        ...leaguesMeta
+          .filter((l) => l.id !== GLOBAL_BRACKET_LEAGUE_ID)
+          .map((l) => ({ id: l.id, name: l.name })),
+      ]
+    : [{ id: GLOBAL_BRACKET_LEAGUE_ID, name: 'ליגה גלובלית' }]
 
   return (
     <Card>
+      {/* League selector */}
+      {allLeagues.length > 1 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-[var(--text2)]">ליגה:</span>
+          {allLeagues.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => setSelectedLid(l.id)}
+              className={`rounded border px-2.5 py-1 text-xs transition-colors ${
+                selectedLid === l.id
+                  ? 'border-[var(--orange)] bg-[rgba(255,107,0,0.1)] text-[var(--orange)]'
+                  : 'border-[rgba(255,255,255,0.15)] text-[var(--text2)] hover:border-[var(--orange-border)]'
+              }`}
+            >
+              {l.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="mb-3 font-oswald text-lg text-[var(--orange)]">🏆 טבלת ניקוד</div>
 
       {!anyFinished && (

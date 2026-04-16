@@ -10,6 +10,7 @@ import {
   relinkBracketLeagueMember,
   getBracketLeagueFromServer,
   adminSaveBracketBet,
+  GLOBAL_BRACKET_LEAGUE_ID,
 } from '@/bracket/bracketLeague.service'
 import { BRACKET_SERIES } from '@/bracket/bracketConstants'
 import type { BracketPick } from '@/bracket/bracketConstants'
@@ -82,7 +83,8 @@ export default function BracketLeagueManagementPanel() {
     setEditTarget({ lid: league.id, uid })
     setPickEdits({})
     try {
-      const fresh = await getBracketLeagueFromServer(league.id)
+      // Always load bets from the global league
+      const fresh = await getBracketLeagueFromServer(GLOBAL_BRACKET_LEAGUE_ID)
       const existing: BracketPick = ((fresh as AnyLeague)?.bets?.[uid]) || {}
       const edits: Record<string, { homeWins: string; awayWins: string }> = {}
       for (const s of BRACKET_SERIES) {
@@ -91,11 +93,9 @@ export default function BracketLeagueManagementPanel() {
       }
       setPickEdits(edits)
     } catch {
-      const existing: BracketPick = ((league.bets || {})[uid]) || {}
       const edits: Record<string, { homeWins: string; awayWins: string }> = {}
       for (const s of BRACKET_SERIES) {
-        const p = existing[s.key] || { homeWins: 0, awayWins: 0 }
-        edits[s.key] = { homeWins: String(p.homeWins), awayWins: String(p.awayWins) }
+        edits[s.key] = { homeWins: '0', awayWins: '0' }
       }
       setPickEdits(edits)
     }
@@ -114,7 +114,7 @@ export default function BracketLeagueManagementPanel() {
       if (hw > 0 || aw > 0) pick[s.key] = { homeWins: hw, awayWins: aw }
     }
     try {
-      await adminSaveBracketBet(editTarget.lid, editTarget.uid, pick)
+      await adminSaveBracketBet(editTarget.uid, pick)
       toast('✅ הימורים עודכנו')
       closeBetEdit()
     } catch (e: unknown) {
@@ -174,7 +174,7 @@ export default function BracketLeagueManagementPanel() {
                   onClick={() => { setExpandedId(expandedId === league.id ? null : league.id); closeBetEdit() }}>
                   {expandedId === league.id ? '▲' : '▼'}
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDelete(league)}>🗑️</Button>
+                <Button variant="destructive" size="sm" onClick={() => handleDelete(league)} disabled={league.id === GLOBAL_BRACKET_LEAGUE_ID} title={league.id === GLOBAL_BRACKET_LEAGUE_ID ? 'לא ניתן למחוק את הליגה הגלובלית' : ''}>🗑️</Button>
               </div>
             </div>
 

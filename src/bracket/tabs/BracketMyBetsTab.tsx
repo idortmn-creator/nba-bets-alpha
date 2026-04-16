@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/auth.store'
@@ -64,10 +65,6 @@ function SeriesCard({ seriesKey, pick, globalR1, bracketSeries, locked, onAdjust
   const { homeWins, awayWins } = p
   const homeWon = homeWins === 4
   const awayWon = awayWins === 4
-  // Show placeholder only when neither team is known yet.
-  // Partial state (one team known, one "?") is intentional — it happens when
-  // the opponent hasn't been set (e.g. 8-seed pending play-in) and the user
-  // still needs to enter win counts for that series.
   const noTeams = !teams.home && !teams.away
 
   const def = BRACKET_SERIES.find((s) => s.key === seriesKey)
@@ -101,7 +98,6 @@ function SeriesCard({ seriesKey, pick, globalR1, bracketSeries, locked, onAdjust
         <div className="br-card-empty">ממתין...</div>
       ) : (
         <>
-          {/* Home team row */}
           <div className={`br-team-row${homeWon ? ' br-winner' : awayWon ? ' br-loser' : ''}`}>
             <span className="br-team-name"><TeamName name={teams.home || '?'} size={13} /></span>
             {!isReadonly && (
@@ -113,7 +109,6 @@ function SeriesCard({ seriesKey, pick, globalR1, bracketSeries, locked, onAdjust
             )}
             {isReadonly && <span className={`br-win-num-ro${homeWon ? ' br-win-bold' : ''}`}>{homeWins}</span>}
           </div>
-          {/* Away team row */}
           <div className={`br-team-row${awayWon ? ' br-winner' : homeWon ? ' br-loser' : ''}`}>
             <span className="br-team-name"><TeamName name={teams.away || '?'} size={13} /></span>
             {!isReadonly && (
@@ -125,7 +120,6 @@ function SeriesCard({ seriesKey, pick, globalR1, bracketSeries, locked, onAdjust
             )}
             {isReadonly && <span className={`br-win-num-ro${awayWon ? ' br-win-bold' : ''}`}>{awayWins}</span>}
           </div>
-          {/* Next game time (only when series is still in progress) */}
           {actual?.nextGame && !actual.winner && (
             <div className="br-next-game">
               {formatIsraelTime(actual.nextGame)}
@@ -165,7 +159,6 @@ function MvpPicker({ label, home, away, selected, locked, onSelect }: MvpPickerP
   const teamsKey = `${home}|${away}`
   const teamsKnown = !!(home && away)
 
-  // Fetch roster whenever both teams are known and changed
   useEffect(() => {
     if (!teamsKnown || prevTeamsRef.current === teamsKey) return
     prevTeamsRef.current = teamsKey
@@ -177,7 +170,6 @@ function MvpPicker({ label, home, away, selected, locked, onSelect }: MvpPickerP
     })
   }, [teamsKey, teamsKnown, home, away])
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return
     function handle(e: MouseEvent) {
@@ -265,13 +257,11 @@ function BracketCanvas({ pick, globalR1, bracketSeries, locked, onAdjust, readon
   return (
     <div style={{ overflowX: 'auto', overflowY: 'hidden', paddingBottom: 8, direction: 'ltr' }}>
       <div style={{ position: 'relative', width: TOTAL_W, height: TOTAL_H + 30, marginTop: 24 }}>
-        {/* Connector SVG */}
         <svg
           style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}
           width={TOTAL_W}
           height={TOTAL_H + 30}
         >
-          {/* Conf labels */}
           {CONF_LABELS.map((l, i) => (
             <text key={i} x={l.x} y={l.y + 30} textAnchor={l.anchor as 'middle'}
               fontSize={10} fontWeight={700} fill="rgba(255,255,255,0.35)"
@@ -279,7 +269,6 @@ function BracketCanvas({ pick, globalR1, bracketSeries, locked, onAdjust, readon
               {l.text}
             </text>
           ))}
-          {/* Connector lines */}
           <g transform="translate(0,30)">
             {BRACKET_CONNECTOR_LINES.map(([x1, y1, x2, y2], i) => (
               <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
@@ -288,7 +277,6 @@ function BracketCanvas({ pick, globalR1, bracketSeries, locked, onAdjust, readon
           </g>
         </svg>
 
-        {/* Series cards */}
         <div style={{ position: 'absolute', top: 30, left: 0 }}>
           {BRACKET_SERIES.map((s) => (
             <SeriesCard
@@ -311,7 +299,8 @@ function BracketCanvas({ pick, globalR1, bracketSeries, locked, onAdjust, readon
 // ── Tab ──────────────────────────────────────────────────────────────────────
 
 export default function BracketMyBetsTab() {
-  const leagueData = useBracketLeagueStore((s) => s.currentBracketLeagueData)
+  const navigate = useNavigate()
+  const globalLeagueData = useBracketLeagueStore((s) => s.globalBracketLeagueData)
   const currentUser = useAuthStore((s) => s.currentUser)
   const globalR1 = useGlobalR1Teams()
   const bracketSeries = useBracketSeries()
@@ -320,14 +309,14 @@ export default function BracketMyBetsTab() {
   const [pick, setPick] = useState<BracketPick>({})
   const [mvpPick, setMvpPick] = useState<BracketMvpPick>({})
 
-  // Load existing bets
+  // Load existing bets from global league
   useEffect(() => {
-    if (!leagueData || !currentUser) return
-    const existing = (leagueData.bets || {})[currentUser.uid] || {}
+    if (!globalLeagueData || !currentUser) return
+    const existing = (globalLeagueData.bets || {})[currentUser.uid] || {}
     setPick({ ...existing })
-    const existingMvp = (leagueData.mvpBets || {})[currentUser.uid] || {}
+    const existingMvp = (globalLeagueData.mvpBets || {})[currentUser.uid] || {}
     setMvpPick({ ...existingMvp })
-  }, [leagueData?.id, currentUser?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [globalLeagueData?.id, currentUser?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function adjustWins(seriesKey: string, side: 'home' | 'away', delta: number) {
     setPick((prev) => {
@@ -336,21 +325,15 @@ export default function BracketMyBetsTab() {
       if (side === 'home') homeWins = Math.max(0, Math.min(4, homeWins + delta))
       else awayWins = Math.max(0, Math.min(4, awayWins + delta))
 
-      // Max 7 total games
       if (homeWins + awayWins > 7) {
         if (side === 'home') awayWins = 7 - homeWins
         else homeWins = 7 - awayWins
       }
-      // If one hits 4, other maxes at 3
       if (homeWins === 4) awayWins = Math.min(awayWins, 3)
       if (awayWins === 4) homeWins = Math.min(homeWins, 3)
 
       const newPick: BracketPick = { ...prev, [seriesKey]: { homeWins, awayWins } }
 
-      // Check if winner changed — if so, clear downstream.
-      // Must pass bracketSeries so winner detection uses the same team resolution
-      // as the display (getBracketTeamsWithActual). Without it, winner detection
-      // fails when API has R2+ teams but user hasn't filled prior-round picks.
       const prevWinner = getBracketWinner(seriesKey, prev, globalR1, bracketSeries)
       const newWinner = getBracketWinner(seriesKey, newPick, globalR1, bracketSeries)
       if (newWinner !== prevWinner) {
@@ -361,27 +344,28 @@ export default function BracketMyBetsTab() {
   }
 
   async function handleSave() {
-    if (!leagueData || !currentUser) return
+    if (!currentUser) return
     try {
-      await saveBracketBet(leagueData.id, currentUser.uid, pick)
+      await saveBracketBet(currentUser.uid, pick)
       toast('✅ הברקט נשמר!')
+      navigate('/bracket/saved')
     } catch (e: unknown) {
       toast('❌ ' + (e instanceof Error ? e.message : String(e)))
     }
   }
 
   async function handleClear() {
-    if (!leagueData || !currentUser) return
+    if (!currentUser) return
     setPick({})
-    await clearBracketBet(leagueData.id, currentUser.uid)
+    await clearBracketBet(currentUser.uid)
     toast('✅ הברקט נוקה!')
   }
 
   async function handleMvpSelect(seriesKey: 'cf_east' | 'cf_west' | 'finals', player: string) {
-    if (!leagueData || !currentUser) return
+    if (!currentUser) return
     setMvpPick((prev) => ({ ...prev, [seriesKey]: player }))
     try {
-      await saveMvpBet(leagueData.id, currentUser.uid, seriesKey, player)
+      await saveMvpBet(currentUser.uid, seriesKey, player)
     } catch (e: unknown) {
       toast('❌ ' + (e instanceof Error ? e.message : String(e)))
     }
@@ -414,7 +398,6 @@ export default function BracketMyBetsTab() {
         </div>
       )}
 
-      {/* Bracket visual */}
       <BracketCanvas
         pick={pick}
         globalR1={globalR1}
@@ -424,7 +407,6 @@ export default function BracketMyBetsTab() {
         readonly={locked || !r1TeamsReady}
       />
 
-      {/* MVP pickers — shown once R1 teams are known */}
       {r1TeamsReady && (
         <div className="mvp-section">
           <div className="mvp-section-title">🏆 בחירת MVP לסדרה</div>
@@ -445,7 +427,6 @@ export default function BracketMyBetsTab() {
         </div>
       )}
 
-      {/* Save buttons */}
       {!locked && r1TeamsReady && (
         <div className="mt-4 flex flex-wrap gap-2">
           <Button onClick={handleSave}>💾 שמור ברקט</Button>

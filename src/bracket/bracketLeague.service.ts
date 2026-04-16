@@ -17,9 +17,53 @@ import { db } from '@/lib/firebase'
 import type { UserDoc } from '@/store/auth.store'
 import type { BracketPick, BracketMvpPick } from './bracketConstants'
 
+export const GLOBAL_BRACKET_LEAGUE_ID = 'bl_global'
+
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
+
+// ── Global league ─────────────────────────────────────────────────────────────
+
+/**
+ * Idempotently enroll the user in the global bracket league.
+ * Creates the league document if it does not exist yet.
+ */
+export async function ensureGlobalLeagueMember(
+  user: { uid: string },
+  userDoc: UserDoc,
+): Promise<void> {
+  const ref = doc(db, 'bracket_leagues', GLOBAL_BRACKET_LEAGUE_ID)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) {
+    await setDoc(ref, {
+      id: GLOBAL_BRACKET_LEAGUE_ID,
+      name: 'ליגה גלובלית',
+      code: 'GLOBAL',
+      adminUid: 'SYSTEM',
+      members: [user.uid],
+      memberInfo: {
+        [user.uid]: { username: userDoc.username, displayName: userDoc.displayName },
+      },
+      bets: {},
+      isGlobal: true,
+      createdAt: serverTimestamp(),
+    })
+  } else {
+    const data = snap.data()
+    if (!(data.members as string[]).includes(user.uid)) {
+      await updateDoc(ref, {
+        members: arrayUnion(user.uid),
+        [`memberInfo.${user.uid}`]: { username: userDoc.username, displayName: userDoc.displayName },
+      })
+    }
+  }
+  await updateDoc(doc(db, 'users', user.uid), {
+    bracketLeagues: arrayUnion(GLOBAL_BRACKET_LEAGUE_ID),
+  })
+}
+
+// ── Private leagues ───────────────────────────────────────────────────────────
 
 export async function createBracketLeague(
   name: string,
@@ -84,39 +128,69 @@ export async function loadMyBracketLeagues(uid: string): Promise<Record<string, 
   return docs.filter((d) => d.exists()).map((d) => ({ id: d.id, ...d.data() }))
 }
 
+/**
+ * Load lightweight league metadata (id, name, members only) for the league selector.
+ * Always ensures the global league is included as the first entry.
+ */
+export async function loadMyBracketLeaguesMeta(
+  uid: string,
+): Promise<{ id: string; name: string; members: string[] }[]> {
+  const uSnap = await getDoc(doc(db, 'users', uid))
+  const ids: string[] = uSnap.data()?.bracketLeagues || []
+
+  // Always include global league even if not yet in user's list
+  const allIds = ids.includes(GLOBAL_BRACKET_LEAGUE_ID)
+    ? ids
+    : [GLOBAL_BRACKET_LEAGUE_ID, ...ids]
+
+  const docs = await Promise.all(allIds.map((id) => getDoc(doc(db, 'bracket_leagues', id))))
+  const results = docs
+    .filter((d) => d.exists())
+    .map((d) => ({
+      id: d.id,
+      name: d.id === GLOBAL_BRACKET_LEAGUE_ID ? 'ליגה גלובלית' : (d.data()!.name as string),
+      members: (d.data()!.members as string[]) || [],
+    }))
+
+  // Sort: global league first
+  return [
+    ...results.filter((r) => r.id === GLOBAL_BRACKET_LEAGUE_ID),
+    ...results.filter((r) => r.id !== GLOBAL_BRACKET_LEAGUE_ID),
+  ]
+}
+
+// ── Bet operations (always target global league) ──────────────────────────────
+
 export async function saveBracketBet(
-  lid: string,
   uid: string,
   pick: BracketPick
 ): Promise<void> {
-  await updateDoc(doc(db, 'bracket_leagues', lid), {
+  await updateDoc(doc(db, 'bracket_leagues', GLOBAL_BRACKET_LEAGUE_ID), {
     [`bets.${uid}`]: pick,
   })
 }
 
-export async function clearBracketBet(lid: string, uid: string): Promise<void> {
-  await updateDoc(doc(db, 'bracket_leagues', lid), {
+export async function clearBracketBet(uid: string): Promise<void> {
+  await updateDoc(doc(db, 'bracket_leagues', GLOBAL_BRACKET_LEAGUE_ID), {
     [`bets.${uid}`]: {},
   })
 }
 
 export async function saveMvpBet(
-  lid: string,
   uid: string,
   seriesKey: 'cf_east' | 'cf_west' | 'finals',
   player: string,
 ): Promise<void> {
-  await updateDoc(doc(db, 'bracket_leagues', lid), {
+  await updateDoc(doc(db, 'bracket_leagues', GLOBAL_BRACKET_LEAGUE_ID), {
     [`mvpBets.${uid}.${seriesKey}`]: player,
   })
 }
 
 export async function clearMvpBet(
-  lid: string,
   uid: string,
   seriesKey: 'cf_east' | 'cf_west' | 'finals',
 ): Promise<void> {
-  await updateDoc(doc(db, 'bracket_leagues', lid), {
+  await updateDoc(doc(db, 'bracket_leagues', GLOBAL_BRACKET_LEAGUE_ID), {
     [`mvpBets.${uid}.${seriesKey}`]: deleteField(),
   })
 }
@@ -138,11 +212,25 @@ export async function removeBracketLeagueMember(lid: string, uid: string): Promi
   await updateDoc(doc(db, 'bracket_leagues', lid), {
     members: arrayRemove(uid),
     [`memberInfo.${uid}`]: deleteField(),
+  })
+  // Remove bets from global league when removed from private league only if also removed from global
+  // (member removal from private league should not affect their global bets)
+  try {
+    await updateDoc(doc(db, 'users', uid), { bracketLeagues: arrayRemove(lid) })
+  } catch { /* user doc may not exist */ }
+}
+
+export async function removeMemberFromGlobalLeague(uid: string): Promise<void> {
+  await updateDoc(doc(db, 'bracket_leagues', GLOBAL_BRACKET_LEAGUE_ID), {
+    members: arrayRemove(uid),
+    [`memberInfo.${uid}`]: deleteField(),
     [`bets.${uid}`]: deleteField(),
     [`mvpBets.${uid}`]: deleteField(),
   })
   try {
-    await updateDoc(doc(db, 'users', uid), { bracketLeagues: arrayRemove(lid) })
+    await updateDoc(doc(db, 'users', uid), {
+      bracketLeagues: arrayRemove(GLOBAL_BRACKET_LEAGUE_ID),
+    })
   } catch { /* user doc may not exist */ }
 }
 
@@ -163,16 +251,24 @@ export async function relinkBracketLeagueMember(
     return out
   }
 
-  await updateDoc(doc(db, 'bracket_leagues', lid), {
+  const update: Record<string, unknown> = {
     members,
     memberInfo: remapKeys((data.memberInfo as Record<string, unknown>) || {}),
-    bets: remapKeys((data.bets as Record<string, unknown>) || {}),
-    mvpBets: remapKeys((data.mvpBets as Record<string, unknown>) || {}),
-  })
+  }
+  // Only remap bets if this is the global league
+  if (lid === GLOBAL_BRACKET_LEAGUE_ID) {
+    update.bets = remapKeys((data.bets as Record<string, unknown>) || {})
+    update.mvpBets = remapKeys((data.mvpBets as Record<string, unknown>) || {})
+  }
+
+  await updateDoc(doc(db, 'bracket_leagues', lid), update)
 }
 
-export async function adminSaveBracketBet(lid: string, uid: string, pick: BracketPick): Promise<void> {
-  await updateDoc(doc(db, 'bracket_leagues', lid), { [`bets.${uid}`]: pick })
+/** Admin: save a user's bracket pick to the global league */
+export async function adminSaveBracketBet(uid: string, pick: BracketPick): Promise<void> {
+  await updateDoc(doc(db, 'bracket_leagues', GLOBAL_BRACKET_LEAGUE_ID), {
+    [`bets.${uid}`]: pick,
+  })
 }
 
 export async function deleteBracketLeague(lid: string, memberUids: string[]): Promise<void> {
