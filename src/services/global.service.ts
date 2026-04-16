@@ -261,3 +261,15 @@ export async function saveEmailJSSettings(serviceId: string, templateId: string,
 export async function saveTiebreakerLocked(locked: boolean) {
   await setDoc(doc(db, 'global', 'settings'), { tiebreakerLocked: locked }, { merge: true })
 }
+
+/**
+ * Manually override the "must have previous stage results" gate for betting.
+ * When unlocked=true, users can place bets on this stage even if the prior
+ * stage's results haven't been fully entered yet (e.g. a later series starts
+ * before an earlier one finishes).
+ */
+export async function setStageUnlocked(stage: StageKey, unlocked: boolean) {
+  await updateDoc(doc(db, 'global', 'settings'), {
+    [`stageUnlocked.${stage}`]: unlocked,
+  })
+}

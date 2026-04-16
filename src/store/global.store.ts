@@ -20,6 +20,8 @@ export interface GlobalData {
   bracketLocked?: boolean
   /** Bracket format scheduled auto-lock (Unix ms timestamp) */
   bracketAutoLock?: number
+  /** Per-stage manual betting unlock override (bypasses prior-results gate) */
+  stageUnlocked?: Record<string, boolean>
   /** Bracket tiebreaker */
   bracketTiebreakerQuestion?: string
   bracketTiebreakerAnswer?: number | null

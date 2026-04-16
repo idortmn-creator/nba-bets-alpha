@@ -23,6 +23,8 @@ export function useGlobalHelpers() {
 
   function canBetOnStage(si: StageKey) {
     if (si === 0) return true
+    // Admin can manually unlock a stage even without prior-stage results
+    if ((getGlobal('stageUnlocked', {} as Record<string, boolean>))[String(si)]) return true
     if (si === '0b') return hasStageResults(0)
     if (si === 1) return hasStageResults('0b')
     const prev: Record<number, StageKey> = { 2: 1, 3: 2, 4: 3 }

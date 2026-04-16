@@ -5,7 +5,7 @@ import { Card, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SelectNative } from '@/components/ui/select-native'
 import { useGlobalHelpers } from '@/hooks/useGlobalHelpers'
-import { setCurrentStage, toggleStageLock, toggleSeriesLock } from '@/services/global.service'
+import { setCurrentStage, toggleStageLock, toggleSeriesLock, setStageUnlocked } from '@/services/global.service'
 import { STAGE_NAMES, STAGE_SHORT, STAGE_KEYS, STAGE_MATCHES } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
 
@@ -169,6 +169,57 @@ export default function LocksPanel() {
             </div>
           )
         })}
+      </div>
+
+      {/* ── Betting override section ─────────────────────────────────────── */}
+      <div className="mt-5 rounded-lg border border-[var(--gold)]/25 bg-[var(--gold)]/5 p-3">
+        <div className="mb-1 flex items-center gap-2">
+          <Unlock size={13} className="text-[var(--gold)]" />
+          <span className="text-sm font-bold text-[var(--gold)]">פתיחת הגשת הימורים ידנית</span>
+        </div>
+        <p className="mb-3 text-[0.7rem] leading-relaxed text-[var(--text2)]">
+          מאפשר למשתתפים להגיש הימורים לשלב גם אם תוצאות השלב הקודם טרם הוזנו. שימושי כשסדרה בשלב מאוחר מתחילה לפני שסדרה בשלב הקודם מסתיימת.
+        </p>
+        <div className="space-y-1.5">
+          {/* Stage 0 always open — only show gated stages */}
+          {(['0b', '1', '2', '3', '4'] as const).map((v) => {
+            const si = (v === '0b' ? '0b' : parseInt(v)) as StageKey
+            const sIdx = STAGE_KEYS.indexOf(si)
+            const isForced = !!(getGlobal('stageUnlocked', {} as Record<string, boolean>))[String(si)]
+            const overrideKey = `unlock_${v}`
+            return (
+              <div key={v} className="flex items-center justify-between rounded-lg border border-[rgba(255,215,0,0.1)] bg-[var(--dark3)] px-3 py-2">
+                <span className="text-sm text-[var(--text1)]">{STAGE_SHORT[sIdx]}</span>
+                <button
+                  disabled={loadingKey === overrideKey}
+                  onClick={async () => {
+                    setLoadingKey(overrideKey)
+                    try {
+                      await setStageUnlocked(si, !isForced)
+                      toast(isForced ? `🔒 ${STAGE_SHORT[sIdx]} — חזר לפתיחה אוטומטית` : `🔓 ${STAGE_SHORT[sIdx]} — הימורים נפתחו ידנית`)
+                    } finally {
+                      setLoadingKey(null)
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-all ${
+                    isForced
+                      ? 'border-[var(--gold)]/50 bg-[var(--gold)]/15 text-[var(--gold)]'
+                      : 'border-[var(--card-border)] text-[var(--text2)] hover:border-[var(--gold)]/30 hover:text-[var(--gold)]'
+                  }`}
+                >
+                  {loadingKey === overrideKey ? (
+                    <span className="text-[0.6rem]">⏳</span>
+                  ) : isForced ? (
+                    <Unlock size={11} />
+                  ) : (
+                    <Lock size={11} />
+                  )}
+                  {isForced ? 'פתוח ידנית' : 'נעול אוטומטי'}
+                </button>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </Card>
   )
