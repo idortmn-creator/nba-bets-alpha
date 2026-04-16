@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { Lock, Loader2 } from 'lucide-react'
+import { Lock, Loader2, Clock } from 'lucide-react'
 import { Card, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,20 +29,26 @@ function formatSeriesTime(ts: number): string {
 export default function EnterBetsTab() {
   const leagueData = useLeagueStore((s) => s.currentLeagueData)
   const currentUser = useAuthStore((s) => s.currentUser)
-  const { getGlobal, canBetOnStage, isSeriesLocked, isBonusLocked, isSingleBonusLocked, getTeams, teamLabel, getPlayinFinalTeams, getBonusBets, isPreBetsLocked } = useGlobalHelpers()
+  const {
+    getGlobal, canBetOnStage, hasAnySeriesOpen, canBetOnSeries, isSeriesOpenForBetting,
+    isSeriesLocked, isBonusLocked, isSingleBonusLocked, getTeams, teamLabel,
+    getPlayinFinalTeams, getBonusBets, isPreBetsLocked,
+  } = useGlobalHelpers()
   const tiebreakerQuestion = getGlobal('tiebreakerQuestion', '') as string
-  const tiebreakerLocked = getGlobal('tiebreakerLocked', false) as boolean
+  const tiebreakerLocked   = getGlobal('tiebreakerLocked', false) as boolean
   const autoLocks = getGlobal('autoLocks', {} as Record<string, number>)
   const [stage, setStage] = useState<StageKey>(0)
   const [cbd, setCbd] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
 
-  const stageIdx = STAGE_KEYS.indexOf(stage)
+  const stageIdx  = STAGE_KEYS.indexOf(stage)
   const stageLocked = getGlobal('stageLocked', [] as boolean[]) as boolean[]
-  const locked = stageLocked[stageIdx] || false
-  const matches = STAGE_MATCHES[stage] || []
+  const locked    = stageLocked[stageIdx] || false
+  const matches   = STAGE_MATCHES[stage] || []
 
-  // Load existing bets when stage changes
+  // True when the stage is fully open OR at least one series was explicitly opened
+  const anyBettable = canBetOnStage(stage) || hasAnySeriesOpen(stage)
+
   useEffect(() => {
     if (!leagueData || !currentUser) return
     const existing = ((leagueData.bets || {})[currentUser.uid] || {})['stage' + stage] || {}
@@ -75,21 +81,22 @@ export default function EnterBetsTab() {
     const newCbd = { ...cbd }
     if (stage === 0 || stage === '0b') {
       for (const m of matches) {
+        if (!canBetOnSeries(stage, m.key)) continue
         const t = getTeams(stage, m.key)
         const teams = [t.home, t.away].filter(Boolean)
         if (teams.length) newCbd[m.key] = teams[Math.floor(Math.random() * teams.length)]
       }
     } else {
       for (const m of matches) {
-        if (isSeriesLocked(stage, m.key)) continue
+        if (!canBetOnSeries(stage, m.key)) continue
         const t = getTeams(stage, m.key)
         const teams = [t.home, t.away].filter(Boolean)
-        if (teams.length) {
+        if (teams.length >= 2) {
           newCbd[m.key + '_winner'] = teams[Math.floor(Math.random() * teams.length)]
           newCbd[m.key + '_result'] = GAPS[Math.floor(Math.random() * GAPS.length)]
         }
       }
-      if (stage === 1 && !isPreBetsLocked()) {
+      if (stage === 1 && canBetOnStage(stage) && !isPreBetsLocked()) {
         const eastT: string[] = [], westT: string[] = []
         for (const m of STAGE_MATCHES[1]) {
           const t = getTeams(1, m.key)
@@ -104,7 +111,7 @@ export default function EnterBetsTab() {
         }
       }
     }
-    const bonuses = getBonusBets(stage).filter((b) => !isSingleBonusLocked(stage, b))
+    const bonuses = canBetOnStage(stage) ? getBonusBets(stage).filter((b) => !isSingleBonusLocked(stage, b)) : []
     for (const b of bonuses) {
       if (b.answers?.length) newCbd['bonus_' + b.id] = b.answers[Math.floor(Math.random() * b.answers.length)]
     }
@@ -129,6 +136,7 @@ export default function EnterBetsTab() {
           const idx = STAGE_KEYS.indexOf(o.value as StageKey)
           const isLocked = stageLocked[idx] ?? false
           const isActive = stage === o.value
+          const hasPartialOpen = !isLocked && !canBetOnStage(o.value) && hasAnySeriesOpen(o.value)
           return (
             <button
               key={String(o.value)}
@@ -141,60 +149,82 @@ export default function EnterBetsTab() {
                   : 'border-transparent text-[var(--text2)] hover:text-[var(--text1)]',
               ].join(' ')}
             >
-              {o.label}{isLocked ? ' 🔒' : ''}
+              {o.label}{isLocked ? ' 🔒' : hasPartialOpen ? ' 🟡' : ''}
             </button>
           )
         })}
       </div>
 
       <div className="p-4">
-      <div className="mb-3 rounded-lg border border-[var(--orange-border)] bg-[var(--dark3)] p-3 text-xs font-semibold"><strong>📌</strong> בחר שלב ולחץ על ההימורים שלך.</div>
+        <div className="mb-3 rounded-lg border border-[var(--orange-border)] bg-[var(--dark3)] p-3 text-xs font-semibold">
+          <strong>📌</strong> בחר שלב ולחץ על ההימורים שלך.
+        </div>
 
-      {locked ? (
-        <>
+        {locked ? (
           <LockedView stage={stage} cbd={cbd} matches={matches} teamLabel={teamLabel} tiebreakerQuestion={tiebreakerQuestion} tiebreakerLocked={tiebreakerLocked} />
-        </>
-      ) : !canBetOnStage(stage) ? (
-        <div className="text-sm text-[var(--text2)]">⏳ ניתן להמר רק לאחר הזנת תוצאות השלב הקודם</div>
-      ) : (
-        <>
-          <Separator />
-          {(stage === 0 || stage === '0b') ? (
-            <PlayinForm stage={stage} matches={matches} cbd={cbd} pick={pick} getTeams={getTeams} getPlayinFinalTeams={getPlayinFinalTeams} isSeriesLocked={isSeriesLocked} autoLocks={autoLocks} />
-          ) : (
-            <SeriesForm stage={stage} matches={matches} cbd={cbd} pick={pick} getTeams={getTeams} isSeriesLocked={isSeriesLocked} autoLocks={autoLocks} />
-          )}
+        ) : !anyBettable ? (
+          <div className="text-sm text-[var(--text2)]">⏳ ניתן להמר רק לאחר הזנת תוצאות השלב הקודם</div>
+        ) : (
+          <>
+            {/* Partial-open banner — shown when stage isn't fully open but some series are */}
+            {!canBetOnStage(stage) && hasAnySeriesOpen(stage) && (
+              <div className="mb-3 flex items-center gap-2 rounded-lg border border-[var(--gold)]/30 bg-[var(--gold)]/8 p-2.5 text-xs text-[var(--gold)]">
+                <Clock size={13} className="shrink-0" />
+                <span>חלק מהסדרות נפתחו להגשה מוקדמת. שאר הסדרות יפתחו לאחר שתוצאות השלב הקודם יוזנו.</span>
+              </div>
+            )}
 
-          {stage === 0 && tiebreakerQuestion && (
-            <>
-              <Separator />
-              {tiebreakerLocked ? (
-                <div className="tiebreaker-card opacity-70">
-                  <div className="tiebreaker-header">
-                    <span className="tiebreaker-icon">🔒</span>
-                    <span className="tiebreaker-title">שובר שוויון — ננעל</span>
+            <Separator />
+            {(stage === 0 || stage === '0b') ? (
+              <PlayinForm
+                stage={stage} matches={matches} cbd={cbd} pick={pick}
+                getTeams={getTeams} getPlayinFinalTeams={getPlayinFinalTeams}
+                isSeriesLocked={isSeriesLocked} canBetOnSeries={canBetOnSeries}
+                isSeriesOpenForBetting={isSeriesOpenForBetting} stageFullyOpen={canBetOnStage(stage)}
+                autoLocks={autoLocks}
+              />
+            ) : (
+              <SeriesForm
+                stage={stage} matches={matches} cbd={cbd} pick={pick}
+                getTeams={getTeams} isSeriesLocked={isSeriesLocked}
+                canBetOnSeries={canBetOnSeries} isSeriesOpenForBetting={isSeriesOpenForBetting}
+                stageFullyOpen={canBetOnStage(stage)} autoLocks={autoLocks}
+              />
+            )}
+
+            {stage === 0 && tiebreakerQuestion && (
+              <>
+                <Separator />
+                {tiebreakerLocked ? (
+                  <div className="tiebreaker-card opacity-70">
+                    <div className="tiebreaker-header">
+                      <span className="tiebreaker-icon">🔒</span>
+                      <span className="tiebreaker-title">שובר שוויון — ננעל</span>
+                    </div>
+                    <p className="tiebreaker-q">{tiebreakerQuestion}</p>
+                    <div className="bet-value pending text-base">{cbd['tiebreaker'] || '-'}</div>
                   </div>
-                  <p className="tiebreaker-q">{tiebreakerQuestion}</p>
-                  <div className="bet-value pending text-base">{cbd['tiebreaker'] || '-'}</div>
-                </div>
-              ) : (
-                <TiebreakerForm question={tiebreakerQuestion} value={cbd['tiebreaker'] || ''} onChange={(v) => pick('tiebreaker', v)} />
-              )}
-            </>
-          )}
+                ) : (
+                  <TiebreakerForm question={tiebreakerQuestion} value={cbd['tiebreaker'] || ''} onChange={(v) => pick('tiebreaker', v)} />
+                )}
+              </>
+            )}
 
-          {stage === 1 && !isPreBetsLocked() && <PreBetsForm stage={stage} cbd={cbd} pick={pick} getTeams={getTeams} />}
+            {/* Pre-bets and bonus bets only when the full stage is open */}
+            {canBetOnStage(stage) && stage === 1 && !isPreBetsLocked() && (
+              <PreBetsForm stage={stage} cbd={cbd} pick={pick} getTeams={getTeams} />
+            )}
+            {canBetOnStage(stage) && (
+              <BonusBetsForm stage={stage} cbd={cbd} pick={pick} getBonusBets={getBonusBets} isBonusLocked={isBonusLocked} isSingleBonusLocked={isSingleBonusLocked} />
+            )}
 
-          <BonusBetsForm stage={stage} cbd={cbd} pick={pick} getBonusBets={getBonusBets} isBonusLocked={isBonusLocked} isSingleBonusLocked={isSingleBonusLocked} />
-
-          {/* bottom spacer so content isn't hidden behind the sticky bar */}
-          <div className="h-20" />
-        </>
-      )}
+            <div className="h-20" />
+          </>
+        )}
       </div>
 
-      {/* Sticky action bar — only shown when stage is open for betting */}
-      {!locked && canBetOnStage(stage) && (
+      {/* Sticky action bar */}
+      {!locked && anyBettable && (
         <div className="sticky bottom-0 z-50 flex flex-wrap items-center gap-2 border-t border-white/10 bg-[var(--dark2)]/90 p-4 backdrop-blur-md">
           <Button disabled={saving} onClick={handleSave} className="min-w-[120px]">
             {saving ? <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" />שומר...</> : '💾 שמור הימורים'}
@@ -248,7 +278,7 @@ function TiebreakerForm({ question, value, onChange }: { question: string; value
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, isSeriesLocked, autoLocks }: any) {
+function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, isSeriesLocked, canBetOnSeries, isSeriesOpenForBetting, stageFullyOpen, autoLocks }: any) {
   return (
     <div>
       <CardTitle>🎯 בחר מנצחת</CardTitle>
@@ -257,6 +287,8 @@ function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, 
         if (stage === '0b') { const ft = getPlayinFinalTeams(m.conf); t1 = ft.home; t2 = ft.away }
         else { const t = getTeams(stage, m.key); t1 = t.home || 'קבוצה 1'; t2 = t.away || 'קבוצה 2' }
         const lockTs: number | undefined = autoLocks?.[`${stage}_${m.key}`]
+
+        // ── State 1: locked (game started) ──────────────────────────────
         if (isSeriesLocked(stage, m.key)) {
           return (
             <div key={m.key} className="playin-card bet-card-locked opacity-50 pointer-events-none">
@@ -267,6 +299,28 @@ function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, 
             </div>
           )
         }
+
+        // ── State 2: open but teams not yet determined ───────────────────
+        if (canBetOnSeries(stage, m.key) && (!t1 || !t2)) {
+          return (
+            <div key={m.key} className="playin-card">
+              <div className="match-label">🏀 {m.label}</div>
+              <PendingTeamCard />
+            </div>
+          )
+        }
+
+        // ── State 3: not open (partial mode — stage not fully open) ──────
+        if (!canBetOnSeries(stage, m.key) && !stageFullyOpen) {
+          return (
+            <div key={m.key} className="playin-card opacity-50">
+              <div className="match-label">🏀 {t1 && t2 ? <><TeamName name={t1} size={14} /> מול <TeamName name={t2} size={14} /></> : m.label}</div>
+              <SeriesNotOpenCard />
+            </div>
+          )
+        }
+
+        // ── State 4: open and both teams known — full UI ─────────────────
         return (
           <div key={m.key} className="playin-card">
             <div className="match-label">🏀 {t1 && t2 ? <><TeamName name={t1} size={14} /> מול <TeamName name={t2} size={14} /></> : m.label}</div>
@@ -287,27 +341,52 @@ function PlayinForm({ stage, matches, cbd, pick, getTeams, getPlayinFinalTeams, 
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function SeriesForm({ stage, matches, cbd, pick, getTeams, isSeriesLocked, autoLocks }: any) {
+function SeriesForm({ stage, matches, cbd, pick, getTeams, isSeriesLocked, canBetOnSeries, isSeriesOpenForBetting, stageFullyOpen, autoLocks }: any) {
   return (
     <div>
       <CardTitle>🎯 בחר תוצאה</CardTitle>
       {matches.map((m: any) => {
         const t = getTeams(stage, m.key)
-        const home = t.home || 'ביתית', away = t.away || 'אורחת'
+        const home = t.home, away = t.away
         const lockTs: number | undefined = autoLocks?.[`${stage}_${m.key}`]
+
+        // ── State 1: locked (game started) ──────────────────────────────
         if (isSeriesLocked(stage, m.key)) {
           return (
             <div key={m.key} className="matchup-bet-card bet-card-locked opacity-50 pointer-events-none">
-              <div className="match-label">🏀 <TeamName name={home} size={14} /> מול <TeamName name={away} size={14} /></div>
+              <div className="match-label">🏀 <TeamName name={home || m.label} size={14} /> מול <TeamName name={away || '?'} size={14} /></div>
               <div className="flex items-center justify-center gap-1.5 p-2 text-sm text-[var(--text2)]">
                 <Lock size={13} />סדרה זו ננעלה
               </div>
             </div>
           )
         }
+
+        // ── State 2: open but second team not yet determined ─────────────
+        if (canBetOnSeries(stage, m.key) && (!home || !away)) {
+          return (
+            <div key={m.key} className="matchup-bet-card">
+              <div className="match-label">🏀 {home || away ? <><TeamName name={home || away} size={14} /> מול ?</> : m.label}</div>
+              <PendingTeamCard />
+            </div>
+          )
+        }
+
+        // ── State 3: not open yet (partial mode) ─────────────────────────
+        if (!canBetOnSeries(stage, m.key) && !stageFullyOpen) {
+          return (
+            <div key={m.key} className="matchup-bet-card opacity-50">
+              <div className="match-label">🏀 {home && away ? <><TeamName name={home} size={14} /> מול <TeamName name={away} size={14} /></> : m.label}</div>
+              <SeriesNotOpenCard />
+            </div>
+          )
+        }
+
+        // ── State 4: open and both teams known — full UI ─────────────────
+        const homeName = home || 'ביתית', awayName = away || 'אורחת'
         return (
           <div key={m.key} className="matchup-bet-card">
-            <div className="match-label">🏀 {home && away ? <><TeamName name={home} size={14} /> מול <TeamName name={away} size={14} /></> : m.label}</div>
+            <div className="match-label">🏀 {homeName && awayName ? <><TeamName name={homeName} size={14} /> מול <TeamName name={awayName} size={14} /></> : m.label}</div>
             {lockTs && (
               <div className="text-[0.68rem] text-[var(--text2)] mb-2 pr-1">
                 🕐 {formatSeriesTime(lockTs)}
@@ -315,12 +394,12 @@ function SeriesForm({ stage, matches, cbd, pick, getTeams, isSeriesLocked, autoL
             )}
             <div className="mt-2 flex gap-2.5">
               <div className="flex flex-1 flex-col gap-2 rounded-lg border border-[var(--blue)]/15 bg-[var(--blue)]/5 p-2">
-                <div className="flex items-center justify-center gap-1 text-[0.7rem] font-bold text-[var(--blue)]"><TeamName name={home} size={16} /><span>🏠</span></div>
-                {GAPS.map((r) => <button key={r} className={`bet-opt ${cbd[m.key + '_winner'] === home && cbd[m.key + '_result'] === r ? 'sel-home' : ''}`} onClick={() => { pick(m.key + '_winner', home); pick(m.key + '_result', r) }}><span className="opt-res">{r}</span></button>)}
+                <div className="flex items-center justify-center gap-1 text-[0.7rem] font-bold text-[var(--blue)]"><TeamName name={homeName} size={16} /><span>🏠</span></div>
+                {GAPS.map((r) => <button key={r} className={`bet-opt ${cbd[m.key + '_winner'] === homeName && cbd[m.key + '_result'] === r ? 'sel-home' : ''}`} onClick={() => { pick(m.key + '_winner', homeName); pick(m.key + '_result', r) }}><span className="opt-res">{r}</span></button>)}
               </div>
               <div className="flex flex-1 flex-col gap-2 rounded-lg border border-[var(--orange)]/15 bg-[var(--orange)]/5 p-2">
-                <div className="flex items-center justify-center gap-1 text-[0.7rem] font-bold text-[var(--orange)]"><TeamName name={away} size={16} /><span>✈️</span></div>
-                {GAPS.map((r) => <button key={r} className={`bet-opt ${cbd[m.key + '_winner'] === away && cbd[m.key + '_result'] === r ? 'sel-away' : ''}`} onClick={() => { pick(m.key + '_winner', away); pick(m.key + '_result', r) }}><span className="opt-res">{r}</span></button>)}
+                <div className="flex items-center justify-center gap-1 text-[0.7rem] font-bold text-[var(--orange)]"><TeamName name={awayName} size={16} /><span>✈️</span></div>
+                {GAPS.map((r) => <button key={r} className={`bet-opt ${cbd[m.key + '_winner'] === awayName && cbd[m.key + '_result'] === r ? 'sel-away' : ''}`} onClick={() => { pick(m.key + '_winner', awayName); pick(m.key + '_result', r) }}><span className="opt-res">{r}</span></button>)}
               </div>
             </div>
             {m.hasMvp && (
@@ -329,6 +408,26 @@ function SeriesForm({ stage, matches, cbd, pick, getTeams, isSeriesLocked, autoL
           </div>
         )
       })}
+    </div>
+  )
+}
+
+/** Shown when a series is open for betting but one team hasn't qualified yet. */
+function PendingTeamCard() {
+  return (
+    <div className="flex items-center gap-2.5 rounded-lg border border-[var(--gold)]/25 bg-[var(--gold)]/5 px-3 py-3 text-xs text-[var(--gold)]">
+      <Clock size={14} className="shrink-0" />
+      <span>הגשת הימורים לסדרה זו תיפתח לאחר שהקבוצה השנייה תיקבע</span>
+    </div>
+  )
+}
+
+/** Shown when the stage isn't fully open and this series hasn't been individually opened. */
+function SeriesNotOpenCard() {
+  return (
+    <div className="flex items-center gap-2.5 rounded-lg border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] px-3 py-3 text-xs text-[var(--text2)]">
+      <Lock size={13} className="shrink-0" />
+      <span>סדרה זו תיפתח להגשה עם פתיחת השלב</span>
     </div>
   )
 }

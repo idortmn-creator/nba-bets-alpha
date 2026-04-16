@@ -268,6 +268,17 @@ export async function saveTiebreakerLocked(locked: boolean) {
  * stage's results haven't been fully entered yet (e.g. a later series starts
  * before an earlier one finishes).
  */
+/**
+ * Explicitly open or close a specific series for betting, independent of
+ * whether the whole stage is open. Allows betting on an individual series
+ * before the prior stage's results are fully entered.
+ */
+export async function setSeriesOpen(stage: StageKey, matchKey: string, open: boolean) {
+  await updateDoc(doc(db, 'global', 'settings'), {
+    [`seriesOpen.${stage}_${matchKey}`]: open,
+  })
+}
+
 export async function setStageUnlocked(stage: StageKey, unlocked: boolean) {
   await updateDoc(doc(db, 'global', 'settings'), {
     [`stageUnlocked.${stage}`]: unlocked,

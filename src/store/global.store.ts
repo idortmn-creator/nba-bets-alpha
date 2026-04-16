@@ -22,6 +22,8 @@ export interface GlobalData {
   bracketAutoLock?: number
   /** Per-stage manual betting unlock override (bypasses prior-results gate) */
   stageUnlocked?: Record<string, boolean>
+  /** Per-series explicit betting open, keyed "{stageKey}_{matchKey}" */
+  seriesOpen?: Record<string, boolean>
   /** Bracket tiebreaker */
   bracketTiebreakerQuestion?: string
   bracketTiebreakerAnswer?: number | null

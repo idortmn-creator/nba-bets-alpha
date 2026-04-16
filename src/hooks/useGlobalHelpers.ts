@@ -32,6 +32,30 @@ export function useGlobalHelpers() {
     return true
   }
 
+  /** True when this series has been explicitly opened for betting by the admin. */
+  function isSeriesOpenForBetting(si: StageKey, mk: string): boolean {
+    return !!(getGlobal('seriesOpen', {} as Record<string, boolean>))[`${si}_${mk}`]
+  }
+
+  /** True when at least one series in this stage has been explicitly opened. */
+  function hasAnySeriesOpen(si: StageKey): boolean {
+    const openMap = getGlobal('seriesOpen', {} as Record<string, boolean>)
+    const prefix = `${si}_`
+    return Object.keys(openMap).some((k) => k.startsWith(prefix) && openMap[k])
+  }
+
+  /**
+   * True when a user can place/change bets on this specific series.
+   * A series is bettable when:
+   *   - it is NOT locked (game hasn't started), AND
+   *   - either the whole stage is open OR this series was explicitly opened
+   */
+  function canBetOnSeries(si: StageKey, mk: string): boolean {
+    if (isSeriesLocked(si, mk)) return false
+    if (canBetOnStage(si)) return true
+    return isSeriesOpenForBetting(si, mk)
+  }
+
   function isSeriesLocked(si: StageKey, mk: string) {
     if (getGlobal('seriesLocked', {} as Record<string, boolean>)[si + '_' + mk]) return true
     const stageIdx = STAGE_KEYS.indexOf(si)
@@ -139,6 +163,9 @@ export function useGlobalHelpers() {
     isSuperAdmin,
     hasStageResults,
     canBetOnStage,
+    isSeriesOpenForBetting,
+    hasAnySeriesOpen,
+    canBetOnSeries,
     isSeriesLocked,
     isBonusLocked,
     isSingleBonusLocked,

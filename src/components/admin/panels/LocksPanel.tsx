@@ -5,12 +5,12 @@ import { Card, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SelectNative } from '@/components/ui/select-native'
 import { useGlobalHelpers } from '@/hooks/useGlobalHelpers'
-import { setCurrentStage, toggleStageLock, toggleSeriesLock, setStageUnlocked } from '@/services/global.service'
+import { setCurrentStage, toggleStageLock, toggleSeriesLock, setSeriesOpen, setStageUnlocked } from '@/services/global.service'
 import { STAGE_NAMES, STAGE_SHORT, STAGE_KEYS, STAGE_MATCHES } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
 
 export default function LocksPanel() {
-  const { globalData, getGlobal, isSeriesLocked } = useGlobalHelpers()
+  const { globalData, getGlobal, isSeriesLocked, isSeriesOpenForBetting } = useGlobalHelpers()
   const [selectedStage, setSelectedStage] = useState<string>('0')
   const [expandedStage, setExpandedStage] = useState<string | null>(null)
   const [loadingKey, setLoadingKey] = useState<string | null>(null)
@@ -134,36 +134,69 @@ export default function LocksPanel() {
                 )}
               </div>
 
-              {/* Individual series toggles */}
+              {/* Individual series controls */}
               {isExpanded && matches.length > 0 && (
-                <div className="border-t border-[rgba(255,255,255,0.05)] px-2.5 pb-2.5 pt-2">
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {matches.map((m) => {
-                      const serLocked = isSeriesLocked(si, m.key)
-                      const serKey = `series_${si}_${m.key}`
-                      return (
-                        <button
-                          key={m.key}
-                          onClick={() => handleToggleSeries(si, m.key)}
-                          disabled={loadingKey === serKey}
-                          className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs transition-all ${
-                            serLocked
-                              ? 'border-[var(--green)]/40 bg-[var(--green)]/10 text-[var(--green)]'
-                              : 'border-[var(--card-border)] text-[var(--text2)] hover:border-[var(--orange-border)] hover:text-[var(--text1)]'
-                          }`}
-                        >
-                          {loadingKey === serKey ? (
-                            <span className="text-[0.6rem]">⏳</span>
-                          ) : serLocked ? (
-                            <Lock size={10} className="shrink-0" />
-                          ) : (
-                            <Unlock size={10} className="shrink-0" />
-                          )}
-                          <span className="truncate">{m.label}</span>
-                        </button>
-                      )
-                    })}
+                <div className="border-t border-[rgba(255,255,255,0.05)] px-2.5 pb-2.5 pt-2 space-y-1.5">
+                  {/* Column headers */}
+                  <div className="flex items-center justify-between px-1 text-[0.62rem] text-[var(--text2)]">
+                    <span>סדרה</span>
+                    <div className="flex gap-6 pl-1">
+                      <span>נעילה</span>
+                      <span>הגשת הימורים</span>
+                    </div>
                   </div>
+                  {matches.map((m) => {
+                    const serLocked  = isSeriesLocked(si, m.key)
+                    const serOpen    = isSeriesOpenForBetting(si, m.key)
+                    const lockKey    = `series_${si}_${m.key}`
+                    const openKey    = `seropen_${si}_${m.key}`
+                    return (
+                      <div key={m.key} className="flex items-center justify-between gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--dark2)] px-2.5 py-1.5">
+                        <span className="min-w-0 truncate text-xs text-[var(--text1)]">{m.label}</span>
+                        <div className="flex shrink-0 gap-1.5">
+                          {/* Lock toggle */}
+                          <button
+                            onClick={() => handleToggleSeries(si, m.key)}
+                            disabled={loadingKey === lockKey}
+                            title={serLocked ? 'לחץ לפתיחה' : 'לחץ לנעילה'}
+                            className={`flex items-center gap-1 rounded-md border px-2 py-1 text-[0.65rem] transition-all ${
+                              serLocked
+                                ? 'border-[var(--green)]/40 bg-[var(--green)]/10 text-[var(--green)]'
+                                : 'border-[var(--card-border)] text-[var(--text2)] hover:border-[var(--orange-border)]'
+                            }`}
+                          >
+                            {loadingKey === lockKey ? <span>⏳</span> : serLocked ? <Lock size={9} /> : <Unlock size={9} />}
+                            {serLocked ? 'נעול' : 'פתוח'}
+                          </button>
+
+                          {/* Betting-open toggle */}
+                          <button
+                            onClick={async () => {
+                              setLoadingKey(openKey)
+                              try {
+                                await setSeriesOpen(si, m.key, !serOpen)
+                                toast(serOpen ? `📴 ${m.label} — הגשה נסגרה` : `🟢 ${m.label} — נפתח להגשת הימורים`)
+                              } finally {
+                                setLoadingKey(null)
+                              }
+                            }}
+                            disabled={loadingKey === openKey || serLocked}
+                            title={serLocked ? 'הסדרה נעולה' : serOpen ? 'סגור להגשה' : 'פתח להגשת הימורים'}
+                            className={`flex items-center gap-1 rounded-md border px-2 py-1 text-[0.65rem] transition-all ${
+                              serLocked
+                                ? 'cursor-not-allowed border-[var(--card-border)] text-[var(--text2)] opacity-40'
+                                : serOpen
+                                  ? 'border-[var(--gold)]/50 bg-[var(--gold)]/15 text-[var(--gold)]'
+                                  : 'border-[var(--card-border)] text-[var(--text2)] hover:border-[var(--gold)]/30 hover:text-[var(--gold)]'
+                            }`}
+                          >
+                            {loadingKey === openKey ? <span>⏳</span> : serOpen ? '🟢' : '⭕'}
+                            {serOpen ? 'פתוח' : 'סגור'}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
