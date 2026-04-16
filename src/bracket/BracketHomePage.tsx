@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { useGlobalStore } from '@/store/global.store'
@@ -13,6 +13,15 @@ export default function BracketHomePage() {
   const globalData = useGlobalStore((s) => s.globalData)
   const isSuperAdmin = currentUser?.uid === SUPER_ADMIN_UID
   const [joining, setJoining] = useState(false)
+
+  // Redirect returning users who already started their bracket
+  useEffect(() => {
+    if (!userDoc) return
+    const bracketLeagues: string[] = (userDoc as Record<string, unknown>).bracketLeagues as string[] || []
+    if (bracketLeagues.includes(GLOBAL_BRACKET_LEAGUE_ID)) {
+      navigate('/bracket/saved', { replace: true })
+    }
+  }, [userDoc]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Check if global R1 teams are set
   const teams = (globalData.teams as Record<string, Record<string, { home: string; away: string }>> | undefined) || {}
@@ -31,10 +40,15 @@ export default function BracketHomePage() {
     }
   }
 
+  // Show spinner while user doc is loading (prevents flash of landing page for returning users)
+  if (!userDoc) {
+    return <div className="flex items-center justify-center py-16"><div className="spinner" /></div>
+  }
+
   return (
     <div className="py-6">
       <div className="mb-4 text-lg font-bold">
-        שלום, <span className="text-[var(--orange)]">{userDoc?.username || ''}</span> 👋
+        שלום, <span className="text-[var(--orange)]">{userDoc.username || ''}</span> 👋
       </div>
       <div className="mb-5 rounded-lg border border-[rgba(79,195,247,0.3)] bg-[rgba(79,195,247,0.06)] p-3 text-sm leading-relaxed text-[var(--blue)]">
         <strong>📊 טורניר הברקט:</strong> ניחשו את כל הפלייאוף לפני שמתחיל — ללא הזנת הימורים בין סיבובים.
@@ -62,7 +76,7 @@ export default function BracketHomePage() {
             <div className="hc-sub">נעילה, תוצאות וניהול ליגות</div>
           </div>
         )}
-        {/* My Leagues — still accessible */}
+
         <div className="home-card" onClick={() => navigate('/bracket/leagues')}>
           <div className="hc-icon">🏆</div>
           <div className="hc-title">הליגות שלי</div>
