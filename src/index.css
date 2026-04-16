@@ -955,6 +955,57 @@
   text-overflow: ellipsis;
 }
 
+/* ── LEADERBOARD BREAKDOWN CHIPS ── */
+.lb-rd-chip {
+  display: inline-block;
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 4px;
+  font-size: 0.65rem;
+  color: var(--text2);
+}
+.lb-mvp-chip {
+  background: rgba(255,215,0,0.12);
+  color: var(--gold, #ffd700);
+}
+
+/* ── RULES TABLE ── */
+.rules-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.rules-table th {
+  text-align: center;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text2);
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.rules-table th:first-child { text-align: right; }
+.rules-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  text-align: center;
+}
+.rules-table td:first-child { text-align: right; color: var(--text2); }
+.rules-table tr:last-child td { border-bottom: none; }
+.rules-pts { font-weight: 700; color: var(--orange); }
+.rules-exact { color: var(--green) !important; }
+.rules-mvp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: rgba(255,215,0,0.05);
+  border: 1px solid rgba(255,215,0,0.15);
+}
+.rules-mvp-label { font-size: 0.8rem; color: var(--text2); }
+
 /* ── MVP PICKER ── */
 .mvp-section {
   margin-top: 16px;

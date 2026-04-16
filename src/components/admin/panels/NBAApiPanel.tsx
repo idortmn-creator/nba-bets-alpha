@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { httpsCallable } from 'firebase/functions'
+import { doc, updateDoc } from 'firebase/firestore'
 import { toast } from 'sonner'
 import { Card, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SelectNative } from '@/components/ui/select-native'
 import { Separator } from '@/components/ui/separator'
-import { functions } from '@/lib/firebase'
+import { functions, db } from '@/lib/firebase'
+import { useGlobalStore } from '@/store/global.store'
+import type { BracketMvpPick } from '@/bracket/bracketConstants'
 
 const syncTeamsFn = httpsCallable(functions, 'syncTeams')
 const syncResultsFn = httpsCallable(functions, 'syncResults')
@@ -34,6 +37,28 @@ export default function NBAApiPanel() {
   const [stageKey, setStageKey] = useState<string>('1')
   const [loading, setLoading] = useState<string | null>(null)
   const [lastResult, setLastResult] = useState<{ action: string; data: SyncResult } | null>(null)
+
+  // Actual MVP state — pre-populate from global store
+  const existingMvp = useGlobalStore((s) => s.globalData.bracketActualMvp as BracketMvpPick | undefined) || {}
+  const [mvpInputs, setMvpInputs] = useState<BracketMvpPick>({
+    cf_east: existingMvp.cf_east || '',
+    cf_west: existingMvp.cf_west || '',
+    finals:  existingMvp.finals  || '',
+  })
+
+  async function handleSaveMvp() {
+    setLoading('mvp')
+    try {
+      const payload: BracketMvpPick = {}
+      if (mvpInputs.cf_east?.trim()) payload.cf_east = mvpInputs.cf_east.trim()
+      if (mvpInputs.cf_west?.trim()) payload.cf_west = mvpInputs.cf_west.trim()
+      if (mvpInputs.finals?.trim())  payload.finals  = mvpInputs.finals.trim()
+      await updateDoc(doc(db, 'global', 'settings'), { bracketActualMvp: payload })
+      toast('✅ MVP נשמר בהצלחה')
+    } catch (e: unknown) {
+      toast('❌ ' + (e instanceof Error ? e.message : String(e)))
+    } finally { setLoading(null) }
+  }
 
   function parseStageKey(v: string): number | string {
     return v === '0b' ? '0b' : parseInt(v)
@@ -238,6 +263,41 @@ export default function NBAApiPanel() {
       {/* Scheduled sync note */}
       <div className="mt-4 rounded-lg bg-[var(--dark3)] p-2 text-xs text-[var(--text2)]">
         ⏰ סנכרון אוטומטי פועל <strong>כל שעה</strong> — קבוצות ותוצאות מתרעננות מהAPI באופן אוטומטי (כל עוד השלב הנוכחי לא נעול)
+      </div>
+
+      <Separator />
+
+      {/* Actual MVP entry */}
+      <div className="mt-4">
+        <div className="mb-3 font-bold text-[var(--gold)]">🏆 הגדרת MVP בפועל (לניקוד ברקט)</div>
+        <div className="space-y-2">
+          {([
+            { key: 'cf_east', label: 'MVP גמר מזרח (2 נק\')' },
+            { key: 'cf_west', label: 'MVP גמר מערב (2 נק\')' },
+            { key: 'finals',  label: 'MVP גמר NBA (5 נק\')' },
+          ] as { key: keyof BracketMvpPick; label: string }[]).map(({ key, label }) => (
+            <div key={key} className="flex items-center gap-3">
+              <label className="w-44 text-xs text-[var(--text2)] shrink-0">{label}</label>
+              <input
+                type="text"
+                className="ts-inp flex-1"
+                placeholder="שם השחקן באנגלית..."
+                value={mvpInputs[key] || ''}
+                onChange={(e) => setMvpInputs((prev) => ({ ...prev, [key]: e.target.value }))}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="mt-3">
+          <Button
+            size="sm"
+            onClick={handleSaveMvp}
+            disabled={!!loading}
+            className="!bg-[rgba(255,215,0,0.1)] !border-[rgba(255,215,0,0.3)] !text-[var(--gold)]"
+          >
+            {loading === 'mvp' ? '⏳' : '💾'} שמור MVP
+          </Button>
+        </div>
       </div>
     </Card>
   )

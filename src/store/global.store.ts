@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { BracketSeriesMap } from '@/bracket/bracketConstants'
+import type { BracketSeriesMap, BracketMvpPick } from '@/bracket/bracketConstants'
 
 export interface GlobalData {
   currentStage?: number | string
@@ -14,6 +14,8 @@ export interface GlobalData {
   tiebreakerAnswer?: number | null
   tiebreakerLocked?: boolean
   bracketSeries?: BracketSeriesMap
+  /** Actual MVP for each eligible bracket series — set by admin */
+  bracketActualMvp?: BracketMvpPick
   [key: string]: unknown
 }
 
