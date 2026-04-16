@@ -13,24 +13,33 @@ export default function LeagueAdminTab() {
   const leagueData  = useLeagueStore(s => s.currentLeagueData)
   const currentUser = useAuthStore(s => s.currentUser)
   const { getGlobal, isSeriesLocked } = useGlobalHelpers()
-  const [subTab, setSubTab]     = useState<'status' | 'remove'>('status')
-  const [removing, setRemoving] = useState<string | null>(null)
+  const [subTab, setSubTab]       = useState<'status' | 'remove'>('status')
+  const [removing, setRemoving]   = useState<string | null>(null)
+  const [viewStageStr, setViewStageStr] = useState<string | null>(null)
 
   // Guard: only league admin sees this tab
   if (!leagueData || !currentUser || leagueData.adminUid !== currentUser.uid) return null
 
-  const currentStage = getGlobal('currentStage', 0) as StageKey
-  const stageIdx     = STAGE_KEYS.indexOf(currentStage)
-  const stageName    = stageIdx >= 0 ? STAGE_SHORT[stageIdx] : String(currentStage)
-  const matches      = STAGE_MATCHES[currentStage] || []
-  const members      = leagueData.members || []
+  const currentStage    = getGlobal('currentStage', 0) as StageKey
+  const currentStageIdx = STAGE_KEYS.indexOf(currentStage)
 
-  // Matches still open (not locked) — relevant for submission status
-  const openMatches = matches.filter(m => !isSeriesLocked(currentStage, m.key))
+  // The stage currently being viewed in the status tab — defaults to the active stage
+  const viewStage: StageKey = viewStageStr === null
+    ? currentStage
+    : (viewStageStr === '0b' ? '0b' : parseInt(viewStageStr) as StageKey)
+  const viewStageIdx = STAGE_KEYS.indexOf(viewStage)
+  const stageName    = viewStageIdx >= 0 ? STAGE_SHORT[viewStageIdx] : String(viewStage)
+
+  const matches = STAGE_MATCHES[viewStage] || []
+  const members = leagueData.members || []
+
+  // For the selected stage, show all matches (not just unlocked ones) so the admin
+  // can see past submissions for already-locked series too
+  const relevantMatches = matches
 
   function hasSubmittedMatch(uid: string, matchKey: string): boolean {
-    const bet = ((leagueData?.bets || {})[uid] || {})['stage' + currentStage] || {}
-    if (currentStage === 0 || currentStage === '0b') {
+    const bet = ((leagueData?.bets || {})[uid] || {})['stage' + viewStage] || {}
+    if (viewStage === 0 || viewStage === '0b') {
       return !!bet[matchKey]
     }
     return !!bet[matchKey + '_winner']
@@ -80,19 +89,37 @@ export default function LeagueAdminTab() {
             </div>
           </div>
 
-          {openMatches.length === 0 ? (
-            <div className="text-sm text-[var(--text2)]">
-              כל הסדרות בשלב זה ננעלו — אין עוד הגשות פתוחות
-            </div>
+          {/* Stage selector */}
+          <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {STAGE_KEYS.map((si, i) => {
+              const isFuture = i > currentStageIdx
+              const isActive = (viewStageStr === null ? currentStage : viewStage) === si
+              return (
+                <button
+                  key={String(si)}
+                  onClick={() => setViewStageStr(String(si))}
+                  disabled={isFuture}
+                  className={[
+                    'stage-tab shrink-0 text-[0.7rem]',
+                    isActive ? 'active' : '',
+                    isFuture ? 'opacity-30 cursor-not-allowed' : '',
+                  ].join(' ')}
+                >
+                  {STAGE_SHORT[i]}
+                </button>
+              )
+            })}
+          </div>
+
+          {relevantMatches.length === 0 ? (
+            <div className="text-sm text-[var(--text2)]">אין סדרות בשלב זה</div>
           ) : (
             <div className="overflow-x-auto -mx-1">
               <table className="w-full text-xs min-w-[320px]">
                 <thead>
                   <tr className="border-b border-[var(--border)]">
-                    <th className="text-right py-2 pr-2 font-semibold text-[var(--text2)]">
-                      משתתף
-                    </th>
-                    {openMatches.map(m => (
+                    <th className="text-right py-2 pr-2 font-semibold text-[var(--text2)]">משתתף</th>
+                    {relevantMatches.map(m => (
                       <th
                         key={m.key}
                         className="text-center py-2 px-1 font-semibold text-[var(--text2)] min-w-[52px] leading-tight"
@@ -110,11 +137,9 @@ export default function LeagueAdminTab() {
                       <tr key={uid} className="border-b border-[rgba(255,255,255,0.04)]">
                         <td className="py-2 pr-2">
                           <span className="font-semibold">{info.username || uid}</span>
-                          {isMe && (
-                            <span className="mr-1 text-[0.6rem] text-[var(--orange)]">אתה</span>
-                          )}
+                          {isMe && <span className="mr-1 text-[0.6rem] text-[var(--orange)]">אתה</span>}
                         </td>
-                        {openMatches.map(m => {
+                        {relevantMatches.map(m => {
                           const submitted = hasSubmittedMatch(uid, m.key)
                           return (
                             <td key={m.key} className="text-center py-2 px-1">
