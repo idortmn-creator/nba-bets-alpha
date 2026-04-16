@@ -20,8 +20,12 @@ export default function AutoLockPanel() {
 
   async function handleAdd() {
     if (!time) { toast('⚠️ בחר תאריך ושעה'); return }
-    const ts = new Date(time).getTime()
-    if (ts <= Date.now()) { toast('⚠️ הזמן חייב להיות בעתיד'); return }
+    // datetime-local returns "YYYY-MM-DDTHH:mm" with no timezone.
+    // Appending "+03:00" treats the entered time as Israel Standard Time (UTC+3).
+    // Israel observes Daylight Saving Time (UTC+3 in summer, UTC+2 in winter),
+    // but for betting lock purposes IST (UTC+3) is the correct anchor during the season.
+    const ts = new Date(time + ':00+03:00').getTime()
+    if (isNaN(ts) || ts <= Date.now()) { toast('⚠️ הזמן חייב להיות בעתיד'); return }
     await addAutoLock(target, ts)
     setTime('')
     toast('✅ נעילה אוטומטית נקבעה!')
@@ -74,10 +78,15 @@ export default function AutoLockPanel() {
             locked = (getGlobal('stageLocked', [] as boolean[]))[STAGE_KEYS.indexOf(normKey)] || false
           }
           const status = locked ? '✅' : ts < now ? '⚡' : '⏳'
+          const displayTime = new Date(ts).toLocaleString('he-IL', {
+            timeZone: 'Asia/Jerusalem',
+            weekday: 'short', day: 'numeric', month: 'numeric',
+            hour: '2-digit', minute: '2-digit',
+          })
           return (
             <div key={key} className="auto-lock-entry">
               <span className="font-bold">{name}</span>
-              <span className="text-[var(--text2)]">{new Date(ts).toLocaleString('he-IL')}</span>
+              <span className="text-[var(--text2)]">{displayTime} 🇮🇱</span>
               <span className="text-[0.7rem]">{status}</span>
               <button onClick={() => handleRemove(key)} className="text-[var(--red)] text-xs">✕</button>
             </div>
