@@ -7,12 +7,22 @@ import { SelectNative } from '@/components/ui/select-native'
 import { TeamName } from '@/components/ui/TeamName'
 import { getBracketTeams, BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES, CARD_W, CARD_H, TOTAL_H, TOTAL_W } from '../bracketConstants'
 import { GLOBAL_BRACKET_LEAGUE_ID } from '../bracketLeague.service'
+import { getTeamColor, getOutcomeColor } from '../teamColors'
+import Pie3D from '../Pie3D'
 import type { BracketPick, BracketSeriesMap, BracketMvpPick } from '../bracketConstants'
+import type { PieSlice } from '../Pie3D'
 
 const MVP_SERIES_LABELS: Record<string, string> = {
   cf_east: 'גמר מזרח',
   cf_west: 'גמר מערב',
   finals: 'גמר NBA',
+}
+
+const ROUND_LABELS: Record<number, string> = {
+  1: 'סיבוב ראשון',
+  2: 'סיבוב שני',
+  3: 'גמר קונפרנס',
+  4: 'גמר NBA',
 }
 
 function useGlobalR1Teams() {
@@ -31,6 +41,8 @@ function useBracketLocked() {
 function useBracketSeries(): BracketSeriesMap {
   return (useGlobalStore((s) => s.globalData).bracketSeries as BracketSeriesMap | undefined) || {}
 }
+
+// ── By-User mode ─────────────────────────────────────────────────────────────
 
 interface ReadonlyCardProps {
   seriesKey: string
@@ -136,6 +148,159 @@ function MemberBracket({ uid, pick, globalR1, bracketSeries, username, mvpPick }
   )
 }
 
+// ── By-Series mode ────────────────────────────────────────────────────────────
+
+interface OutcomeCount {
+  homeWins: number
+  awayWins: number
+  count: number
+}
+
+function countOutcomes(
+  seriesKey: string,
+  memberUids: string[],
+  bets: Record<string, BracketPick>,
+): OutcomeCount[] {
+  const map = new Map<string, OutcomeCount>()
+  for (const uid of memberUids) {
+    const p = bets[uid]?.[seriesKey]
+    if (!p || (p.homeWins !== 4 && p.awayWins !== 4)) continue
+    const key = `${p.homeWins}-${p.awayWins}`
+    if (!map.has(key)) map.set(key, { homeWins: p.homeWins, awayWins: p.awayWins, count: 0 })
+    map.get(key)!.count++
+  }
+  return Array.from(map.values()).sort((a, b) => b.count - a.count)
+}
+
+function SeriesPieCard({
+  seriesKey,
+  memberUids,
+  bets,
+  globalR1,
+  bracketSeries,
+}: {
+  seriesKey: string
+  memberUids: string[]
+  bets: Record<string, BracketPick>
+  globalR1: Record<string, { home: string; away: string }>
+  bracketSeries: BracketSeriesMap
+}) {
+  const teams = getBracketTeams(seriesKey, {} as BracketPick, globalR1, bracketSeries)
+  const def = BRACKET_SERIES.find((s) => s.key === seriesKey)
+  const conf = def?.conf || ''
+  const borderColor = conf === 'east' ? 'rgba(79,195,247,0.3)' : conf === 'west' ? 'rgba(255,107,0,0.3)' : 'rgba(255,215,0,0.4)'
+
+  const homeColor = getTeamColor(teams.home)
+  const awayColor = getTeamColor(teams.away)
+
+  const outcomes = countOutcomes(seriesKey, memberUids, bets)
+  const totalPicks = outcomes.reduce((s, o) => s + o.count, 0)
+
+  // Build pie slices
+  const slices: PieSlice[] = outcomes.map((o) => {
+    const homeWon = o.homeWins === 4
+    const loserWins = homeWon ? o.awayWins : o.homeWins
+    const baseColor = homeWon ? homeColor : awayColor
+    const color = getOutcomeColor(baseColor, loserWins)
+    const teamName = homeWon ? (teams.home || '?') : (teams.away || '?')
+    const label = `${teamName} 4-${loserWins} (${o.count})`
+    return { value: o.count, color, label }
+  })
+
+  // Legend entries
+  const legendItems = outcomes.map((o) => {
+    const homeWon = o.homeWins === 4
+    const loserWins = homeWon ? o.awayWins : o.homeWins
+    const baseColor = homeWon ? homeColor : awayColor
+    const color = getOutcomeColor(baseColor, loserWins)
+    const teamName = homeWon ? (teams.home || '?') : (teams.away || '?')
+    const pct = totalPicks > 0 ? Math.round((o.count / totalPicks) * 100) : 0
+    return { color, label: `${teamName} 4-${loserWins}`, count: o.count, pct }
+  })
+
+  const noTeams = !teams.home && !teams.away
+
+  return (
+    <div
+      className="series-pie-card"
+      style={{ borderColor }}
+    >
+      <div className="series-pie-title">{def?.label || seriesKey}</div>
+      {noTeams ? (
+        <div className="series-pie-unknown">?</div>
+      ) : totalPicks === 0 ? (
+        <div className="series-pie-empty">אין ניחושים עדיין</div>
+      ) : (
+        <div className="series-pie-body">
+          <div className="series-pie-teams">
+            <span className="series-pie-team" style={{ color: homeColor }}>
+              <TeamName name={teams.home} size={11} />
+            </span>
+            <span className="series-pie-vs">vs</span>
+            <span className="series-pie-team" style={{ color: awayColor }}>
+              <TeamName name={teams.away} size={11} />
+            </span>
+          </div>
+          <div className="series-pie-chart-row">
+            <Pie3D slices={slices} size={120} />
+            <div className="series-pie-legend">
+              {legendItems.map((item) => (
+                <div key={item.label} className="series-pie-legend-row">
+                  <span className="series-pie-legend-dot" style={{ background: item.color }} />
+                  <span className="series-pie-legend-label">{item.label}</span>
+                  <span className="series-pie-legend-count">{item.count} ({item.pct}%)</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function BySeriesView({
+  memberUids,
+  bets,
+  globalR1,
+  bracketSeries,
+}: {
+  memberUids: string[]
+  bets: Record<string, BracketPick>
+  globalR1: Record<string, { home: string; away: string }>
+  bracketSeries: BracketSeriesMap
+}) {
+  const rounds = [1, 2, 3, 4] as const
+  return (
+    <div className="by-series-view">
+      {rounds.map((round) => {
+        const roundSeries = BRACKET_SERIES.filter((s) => s.round === round)
+        return (
+          <div key={round} className="by-series-round">
+            <div className="by-series-round-title">{ROUND_LABELS[round]}</div>
+            <div className="by-series-grid">
+              {roundSeries.map((s) => (
+                <SeriesPieCard
+                  key={s.key}
+                  seriesKey={s.key}
+                  memberUids={memberUids}
+                  bets={bets}
+                  globalR1={globalR1}
+                  bracketSeries={bracketSeries}
+                />
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── Main tab ──────────────────────────────────────────────────────────────────
+
+type ViewMode = 'by-user' | 'by-series'
+
 export default function BracketBetsViewTab() {
   const globalLeagueData  = useBracketLeagueStore((s) => s.globalBracketLeagueData)
   const leaguesMeta       = useBracketLeagueStore((s) => s.myBracketLeaguesMeta)
@@ -145,6 +310,7 @@ export default function BracketBetsViewTab() {
   const locked            = useBracketLocked()
 
   const [selectedLid, setSelectedLid] = useState(GLOBAL_BRACKET_LEAGUE_ID)
+  const [viewMode, setViewMode] = useState<ViewMode>('by-user')
 
   if (!globalLeagueData) return null
 
@@ -204,17 +370,42 @@ export default function BracketBetsViewTab() {
         </div>
       )}
 
-      {sorted.map((uid) => (
-        <MemberBracket
-          key={uid}
-          uid={uid}
-          pick={bets[uid] || {}}
+      {/* View mode toggle */}
+      <div className="bets-view-toggle mb-4">
+        <button
+          className={`bets-view-btn${viewMode === 'by-user' ? ' bets-view-btn-active' : ''}`}
+          onClick={() => setViewMode('by-user')}
+        >
+          לפי משתמש
+        </button>
+        <button
+          className={`bets-view-btn${viewMode === 'by-series' ? ' bets-view-btn-active' : ''}`}
+          onClick={() => setViewMode('by-series')}
+        >
+          לפי סדרה
+        </button>
+      </div>
+
+      {viewMode === 'by-user' ? (
+        sorted.map((uid) => (
+          <MemberBracket
+            key={uid}
+            uid={uid}
+            pick={bets[uid] || {}}
+            globalR1={globalR1}
+            bracketSeries={bracketSeries}
+            username={(memberInfo[uid]?.username) || uid}
+            mvpPick={mvpBets[uid] || {}}
+          />
+        ))
+      ) : (
+        <BySeriesView
+          memberUids={sorted}
+          bets={bets}
           globalR1={globalR1}
           bracketSeries={bracketSeries}
-          username={(memberInfo[uid]?.username) || uid}
-          mvpPick={mvpBets[uid] || {}}
         />
-      ))}
+      )}
     </div>
   )
 }
