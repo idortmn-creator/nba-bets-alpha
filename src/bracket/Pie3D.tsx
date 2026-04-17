@@ -1,165 +1,90 @@
-import type { ReactNode } from 'react'
-import { darkenColor } from './teamColors'
-
 export interface PieSlice {
-  value: number    // raw count (will be normalized to fraction)
-  color: string    // fill hex color for the top face
-  label: string    // text label shown on hover / in legend
+  value: number   // raw count
+  color: string   // hex fill
+  label: string   // tooltip / legend
 }
 
 interface Props {
   slices: PieSlice[]
-  cx?: number
-  cy?: number
-  rx?: number      // horizontal radius of the top ellipse
-  ry?: number      // vertical radius of the top ellipse (defaults rx * 0.36)
-  depth?: number   // cylinder depth in px
-  size?: number    // SVG viewBox size (square)
+  size?: number   // SVG size in px (square)
 }
 
-function polarX(cx: number, rx: number, angleRad: number) {
-  return cx + rx * Math.cos(angleRad)
-}
-function polarY(cy: number, ry: number, angleRad: number) {
-  return cy + ry * Math.sin(angleRad)
-}
+const GAP_DEG = 1.5  // degrees of gap between segments
 
-function arcPath(
-  cx: number, cy: number, rx: number, ry: number,
-  startAngle: number, endAngle: number,
-  largeArc: 0 | 1
+function donutSegment(
+  cx: number, cy: number,
+  outerR: number, innerR: number,
+  startRad: number, endRad: number,
 ): string {
-  const x1 = polarX(cx, rx, startAngle)
-  const y1 = polarY(cy, ry, startAngle)
-  const x2 = polarX(cx, rx, endAngle)
-  const y2 = polarY(cy, ry, endAngle)
-  return `M ${cx} ${cy} L ${x1} ${y1} A ${rx} ${ry} 0 ${largeArc} 1 ${x2} ${y2} Z`
+  // Inset each edge by half the gap
+  const gapRad = (GAP_DEG * Math.PI) / 180
+  const s = startRad + gapRad / 2
+  const e = endRad   - gapRad / 2
+  if (e <= s) return ''
+
+  const largeArc = e - s > Math.PI ? 1 : 0
+  const ox1 = cx + outerR * Math.cos(s), oy1 = cy + outerR * Math.sin(s)
+  const ox2 = cx + outerR * Math.cos(e), oy2 = cy + outerR * Math.sin(e)
+  const ix1 = cx + innerR * Math.cos(s), iy1 = cy + innerR * Math.sin(s)
+  const ix2 = cx + innerR * Math.cos(e), iy2 = cy + innerR * Math.sin(e)
+
+  return [
+    `M ${ox1} ${oy1}`,
+    `A ${outerR} ${outerR} 0 ${largeArc} 1 ${ox2} ${oy2}`,
+    `L ${ix2} ${iy2}`,
+    `A ${innerR} ${innerR} 0 ${largeArc} 0 ${ix1} ${iy1}`,
+    'Z',
+  ].join(' ')
 }
 
-function sideQuadPath(
-  cx: number, cyt: number, cyb: number, rx: number, ry: number,
-  startAngle: number, endAngle: number,
-): string {
-  // Only render side for the front half: angles in (0, π) → sin > 0
-  const steps = 12
-  const pts: [number, number][] = []
-  for (let i = 0; i <= steps; i++) {
-    const a = startAngle + (endAngle - startAngle) * (i / steps)
-    pts.push([polarX(cx, rx, a), polarY(cyt, ry, a)])
-  }
-  const topPath = pts.map(([x, y], i) => (i === 0 ? `M ${x} ${y}` : `L ${x} ${y}`)).join(' ')
-  const botPath = [...pts].reverse().map(([x, y]) => `L ${x} ${y - cyt + cyb}`).join(' ')
-  return `${topPath} ${botPath} Z`
-}
-
-export default function Pie3D({
-  slices,
-  cx: cxProp,
-  cy: cyProp,
-  rx: rxProp,
-  ry: ryProp,
-  depth: depthProp,
-  size = 140,
-}: Props) {
-  const cx    = cxProp    ?? size / 2
-  const rx    = rxProp    ?? size * 0.40
-  const ry    = ryProp    ?? rx * 0.36
-  const depth = depthProp ?? rx * 0.45
-  const cyt   = cyProp    ?? size * 0.38
-  const cyb   = cyt + depth
-
+export default function DonutChart({ slices, size = 100 }: Props) {
   const total = slices.reduce((s, sl) => s + sl.value, 0)
   if (total === 0 || slices.length === 0) return null
 
-  // Build angle entries
-  interface Segment {
-    slice: PieSlice
-    startAngle: number
-    endAngle: number
-    midAngle: number
-    largeArc: 0 | 1
-    isFront: boolean
-  }
+  const cx      = size / 2
+  const cy      = size / 2
+  const outerR  = size * 0.46
+  const innerR  = size * 0.28
+  const TWO_PI  = Math.PI * 2
 
-  const TWO_PI = Math.PI * 2
-  const segments: Segment[] = []
-  let cumAngle = -Math.PI / 2  // start at top (−90°)
-
-  for (const sl of slices) {
-    if (sl.value <= 0) continue
-    const span = (sl.value / total) * TWO_PI
-    const startAngle = cumAngle
-    const endAngle   = cumAngle + span
-    const midAngle   = (startAngle + endAngle) / 2
-    const largeArc   = span > Math.PI ? 1 : 0
-    // "Front" = midpoint is in lower half of ellipse (sin > 0)
-    const isFront = Math.sin(midAngle) > 0
-    segments.push({ slice: sl, startAngle, endAngle, midAngle, largeArc, isFront })
-    cumAngle = endAngle
-  }
-
-  // Painter's algorithm: render back segments top faces first, then side faces of front
-  // segments back-to-front, then top faces of front segments
-  const backSegs  = segments.filter((s) => !s.isFront)
-  const frontSegs = [...segments.filter((s) => s.isFront)].sort(
-    (a, b) => Math.sin(a.midAngle) - Math.sin(b.midAngle)
-  )
-
-  const sideElems: ReactNode[] = []
-  for (const seg of [...backSegs, ...frontSegs]) {
-    // Only draw side if segment crosses the front half (any point with sin > 0)
-    const sinStart = Math.sin(seg.startAngle)
-    const sinMid   = Math.sin(seg.midAngle)
-    const sinEnd   = Math.sin(seg.endAngle)
-    if (sinStart <= 0 && sinMid <= 0 && sinEnd <= 0) continue
-
-    const sideColor = darkenColor(seg.slice.color, 0.35)
-    sideElems.push(
-      <path
-        key={`side-${seg.slice.label}`}
-        d={sideQuadPath(cx, cyt, cyb, rx, ry, seg.startAngle, seg.endAngle)}
-        fill={sideColor}
-        stroke="rgba(0,0,0,0.15)"
-        strokeWidth={0.5}
-      />
-    )
-  }
+  let cumAngle = -Math.PI / 2  // start at 12 o'clock
 
   return (
-    <svg
-      viewBox={`0 0 ${size} ${size}`}
-      width={size}
-      height={size}
-      style={{ overflow: 'visible', display: 'block' }}
-    >
-      {/* Back-half top faces */}
-      {backSegs.map((seg) => (
-        <path
-          key={`top-back-${seg.slice.label}`}
-          d={arcPath(cx, cyt, rx, ry, seg.startAngle, seg.endAngle, seg.largeArc)}
-          fill={seg.slice.color}
-          stroke="rgba(0,0,0,0.2)"
-          strokeWidth={0.8}
-        >
-          <title>{seg.slice.label}</title>
-        </path>
-      ))}
-
-      {/* Side faces (painter's order) */}
-      {sideElems}
-
-      {/* Front-half top faces (drawn last — on top) */}
-      {frontSegs.map((seg) => (
-        <path
-          key={`top-front-${seg.slice.label}`}
-          d={arcPath(cx, cyt, rx, ry, seg.startAngle, seg.endAngle, seg.largeArc)}
-          fill={seg.slice.color}
-          stroke="rgba(0,0,0,0.2)"
-          strokeWidth={0.8}
-        >
-          <title>{seg.slice.label}</title>
-        </path>
-      ))}
+    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ display: 'block', flexShrink: 0 }}>
+      {slices.map((sl) => {
+        if (sl.value <= 0) return null
+        const span = (sl.value / total) * TWO_PI
+        const startAngle = cumAngle
+        const endAngle   = cumAngle + span
+        cumAngle = endAngle
+        const d = donutSegment(cx, cy, outerR, innerR, startAngle, endAngle)
+        if (!d) return null
+        return (
+          <path key={sl.label} d={d} fill={sl.color}>
+            <title>{sl.label}</title>
+          </path>
+        )
+      })}
+      {/* Total count in the center */}
+      <text
+        x={cx} y={cy - 4}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={size * 0.18}
+        fontWeight="700"
+        fill="rgba(255,255,255,0.9)"
+      >
+        {total}
+      </text>
+      <text
+        x={cx} y={cy + size * 0.13}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={size * 0.11}
+        fill="rgba(255,255,255,0.45)"
+      >
+        ניחושים
+      </text>
     </svg>
   )
 }

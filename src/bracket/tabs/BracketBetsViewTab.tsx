@@ -221,39 +221,47 @@ function SeriesPieCard({
   const noTeams = !teams.home && !teams.away
 
   return (
-    <div
-      className="series-pie-card"
-      style={{ borderColor }}
-    >
-      <div className="series-pie-title">{def?.label || seriesKey}</div>
+    <div className="series-pie-card" style={{ borderColor }}>
+      {/* Header: series label + matchup */}
+      <div className="series-pie-header">
+        <div className="series-pie-title">{def?.label || seriesKey}</div>
+        {!noTeams && (
+          <div className="series-pie-matchup">
+            <span style={{ color: homeColor }}><TeamName name={teams.home} size={12} /></span>
+            <span className="series-pie-vs">–</span>
+            <span style={{ color: awayColor }}><TeamName name={teams.away} size={12} /></span>
+          </div>
+        )}
+      </div>
+
       {noTeams ? (
-        <div className="series-pie-unknown">?</div>
+        <div className="series-pie-empty">טרם נקבעו קבוצות</div>
       ) : totalPicks === 0 ? (
         <div className="series-pie-empty">אין ניחושים עדיין</div>
       ) : (
-        <div className="series-pie-body">
-          <div className="series-pie-teams">
-            <span className="series-pie-team" style={{ color: homeColor }}>
-              <TeamName name={teams.home} size={11} />
-            </span>
-            <span className="series-pie-vs">vs</span>
-            <span className="series-pie-team" style={{ color: awayColor }}>
-              <TeamName name={teams.away} size={11} />
-            </span>
+        <>
+          {/* Donut chart centered */}
+          <div className="series-pie-chart-wrap">
+            <Pie3D slices={slices} size={108} />
           </div>
-          <div className="series-pie-chart-row">
-            <Pie3D slices={slices} size={120} />
-            <div className="series-pie-legend">
-              {legendItems.map((item) => (
-                <div key={item.label} className="series-pie-legend-row">
-                  <span className="series-pie-legend-dot" style={{ background: item.color }} />
-                  <span className="series-pie-legend-label">{item.label}</span>
-                  <span className="series-pie-legend-count">{item.count} ({item.pct}%)</span>
-                </div>
-              ))}
-            </div>
+
+          {/* Legend rows below chart */}
+          <div className="series-pie-legend">
+            {legendItems.map((item) => (
+              <div key={item.label} className="series-pie-legend-row">
+                <span className="series-pie-legend-dot" style={{ background: item.color }} />
+                <span className="series-pie-legend-label">{item.label}</span>
+                <span className="series-pie-legend-bar-wrap">
+                  <span
+                    className="series-pie-legend-bar"
+                    style={{ width: `${item.pct}%`, background: item.color }}
+                  />
+                </span>
+                <span className="series-pie-legend-pct">{item.pct}%</span>
+              </div>
+            ))}
           </div>
-        </div>
+        </>
       )}
     </div>
   )
