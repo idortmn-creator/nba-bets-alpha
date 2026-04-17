@@ -27,6 +27,12 @@ import BracketSavedPage from '@/bracket/BracketSavedPage'
 
 function BracketGuard({ children }: { children: React.ReactNode }) {
   const uid = useAuthStore((s) => s.currentUser?.uid)
+  if (!uid) return <Navigate to="/" replace />
+  return <>{children}</>
+}
+
+function BracketAdminGuard({ children }: { children: React.ReactNode }) {
+  const uid = useAuthStore((s) => s.currentUser?.uid)
   if (uid !== SUPER_ADMIN_UID) return <Navigate to="/" replace />
   return <>{children}</>
 }
@@ -72,7 +78,7 @@ function AppContent() {
           <Route path="/bracket/leagues" element={<BracketGuard><BracketMyLeaguesPage /></BracketGuard>} />
           <Route path="/bracket/league/:lid" element={<BracketGuard><BracketLeaguePage /></BracketGuard>} />
           <Route path="/bracket/league/:lid/:tab" element={<BracketGuard><BracketLeaguePage /></BracketGuard>} />
-          <Route path="/bracket/admin" element={<BracketGuard><BracketAdminPage /></BracketGuard>} />
+          <Route path="/bracket/admin" element={<BracketAdminGuard><BracketAdminPage /></BracketAdminGuard>} />
           <Route path="/bracket/saved" element={<BracketGuard><BracketSavedPage /></BracketGuard>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
