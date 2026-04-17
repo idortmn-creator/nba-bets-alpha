@@ -56,6 +56,10 @@ export default function BonusAdminPanel() {
         <div key={b.id} className="bonus-admin-card">
           <button className="absolute left-2 top-2 text-xs text-[var(--red)]" onClick={() => removeBonus(i)}>✕ הסר</button>
           <div className="mb-2"><Label>שאלה</Label><Input value={b.question} onChange={(e) => updateBonus(i, 'question', e.target.value)} placeholder="השאלה..." /></div>
+          <div className="mb-2">
+            <Label>הסבר (אופציונלי)</Label>
+            <Input value={b.explanation || ''} onChange={(e) => updateBonus(i, 'explanation', e.target.value)} placeholder="הסבר קצר שיוצג למשתמשים כשילחצו על סימן ה-?" />
+          </div>
           <div className="mb-2"><Label>נקודות</Label><Input type="number" value={b.points} min={0.5} step={0.5} onChange={(e) => updateBonus(i, 'points', parseFloat(e.target.value) || 1)} className="!w-24" /></div>
           {stageMatches.length > 0 && (
             <div className="mb-2"><Label>🔗 שייך לסדרה</Label>

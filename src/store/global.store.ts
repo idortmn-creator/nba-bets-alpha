@@ -37,6 +37,7 @@ export interface BonusBet {
   points: number
   answers: string[]
   seriesKey?: string
+  explanation?: string
 }
 
 interface GlobalState {

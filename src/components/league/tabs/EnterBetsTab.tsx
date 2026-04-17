@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { Lock, Loader2, Clock } from 'lucide-react'
+import { Lock, Loader2, Clock, HelpCircle } from 'lucide-react'
 import { Card, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -464,6 +464,8 @@ function PreBetsForm({ stage, cbd, pick, getTeams }: any) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function BonusBetsForm({ stage, cbd, pick, getBonusBets, isBonusLocked, isSingleBonusLocked }: any) {
+  const [activeHint, setActiveHint] = useState<string | null>(null)
+
   const bonuses = getBonusBets(stage)
   if (!bonuses.length) return null
   if (isBonusLocked(stage)) return <div className="mt-3 rounded-lg border border-[var(--red)]/30 bg-[var(--red)]/5 p-3 text-sm text-[var(--red)]">🔒 הימורי הבונוס ננעלו</div>
@@ -475,7 +477,27 @@ function BonusBetsForm({ stage, cbd, pick, getBonusBets, isBonusLocked, isSingle
       <CardTitle>⭐ הימורי בונוס</CardTitle>
       {available.map((b: any) => (
         <div key={b.id} className="bonus-bet-card">
-          <div className="bonus-label"><span>⭐ {b.question}</span><span className="bonus-pts-badge">{b.points} נק'</span></div>
+          <div className="bonus-label">
+            <span className="flex items-center gap-1.5">
+              <span>⭐ {b.question}</span>
+              {b.explanation && (
+                <button
+                  onClick={() => setActiveHint(activeHint === b.id ? null : b.id)}
+                  className="shrink-0 text-[#4fc3f7] opacity-80 hover:opacity-100 transition-opacity"
+                  aria-label="הצג הסבר"
+                >
+                  <HelpCircle size={14} />
+                </button>
+              )}
+            </span>
+            <span className="bonus-pts-badge">{b.points} נק'</span>
+          </div>
+          {activeHint === b.id && b.explanation && (
+            <div className="mb-2 flex items-start gap-2 rounded-lg border border-[#4fc3f7]/25 bg-[#4fc3f7]/8 px-3 py-2 text-xs text-[#4fc3f7] leading-relaxed">
+              <HelpCircle size={12} className="mt-0.5 shrink-0" />
+              <span>{b.explanation}</span>
+            </div>
+          )}
           <div className="bonus-opts">
             {(b.answers || []).map((a: string) => (
               <button key={a} className={`bonus-opt ${cbd['bonus_' + b.id] === a ? 'selected' : ''}`} onClick={() => pick('bonus_' + b.id, a)}>{a}</button>
