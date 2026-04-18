@@ -11,7 +11,7 @@ const TEAM_COLOR: Record<string, string> = {
   bkn:  '#0053A0',  // Nets          — classic blue (primary is black; blue used for visibility)
   cha:  '#00788C',  // Hornets       — teal (secondary; avoids PHX/LAL purple conflict)
   chi:  '#CE1141',  // Bulls         — primary red
-  cle:  '#86002C',  // Cavaliers     — wine red
+  cle:  '#5E35B1',  // Cavaliers     — indigo/purple (distinct from TOR red and all East reds)
   dal:  '#003DA5',  // Mavericks     — darker royal blue
   den:  '#FEC524',  // Nuggets       — primary gold (very distinctive)
   det:  '#C8102E',  // Pistons       — primary red
