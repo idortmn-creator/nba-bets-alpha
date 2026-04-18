@@ -129,11 +129,10 @@ export default function LeagueAdminTab() {
                 <button
                   key={String(si)}
                   onClick={() => setViewStageStr(String(si))}
-                  disabled={isFuture}
                   className={[
                     'stage-tab shrink-0 text-[0.7rem]',
                     isActive ? 'active' : '',
-                    isFuture ? 'opacity-30 cursor-not-allowed' : '',
+                    isFuture ? 'opacity-50' : '',
                   ].join(' ')}
                 >
                   {STAGE_SHORT[i]}
