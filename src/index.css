@@ -253,6 +253,55 @@
 .tiebreaker-hint { font-size: 0.75rem; color: var(--text2); margin-bottom: 10px; line-height: 1.4; }
 .tiebreaker-input { max-width: 180px; }
 
+/* ── BRACKET TIEBREAKER (prominent) ── */
+.br-tiebreaker-wrap {
+  margin: 20px 0 4px;
+}
+.br-tiebreaker-card {
+  background: rgba(255,215,0,0.07);
+  border: 2px solid rgba(255,215,0,0.55);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 0 18px rgba(255,215,0,0.12);
+}
+.br-tiebreaker-card .tiebreaker-title {
+  font-size: 1.05rem;
+}
+.br-tiebreaker-card .tiebreaker-q {
+  font-size: 0.97rem;
+  color: var(--text);
+}
+.br-tb-locked-badge {
+  margin-right: auto;
+  font-size: 0.7rem;
+  color: var(--text2);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+.br-tb-input {
+  display: block;
+  width: 100%;
+  max-width: 200px;
+  padding: 7px 12px;
+  font-size: 1rem;
+  font-family: 'Oswald', sans-serif;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,215,0,0.4);
+  border-radius: 8px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.br-tb-input:focus { border-color: rgba(255,215,0,0.8); }
+.br-tb-locked-value {
+  font-size: 1.1rem;
+  font-family: 'Oswald', sans-serif;
+  color: var(--gold);
+  padding: 4px 0;
+}
+
 /* ── AUTH GOOGLE ── */
 .auth-google-btn {
   display: flex;

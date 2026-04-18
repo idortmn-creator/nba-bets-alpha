@@ -195,6 +195,12 @@ export async function clearMvpBet(
   })
 }
 
+export async function saveTiebreakerBet(uid: string, answer: number | null): Promise<void> {
+  await updateDoc(doc(db, 'bracket_leagues', GLOBAL_BRACKET_LEAGUE_ID), {
+    [`tiebreakerBets.${uid}`]: answer,
+  })
+}
+
 // ── Admin functions ───────────────────────────────────────────────────────────
 
 export async function loadAllBracketLeagues(): Promise<Record<string, unknown>[]> {

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/auth.store'
 import { useGlobalStore } from '@/store/global.store'
 import { useBracketLeagueStore } from '../bracketLeague.store'
-import { saveBracketBet, clearBracketBet, saveMvpBet } from '../bracketLeague.service'
+import { saveBracketBet, clearBracketBet, saveMvpBet, saveTiebreakerBet } from '../bracketLeague.service'
 import BracketShareBar from '../BracketShareBar'
 import BracketFullScreenModal from '../BracketFullScreenModal'
 import { drawBracketImage, shareBracketImage } from '../bracketCapture'
@@ -47,6 +47,14 @@ function useBracketLocked() {
   const manualLocked = (globalData.bracketLocked as boolean | undefined) || false
   const autoLockTs   = (globalData.bracketAutoLock as number | undefined) || 0
   return manualLocked || (autoLockTs > 0 && Date.now() >= autoLockTs)
+}
+
+function useBracketTiebreaker() {
+  const globalData = useGlobalStore((s) => s.globalData)
+  return {
+    question: (globalData.bracketTiebreakerQuestion as string | undefined) || '',
+    locked:   (globalData.bracketTiebreakerLocked as boolean | undefined) || false,
+  }
 }
 
 // ── Series card ──────────────────────────────────────────────────────────────
@@ -311,8 +319,11 @@ export default function BracketMyBetsTab() {
 
   const [pick, setPick] = useState<BracketPick>({})
   const [mvpPick, setMvpPick] = useState<BracketMvpPick>({})
+  const [tiebreakerAnswer, setTiebreakerAnswer] = useState('')
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [showFullScreen, setShowFullScreen] = useState(false)
+
+  const tiebreaker = useBracketTiebreaker()
 
   // Load existing bets from global league
   useEffect(() => {
@@ -321,6 +332,8 @@ export default function BracketMyBetsTab() {
     setPick({ ...existing })
     const existingMvp = (globalLeagueData.mvpBets || {})[currentUser.uid] || {}
     setMvpPick({ ...existingMvp })
+    const existingTb = ((globalLeagueData as Record<string, unknown>).tiebreakerBets as Record<string, number> | undefined)?.[currentUser.uid]
+    setTiebreakerAnswer(existingTb != null ? String(existingTb) : '')
   }, [globalLeagueData?.id, currentUser?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function adjustWins(seriesKey: string, side: 'home' | 'away', delta: number) {
@@ -370,6 +383,22 @@ export default function BracketMyBetsTab() {
     setMvpPick((prev) => ({ ...prev, [seriesKey]: player }))
     try {
       await saveMvpBet(currentUser.uid, seriesKey, player)
+    } catch (e: unknown) {
+      toast('❌ ' + (e instanceof Error ? e.message : String(e)))
+    }
+  }
+
+  async function handleTiebreakerBlur() {
+    if (!currentUser || tiebreaker.locked) return
+    const trimmed = tiebreakerAnswer.trim()
+    if (trimmed === '') {
+      await saveTiebreakerBet(currentUser.uid, null).catch(() => {})
+      return
+    }
+    const num = parseFloat(trimmed)
+    if (isNaN(num)) return
+    try {
+      await saveTiebreakerBet(currentUser.uid, num)
     } catch (e: unknown) {
       toast('❌ ' + (e instanceof Error ? e.message : String(e)))
     }
@@ -439,6 +468,33 @@ export default function BracketMyBetsTab() {
               />
             )
           })}
+        </div>
+      )}
+
+      {/* Tiebreaker question */}
+      {tiebreaker.question && (
+        <div className="br-tiebreaker-wrap">
+          <div className={`tiebreaker-card br-tiebreaker-card${tiebreaker.locked ? ' opacity-70' : ''}`}>
+            <div className="tiebreaker-header">
+              <span className="tiebreaker-icon">🎯</span>
+              <span className="tiebreaker-title">שאלת שובר שוויון</span>
+              {tiebreaker.locked && <span className="br-tb-locked-badge">🔒 ננעל</span>}
+            </div>
+            <p className="tiebreaker-q">{tiebreaker.question}</p>
+            <p className="tiebreaker-hint">תשובה מספרית — תשמש לשבירת שוויון בסוף הפלייאוף</p>
+            {tiebreaker.locked ? (
+              <div className="br-tb-locked-value">{tiebreakerAnswer || '—'}</div>
+            ) : (
+              <input
+                type="number"
+                className="tiebreaker-input br-tb-input"
+                placeholder="הזן מספר..."
+                value={tiebreakerAnswer}
+                onChange={(e) => setTiebreakerAnswer(e.target.value)}
+                onBlur={handleTiebreakerBlur}
+              />
+            )}
+          </div>
         </div>
       )}
 
