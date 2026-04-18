@@ -8,7 +8,7 @@ import {
 } from './bracketConstants'
 import type { BracketPick, BracketSeriesMap } from './bracketConstants'
 
-export const SHARE_TEXT = "I'm also participating in the 2026 Playoff Bracket predictions app! 🏀"
+export const SHARE_TEXT = 'גם אני משתתף בהימורי הברקט של אפליקציית הימורי הפלייאוף 2026! 🏀'
 
 // ── Canvas layout constants ──────────────────────────────────────────────────
 
@@ -218,11 +218,13 @@ export async function drawBracketImage(
 // ── Share / download ─────────────────────────────────────────────────────────
 
 export async function shareBracketImage(blob: Blob): Promise<void> {
-  const file = new File([blob], 'my-bracket-2026.png', { type: 'image/png' })
+  const file    = new File([blob], 'my-bracket-2026.png', { type: 'image/png' })
+  const appUrl  = typeof window !== 'undefined' ? window.location.origin : ''
+  const shareText = appUrl ? `${SHARE_TEXT}\n${appUrl}` : SHARE_TEXT
 
   // Web Share API with file (works on mobile — opens native share sheet for WA/FB/X/etc.)
   if (typeof navigator.share === 'function' && navigator.canShare?.({ files: [file] })) {
-    await navigator.share({ files: [file], text: SHARE_TEXT })
+    await navigator.share({ files: [file], text: shareText })
     return
   }
 
