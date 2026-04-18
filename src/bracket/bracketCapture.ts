@@ -1,4 +1,4 @@
-import { getTeamAbbr } from '@/lib/teamLogos'
+import { getTeamAbbr, getTeamLogoUrl } from '@/lib/teamLogos'
 import {
   BRACKET_SERIES,
   BRACKET_POSITIONS,
@@ -23,6 +23,10 @@ const CANVAS_H = TOTAL_H + BRACKET_TOP + HEADER_H + PADDING * 2
 const BG    = '#0f0f15'
 const SURF  = '#1a1a24'
 
+const LOGO_SIZE = 22   // px — fits in the 40px-tall card row
+const LOGO_X_PAD = 4   // gap from card left edge
+const TEXT_X = LOGO_X_PAD + LOGO_SIZE + 4  // abbreviation text starts here
+
 function roundRect(
   ctx: CanvasRenderingContext2D,
   x: number, y: number, w: number, h: number, r: number,
@@ -44,8 +48,41 @@ function label(name: string): string {
   if (!name) return '?'
   const abbr = getTeamAbbr(name)
   if (abbr) return abbr.toUpperCase()
-  // fallback: first 3 chars
   return name.slice(0, 3).toUpperCase()
+}
+
+// ── Logo preloading ──────────────────────────────────────────────────────────
+
+function loadImage(url: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload  = () => resolve(img)
+    img.onerror = () => resolve(null)
+    img.src = url
+  })
+}
+
+async function preloadLogos(
+  pick: BracketPick,
+  globalR1: Record<string, { home: string; away: string }>,
+  bracketSeries: BracketSeriesMap,
+): Promise<Map<string, HTMLImageElement | null>> {
+  const names = new Set<string>()
+  for (const s of BRACKET_SERIES) {
+    const teams = getBracketTeams(s.key, pick, globalR1, bracketSeries)
+    if (teams.home) names.add(teams.home)
+    if (teams.away) names.add(teams.away)
+  }
+
+  const entries = await Promise.all(
+    Array.from(names).map(async (name) => {
+      const url = getTeamLogoUrl(name)
+      const img = url ? await loadImage(url) : null
+      return [name, img] as [string, HTMLImageElement | null]
+    }),
+  )
+  return new Map(entries)
 }
 
 // ── Main draw function ───────────────────────────────────────────────────────
@@ -56,6 +93,9 @@ export async function drawBracketImage(
   bracketSeries: BracketSeriesMap,
   username: string,
 ): Promise<Blob> {
+  // Preload all logos before touching the canvas (avoids taint issues)
+  const logos = await preloadLogos(pick, globalR1, bracketSeries)
+
   const canvas = document.createElement('canvas')
   canvas.width  = CANVAS_W * SCALE
   canvas.height = CANVAS_H * SCALE
@@ -70,19 +110,16 @@ export async function drawBracketImage(
   // ── Header ──
   const hY = PADDING + HEADER_H / 2
 
-  // App label (left)
   ctx.font = '600 12px "Heebo", Arial, sans-serif'
   ctx.fillStyle = 'rgba(255,255,255,0.35)'
   ctx.textAlign = 'left'
   ctx.fillText('NBA 2026 Playoff Bracket', PADDING, hY - 7)
 
-  // Username (left, larger)
   ctx.font = 'bold 16px "Heebo", Arial, sans-serif'
   ctx.fillStyle = '#ff6b00'
   ctx.textAlign = 'left'
   ctx.fillText(username, PADDING, hY + 11)
 
-  // Divider under header
   ctx.strokeStyle = 'rgba(255,255,255,0.08)'
   ctx.lineWidth = 1
   ctx.beginPath()
@@ -136,11 +173,11 @@ export async function drawBracketImage(
     roundRect(ctx, cx, cy, CARD_W, CARD_H, 5)
     ctx.fill()
 
-    // Card border color
+    // Card border
     const conf = s.conf
     ctx.strokeStyle =
       conf === 'east' ? 'rgba(79,195,247,0.45)' :
-      conf === 'west' ? 'rgba(255,107,0,0.45)' :
+      conf === 'west' ? 'rgba(255,107,0,0.45)'  :
       'rgba(255,215,0,0.55)'
     ctx.lineWidth = 1
     roundRect(ctx, cx, cy, CARD_W, CARD_H, 5)
@@ -161,7 +198,8 @@ export async function drawBracketImage(
     ]
 
     rows.forEach((row, i) => {
-      const ry = cy + i * rowH
+      const ry   = cy + i * rowH
+      const midY = ry + rowH / 2
 
       // Row bg highlight if winner
       if (row.won) {
@@ -181,9 +219,7 @@ export async function drawBracketImage(
         ctx.fill()
       }
 
-      const midY = ry + rowH / 2
-
-      // Divider
+      // Divider between rows
       if (i === 0) {
         ctx.strokeStyle = 'rgba(255,255,255,0.08)'
         ctx.lineWidth = 0.5
@@ -193,17 +229,31 @@ export async function drawBracketImage(
         ctx.stroke()
       }
 
-      // Score (right side)
-      ctx.font = row.won ? 'bold 13px Arial, sans-serif' : '12px Arial, sans-serif'
+      // Dim the whole row if this team lost
+      const alpha = row.lost ? 0.35 : 1
+
+      // ── Team logo ──
+      const logoImg = row.name ? logos.get(row.name) : null
+      const logoY   = midY - LOGO_SIZE / 2
+      if (logoImg) {
+        ctx.save()
+        ctx.globalAlpha = alpha
+        ctx.drawImage(logoImg, cx + LOGO_X_PAD, logoY, LOGO_SIZE, LOGO_SIZE)
+        ctx.restore()
+      }
+
+      // ── Team abbreviation ──
+      const textX = logoImg ? cx + TEXT_X : cx + 7
+      ctx.font      = row.won ? 'bold 10px Arial, sans-serif' : '9px Arial, sans-serif'
+      ctx.fillStyle = row.won ? '#ffffff' : row.lost ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.85)'
+      ctx.textAlign = 'left'
+      ctx.fillText(label(row.name), textX, midY)
+
+      // ── Score (right side) ──
+      ctx.font      = row.won ? 'bold 13px Arial, sans-serif' : '12px Arial, sans-serif'
       ctx.fillStyle = row.won ? '#22c55e' : row.lost ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.75)'
       ctx.textAlign = 'right'
       ctx.fillText(String(row.wins), cx + CARD_W - 6, midY)
-
-      // Team abbreviation (left side)
-      ctx.font = row.won ? 'bold 11px Arial, sans-serif' : '10px Arial, sans-serif'
-      ctx.fillStyle = row.won ? '#ffffff' : row.lost ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.85)'
-      ctx.textAlign = 'left'
-      ctx.fillText(label(row.name), cx + 7, midY)
     })
   }
 
