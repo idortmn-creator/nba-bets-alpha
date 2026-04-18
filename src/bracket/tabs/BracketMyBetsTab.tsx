@@ -8,6 +8,7 @@ import { useBracketLeagueStore } from '../bracketLeague.store'
 import { saveBracketBet, clearBracketBet, saveMvpBet } from '../bracketLeague.service'
 import BracketShareBar from '../BracketShareBar'
 import BracketFullScreenModal from '../BracketFullScreenModal'
+import { drawBracketImage, shareBracketImage } from '../bracketCapture'
 import {
   BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES,
   CARD_W, CARD_H, TOTAL_H, TOTAL_W,
@@ -382,6 +383,15 @@ export default function BracketMyBetsTab() {
 
   const username = globalLeagueData?.memberInfo?.[currentUser?.uid || '']?.username || currentUser?.uid || ''
 
+  async function handleShare() {
+    try {
+      const blob = await drawBracketImage(pick, globalR1, bracketSeries, username)
+      await shareBracketImage(blob)
+    } catch (e: unknown) {
+      toast('❌ ' + (e instanceof Error ? e.message : String(e)))
+    }
+  }
+
   return (
     <div>
       {locked && (
@@ -447,7 +457,7 @@ export default function BracketMyBetsTab() {
       )}
 
       <div className="mt-4">
-        <BracketShareBar />
+        <BracketShareBar onShare={handleShare} />
       </div>
 
       {/* Save success popup */}

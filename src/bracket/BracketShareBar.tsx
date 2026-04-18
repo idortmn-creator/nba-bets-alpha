@@ -1,6 +1,7 @@
+import { useState } from 'react'
+
 interface Props {
-  /** Optional message to include in the share text */
-  message?: string
+  onShare: () => Promise<void>
 }
 
 function WaIcon() {
@@ -27,42 +28,46 @@ function XIcon() {
   )
 }
 
-export default function BracketShareBar({ message }: Props) {
-  const url = typeof window !== 'undefined' ? window.location.origin : ''
-  const text = message ?? 'הגשתי את הברקט שלי לפלייאוף NBA 2026! 🏀'
-  const encodedText = encodeURIComponent(`${text}\n${url}`)
-  const encodedUrl  = encodeURIComponent(url)
+export default function BracketShareBar({ onShare }: Props) {
+  const [loading, setLoading] = useState(false)
+
+  async function handleClick() {
+    if (loading) return
+    setLoading(true)
+    try {
+      await onShare()
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="br-share-bar">
-      <span className="br-share-label">שתף:</span>
-      <a
+      <span className="br-share-label">{loading ? 'מכין תמונה...' : 'שתף:'}</span>
+      <button
         className="br-share-btn br-share-wa"
-        href={`https://wa.me/?text=${encodedText}`}
-        target="_blank"
-        rel="noopener noreferrer"
+        onClick={handleClick}
+        disabled={loading}
         title="שתף ב-WhatsApp"
       >
         <WaIcon />
-      </a>
-      <a
+      </button>
+      <button
         className="br-share-btn br-share-fb"
-        href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
-        target="_blank"
-        rel="noopener noreferrer"
+        onClick={handleClick}
+        disabled={loading}
         title="שתף ב-Facebook"
       >
         <FbIcon />
-      </a>
-      <a
+      </button>
+      <button
         className="br-share-btn br-share-x"
-        href={`https://x.com/intent/tweet?text=${encodedText}`}
-        target="_blank"
-        rel="noopener noreferrer"
+        onClick={handleClick}
+        disabled={loading}
         title="שתף ב-X / Twitter"
       >
         <XIcon />
-      </a>
+      </button>
     </div>
   )
 }

@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
+import { toast } from 'sonner'
 import { TeamName } from '@/components/ui/TeamName'
 import BracketShareBar from './BracketShareBar'
+import { drawBracketImage, shareBracketImage } from './bracketCapture'
 import {
   BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES,
   CARD_W, CARD_H, TOTAL_H, TOTAL_W,
@@ -82,6 +84,15 @@ interface Props {
 export default function BracketFullScreenModal({
   pick, mvpPick, globalR1, bracketSeries, username, onClose,
 }: Props) {
+  async function handleShare() {
+    try {
+      const blob = await drawBracketImage(pick, globalR1, bracketSeries, username)
+      await shareBracketImage(blob)
+    } catch (e: unknown) {
+      toast('❌ ' + (e instanceof Error ? e.message : String(e)))
+    }
+  }
+
   // Lock body scroll while modal is open
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -108,7 +119,7 @@ export default function BracketFullScreenModal({
             <span className="brfs-subtitle"> — הברקט שלי</span>
           </div>
           <div className="brfs-header-right">
-            <BracketShareBar />
+            <BracketShareBar onShare={handleShare} />
             <button className="brfs-close" onClick={onClose} aria-label="סגור">✕</button>
           </div>
         </div>
