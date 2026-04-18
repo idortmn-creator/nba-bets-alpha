@@ -332,7 +332,7 @@ export default function BracketMyBetsTab() {
     setPick({ ...existing })
     const existingMvp = (globalLeagueData.mvpBets || {})[currentUser.uid] || {}
     setMvpPick({ ...existingMvp })
-    const existingTb = ((globalLeagueData as Record<string, unknown>).tiebreakerBets as Record<string, number> | undefined)?.[currentUser.uid]
+    const existingTb = globalLeagueData.tiebreakerBets?.[currentUser.uid]
     setTiebreakerAnswer(existingTb != null ? String(existingTb) : '')
   }, [globalLeagueData?.id, currentUser?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 

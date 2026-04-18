@@ -15,6 +15,7 @@ export interface BracketLeagueData {
   memberInfo: Record<string, BracketMemberInfo>
   bets: Record<string, BracketPick>
   mvpBets?: Record<string, BracketMvpPick>
+  tiebreakerBets?: Record<string, number>
   isGlobal?: boolean
   createdAt?: unknown
 }
