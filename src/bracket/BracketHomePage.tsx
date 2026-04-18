@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { useGlobalStore } from '@/store/global.store'
 import { SUPER_ADMIN_UID } from '@/lib/constants'
 import { ensureGlobalLeagueMember, GLOBAL_BRACKET_LEAGUE_ID } from './bracketLeague.service'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
 
 export default function BracketHomePage() {
   const navigate = useNavigate()
@@ -13,23 +14,27 @@ export default function BracketHomePage() {
   const globalData = useGlobalStore((s) => s.globalData)
   const isSuperAdmin = currentUser?.uid === SUPER_ADMIN_UID
   const [joining, setJoining] = useState(false)
-
-  // Redirect returning users who already started their bracket
-  useEffect(() => {
-    if (!userDoc) return
-    const bracketLeagues: string[] = (userDoc as unknown as Record<string, unknown>).bracketLeagues as string[] || []
-    if (bracketLeagues.includes(GLOBAL_BRACKET_LEAGUE_ID)) {
-      navigate('/bracket/saved', { replace: true })
-    }
-  }, [userDoc]) // eslint-disable-line react-hooks/exhaustive-deps
+  const [showExistingModal, setShowExistingModal] = useState(false)
 
   // Check if global R1 teams are set
   const teams = (globalData.teams as Record<string, Record<string, { home: string; away: string }>> | undefined) || {}
   const stage1Teams = teams['stage1'] || {}
   const teamsSet = Object.keys(stage1Teams).length >= 8
 
+  const hasExistingBracket = (() => {
+    if (!userDoc) return false
+    const bracketLeagues = (userDoc as unknown as Record<string, unknown>).bracketLeagues as string[] || []
+    return bracketLeagues.includes(GLOBAL_BRACKET_LEAGUE_ID)
+  })()
+
   async function handleStart() {
     if (!currentUser || !userDoc) return
+
+    if (hasExistingBracket) {
+      setShowExistingModal(true)
+      return
+    }
+
     setJoining(true)
     try {
       await ensureGlobalLeagueMember(currentUser, userDoc)
@@ -40,7 +45,7 @@ export default function BracketHomePage() {
     }
   }
 
-  // Show spinner while user doc is loading (prevents flash of landing page for returning users)
+  // Show spinner while user doc is loading
   if (!userDoc) {
     return <div className="flex items-center justify-center py-16"><div className="spinner" /></div>
   }
@@ -83,6 +88,36 @@ export default function BracketHomePage() {
           <div className="hc-sub">נהל ליגות פרטיות</div>
         </div>
       </div>
+
+      {/* Already-filled popup */}
+      {showExistingModal && (
+        <div
+          className="brfs-overlay"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowExistingModal(false) }}
+        >
+          <div className="br-save-modal">
+            <div className="br-save-modal-icon">📋</div>
+            <div className="br-save-modal-title">כבר מילאת ברקט!</div>
+            <div className="br-save-modal-sub">You have already filled in your bracket</div>
+            <div className="br-save-modal-btns">
+              <Button
+                onClick={() => {
+                  setShowExistingModal(false)
+                  navigate(`/bracket/league/${GLOBAL_BRACKET_LEAGUE_ID}/my-bracket`)
+                }}
+              >
+                ✏️ ערוך את הברקט שלי
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => navigate('/bracket/saved')}
+              >
+                🏠 עבור לדף הבית
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
