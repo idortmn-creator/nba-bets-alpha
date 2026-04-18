@@ -4,10 +4,13 @@ import { useLeagueStore } from '@/store/league.store'
 import { useGlobalStore } from '@/store/global.store'
 import { useGlobalHelpers } from '@/hooks/useGlobalHelpers'
 import { scoreStage, scoreStageDetail } from '@/services/scoring'
-import { STAGE_KEYS, STAGE_SHORT, STAGE_MATCHES, PREBETS } from '@/lib/constants'
+import { STAGE_KEYS, STAGE_SHORT, STAGE_MATCHES, PREBETS, GAPS } from '@/lib/constants'
 import type { StageKey } from '@/lib/constants'
 import { Card } from '@/components/ui/card'
 import { TeamName } from '@/components/ui/TeamName'
+import DonutChart from '@/bracket/Pie3D'
+import type { PieSlice } from '@/bracket/Pie3D'
+import { getTeamColor, getOutcomeColor } from '@/bracket/teamColors'
 
 export default function BetsViewTab() {
   const leagueData = useLeagueStore((s) => s.currentLeagueData)
@@ -289,50 +292,150 @@ function ParticipantView({ stage, members, memberInfo, result, matches, bonuses,
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function SeriesView({ stage, members, memberInfo, result, matches, bonuses, bonusRes, leagueData, isSeriesLocked, teamLabel, isSingleBonusLocked }: any) {
+  const { getTeams } = useGlobalHelpers()
   const visibleMatches = matches.filter((m: any) => isSeriesLocked(stage, m.key))
+  const isPlayin = stage === 0 || stage === '0b'
 
   return (
     <div>
       {visibleMatches.map((m: any) => {
         const rW = result[m.key + '_winner'] || result[m.key] || ''
         const rR = result[m.key + '_result'] || ''
+
+        // Build tally of all member picks for this series
         const tally: Record<string, { count: number; correct: boolean; exact: boolean; users: string[] }> = {}
         members.forEach((uid: string) => {
           const bet = ((leagueData.bets || {})[uid] || {})['stage' + stage] || {}
-          const pick = (stage === 0 || stage === '0b') ? (bet[m.key] || '') : (bet[m.key + '_winner'] || '')
-          const res = (stage === 0 || stage === '0b') ? '' : (bet[m.key + '_result'] || '')
-          const key = (stage === 0 || stage === '0b') ? pick : (pick ? (pick + (res ? ` (${res})` : '')) : '')
+          const pick = isPlayin ? (bet[m.key] || '') : (bet[m.key + '_winner'] || '')
+          const res  = isPlayin ? '' : (bet[m.key + '_result'] || '')
+          const key  = isPlayin ? pick : (pick ? (pick + (res ? ` (${res})` : '')) : '')
           if (!key) return
           if (!tally[key]) tally[key] = { count: 0, correct: false, exact: false, users: [] }
           tally[key].count++
           tally[key].users.push(memberInfo[uid]?.username || uid)
-          if (rW && pick.toLowerCase() === rW.toLowerCase()) { tally[key].correct = true; if (rR && res === rR) tally[key].exact = true }
+          if (rW && pick.toLowerCase() === rW.toLowerCase()) {
+            tally[key].correct = true
+            if (rR && res === rR) tally[key].exact = true
+          }
         })
         const total = members.length || 1
+
+        // ── Play-in stages: bar chart (unchanged) ───────────────────────
+        if (isPlayin) {
+          return (
+            <Card key={m.key} className="!mb-2.5">
+              <div className="mb-1 font-oswald text-base text-[var(--orange)]">🏀 {teamLabel(stage, m.key, m.label)}</div>
+              {rW && <div className="mb-2 text-xs text-[var(--blue)]">תוצאה: {rW}</div>}
+              {Object.entries(tally).sort(([, a], [, b]) => (b as any).count - (a as any).count).map(([pick, t]: [string, any]) => {
+                const cls = rW ? (t.correct ? (t.exact ? 'correct-exact' : 'correct') : 'wrong') : 'pending'
+                const pct = Math.round(t.count / total * 100)
+                return (
+                  <div key={pick} className="series-tally-row">
+                    <span className={`bet-value ${cls}`} style={{ minWidth: 110 }}>
+                      <TeamName name={pick} size={13} />
+                    </span>
+                    <div className="tally-bar-wrap"><div className="tally-bar" style={{ width: `${pct}%` }} /></div>
+                    <span className="tally-count">{t.count}/{total}</span>
+                    <div className="tally-names">{t.users.join(', ')}</div>
+                  </div>
+                )
+              })}
+            </Card>
+          )
+        }
+
+        // ── Rounds 1+: pie/donut chart ───────────────────────────────────
+        const { home, away } = getTeams(stage, m.key)
+        const homeBase = getTeamColor(home)
+        const awayBase = getTeamColor(away)
+
+        // Build per-outcome entries for each team (4-0 = loserWins 0, ..., 4-3 = loserWins 3)
+        const buildSlices = (team: string) =>
+          GAPS.map((gap, gIdx) => {
+            const exactKey = `${team} (${gap})`
+            // Case-insensitive fallback so admin typo differences don't break lookup
+            let entry = tally[exactKey]
+            if (!entry) {
+              const lk = exactKey.toLowerCase()
+              const found = Object.entries(tally).find(([k]) => k.toLowerCase() === lk)
+              if (found) entry = found[1]
+            }
+            return { gap, gIdx, count: entry?.count || 0, users: (entry?.users || []) as string[], correct: entry?.correct || false, exact: entry?.exact || false }
+          })
+
+        const homeSlices = buildSlices(home)
+        const awaySlices = buildSlices(away)
+
+        // All 8 possible outcomes as pie slices (home 4-0→4-3, then away 4-0→4-3)
+        const pieSlices: PieSlice[] = [
+          ...homeSlices.map(({ gIdx, count }) => ({ value: count, color: getOutcomeColor(homeBase, gIdx), label: `${home} ${GAPS[gIdx]}` })),
+          ...awaySlices.map(({ gIdx, count }) => ({ value: count, color: getOutcomeColor(awayBase, gIdx), label: `${away} ${GAPS[gIdx]}` })),
+        ]
+
+        const hasVotes = pieSlices.some(s => s.value > 0)
+
         return (
           <Card key={m.key} className="!mb-2.5">
             <div className="mb-1 font-oswald text-base text-[var(--orange)]">🏀 {teamLabel(stage, m.key, m.label)}</div>
             {rW && <div className="mb-2 text-xs text-[var(--blue)]">תוצאה: {rW}{rR ? ` (${rR})` : ''}</div>}
-            {Object.entries(tally).sort(([, a], [, b]) => (b as any).count - (a as any).count).map(([pick, t]: [string, any]) => {
-              const cls = rW ? (t.correct ? (t.exact ? 'correct-exact' : 'correct') : 'wrong') : 'pending'
-              const pct = Math.round(t.count / total * 100)
-              const parenIdx = pick.lastIndexOf(' (')
-              const pickTeam = parenIdx >= 0 ? pick.slice(0, parenIdx) : pick
-              const pickSuffix = parenIdx >= 0 ? pick.slice(parenIdx) : ''
-              return (
-                <div key={pick} className="series-tally-row">
-                  <span className={`bet-value ${cls}`} style={{ minWidth: 110 }}>
-                    <TeamName name={pickTeam} size={13} />{pickSuffix}
-                  </span>
-                  <div className="tally-bar-wrap"><div className="tally-bar" style={{ width: `${pct}%` }} /></div>
-                  <span className="tally-count">{t.count}/{total}</span>
-                  <div className="tally-names">{t.users.join(', ')}</div>
+
+            {!hasVotes ? (
+              <div className="text-sm text-[var(--text2)]">אין הימורים עדיין</div>
+            ) : (
+              <div className="flex items-start gap-3">
+                {/* Donut chart — first in JSX = right side in RTL */}
+                <DonutChart slices={pieSlices} size={92} />
+
+                {/* Legend: team sections with outcome rows */}
+                <div className="flex-1 min-w-0 space-y-2">
+                  {([
+                    { team: home, base: homeBase, slices: homeSlices },
+                    { team: away, base: awayBase, slices: awaySlices },
+                  ] as { team: string; base: string; slices: ReturnType<typeof buildSlices> }[]).map(({ team, base, slices: ts }) => {
+                    if (!team) return null
+                    const visible = ts.filter(s => s.count > 0)
+                    if (!visible.length) return null
+                    return (
+                      <div key={team}>
+                        {/* Team header with color swatch */}
+                        <div className="mb-1 flex items-center gap-1.5 text-[0.72rem] font-semibold">
+                          <span className="inline-block h-2.5 w-3.5 flex-shrink-0 rounded-sm" style={{ background: base }} />
+                          <TeamName name={team} size={12} />
+                        </div>
+                        {/* One row per outcome that has votes */}
+                        {visible.map(({ gap, gIdx, count, users, correct, exact }) => {
+                          const sliceColor = getOutcomeColor(base, gIdx)
+                          const textCls = rW
+                            ? correct
+                              ? exact ? 'text-[var(--gold)]' : 'text-[var(--green)]'
+                              : 'text-[var(--red)]/60'
+                            : ''
+                          return (
+                            <div key={gap} className="mb-0.5">
+                              <div className={`flex items-center gap-1.5 text-[0.72rem] ${textCls}`}>
+                                <span className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-sm" style={{ background: sliceColor }} />
+                                <span>{gap}</span>
+                                <span className="mr-auto font-medium tabular-nums">{count}/{total}</span>
+                              </div>
+                              {users.length > 0 && (
+                                <div className="pr-4 text-[0.62rem] leading-tight text-[var(--text2)]">
+                                  {users.join(', ')}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })}
                 </div>
-              )
-            })}
+              </div>
+            )}
           </Card>
         )
       })}
+
+      {/* ── Bonus bets — unchanged ──────────────────────────────────────── */}
       {bonuses.filter((b: any) => isSingleBonusLocked(stage, b)).map((b: any) => {
         const correctAns = bonusRes[b.id] || ''
         const tally: Record<string, { count: number; correct: boolean; users: string[] }> = {}
@@ -351,14 +454,14 @@ function SeriesView({ stage, members, memberInfo, result, matches, bonuses, bonu
             <div className="mb-1 font-oswald text-base text-[var(--gold)]">⭐ {b.question}</div>
             {correctAns && <div className="mb-2 text-xs text-[var(--blue)]">תשובה נכונה: {correctAns}</div>}
             {Object.entries(tally).sort(([, a], [, b]) => (b as any).count - (a as any).count).map(([pick, t]: [string, any]) => {
-              const cls = correctAns ? ((t as any).correct ? 'correct' : 'wrong') : 'pending'
-              const pct = Math.round((t as any).count / total * 100)
+              const cls = correctAns ? (t.correct ? 'correct' : 'wrong') : 'pending'
+              const pct = Math.round(t.count / total * 100)
               return (
                 <div key={pick} className="series-tally-row">
                   <span className={`bet-value ${cls}`} style={{ minWidth: 90 }}>{pick}</span>
                   <div className="tally-bar-wrap"><div className="tally-bar" style={{ width: `${pct}%` }} /></div>
-                  <span className="tally-count">{(t as any).count}/{total}</span>
-                  <div className="tally-names">{(t as any).users.join(', ')}</div>
+                  <span className="tally-count">{t.count}/{total}</span>
+                  <div className="tally-names">{t.users.join(', ')}</div>
                 </div>
               )
             })}

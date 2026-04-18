@@ -61,7 +61,10 @@ export default function LeaguePage() {
   const [betsSubTab, setBetsSubTab] = useState<'series' | 'prebets'>('series')
 
   useEffect(() => {
-    if (lid) openLeague(lid)
+    if (lid) {
+      openLeague(lid)
+      localStorage.setItem('lastLeagueId', lid)
+    }
     return () => closeLeague()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lid])

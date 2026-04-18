@@ -37,13 +37,21 @@ export default function EnterBetsTab() {
   const tiebreakerQuestion = getGlobal('tiebreakerQuestion', '') as string
   const tiebreakerLocked   = getGlobal('tiebreakerLocked', false) as boolean
   const autoLocks = getGlobal('autoLocks', {} as Record<string, number>)
-  const [stage, setStage] = useState<StageKey>(0)
+  const stageLocked = getGlobal('stageLocked', [] as boolean[]) as boolean[]
+
+  // Auto-select the highest stage currently open for betting on first render
+  const [stage, setStage] = useState<StageKey>(() => {
+    for (let i = STAGE_KEYS.length - 1; i >= 0; i--) {
+      const si = STAGE_KEYS[i]
+      if (!stageLocked[i] && (canBetOnStage(si) || hasAnySeriesOpen(si))) return si
+    }
+    return 0
+  })
   const [cbd, setCbd] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
 
-  const stageIdx  = STAGE_KEYS.indexOf(stage)
-  const stageLocked = getGlobal('stageLocked', [] as boolean[]) as boolean[]
-  const locked    = stageLocked[stageIdx] || false
+  const stageIdx = STAGE_KEYS.indexOf(stage)
+  const locked   = stageLocked[stageIdx] || false
   const matches   = STAGE_MATCHES[stage] || []
 
   // True when the stage is fully open OR at least one series was explicitly opened

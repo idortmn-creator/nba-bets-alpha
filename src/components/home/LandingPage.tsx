@@ -5,6 +5,15 @@ export default function LandingPage() {
   const navigate = useNavigate()
   const userDoc = useAuthStore((s) => s.currentUserDoc)
 
+  function handleNbaPlayoff() {
+    const lastLeagueId = localStorage.getItem('lastLeagueId')
+    if (lastLeagueId) {
+      navigate(`/league/${lastLeagueId}`)
+    } else {
+      navigate('/home')
+    }
+  }
+
   return (
     <div className="py-6">
       <div className="mb-5 text-lg font-bold">
@@ -13,7 +22,7 @@ export default function LandingPage() {
 
       <div className="landing-grid">
         {/* Card 1 — active */}
-        <div className="home-card" onClick={() => navigate('/home')}>
+        <div className="home-card" onClick={handleNbaPlayoff}>
           <div className="hc-icon">🏀</div>
           <div className="hc-title">NBA Playoff</div>
           <div className="hc-sub">הימורי שלב-שלב</div>

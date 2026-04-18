@@ -6,6 +6,8 @@ import { useAuthStore } from '@/store/auth.store'
 import { useGlobalStore } from '@/store/global.store'
 import { useBracketLeagueStore } from '../bracketLeague.store'
 import { saveBracketBet, clearBracketBet, saveMvpBet } from '../bracketLeague.service'
+import BracketShareBar from '../BracketShareBar'
+import BracketFullScreenModal from '../BracketFullScreenModal'
 import {
   BRACKET_SERIES, BRACKET_POSITIONS, BRACKET_CONNECTOR_LINES,
   CARD_W, CARD_H, TOTAL_H, TOTAL_W,
@@ -308,6 +310,8 @@ export default function BracketMyBetsTab() {
 
   const [pick, setPick] = useState<BracketPick>({})
   const [mvpPick, setMvpPick] = useState<BracketMvpPick>({})
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [showFullScreen, setShowFullScreen] = useState(false)
 
   // Load existing bets from global league
   useEffect(() => {
@@ -347,8 +351,7 @@ export default function BracketMyBetsTab() {
     if (!currentUser) return
     try {
       await saveBracketBet(currentUser.uid, pick)
-      toast('✅ הברקט נשמר!')
-      navigate('/bracket/saved')
+      setShowSaveModal(true)
     } catch (e: unknown) {
       toast('❌ ' + (e instanceof Error ? e.message : String(e)))
     }
@@ -376,6 +379,8 @@ export default function BracketMyBetsTab() {
     const p = pick[k]
     return p && (p.homeWins === 4 || p.awayWins === 4)
   }).length
+
+  const username = globalLeagueData?.memberInfo?.[currentUser?.uid || '']?.username || currentUser?.uid || ''
 
   return (
     <div>
@@ -428,10 +433,50 @@ export default function BracketMyBetsTab() {
       )}
 
       {!locked && r1TeamsReady && (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <Button onClick={handleSave}>💾 שמור ברקט</Button>
           <Button variant="secondary" size="sm" onClick={handleClear}>🔄 נקה הכל</Button>
+          <Button variant="secondary" size="sm" onClick={() => setShowFullScreen(true)}>🔍 צפה בברקט מלא</Button>
         </div>
+      )}
+
+      {locked && (
+        <div className="mt-3 flex items-center gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setShowFullScreen(true)}>🔍 צפה בברקט מלא</Button>
+        </div>
+      )}
+
+      <div className="mt-4">
+        <BracketShareBar />
+      </div>
+
+      {/* Save success popup */}
+      {showSaveModal && (
+        <div className="brfs-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowSaveModal(false) }}>
+          <div className="br-save-modal">
+            <div className="br-save-modal-icon">✅</div>
+            <div className="br-save-modal-title">הברקט נשמר!</div>
+            <div className="br-save-modal-sub">מה תרצה לעשות עכשיו?</div>
+            <div className="br-save-modal-btns">
+              <Button onClick={() => navigate('/bracket')}>🏠 חזור לדף הבית</Button>
+              <Button variant="secondary" onClick={() => { setShowSaveModal(false); setShowFullScreen(true) }}>
+                📊 צפה בברקט שלי
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full screen bracket view */}
+      {showFullScreen && (
+        <BracketFullScreenModal
+          pick={pick}
+          mvpPick={mvpPick}
+          globalR1={globalR1}
+          bracketSeries={bracketSeries}
+          username={username}
+          onClose={() => setShowFullScreen(false)}
+        />
       )}
     </div>
   )

@@ -169,7 +169,15 @@ function countOutcomes(
     if (!map.has(key)) map.set(key, { homeWins: p.homeWins, awayWins: p.awayWins, count: 0 })
     map.get(key)!.count++
   }
-  return Array.from(map.values()).sort((a, b) => b.count - a.count)
+  // Group: all home-team wins first (4-0 → 4-3), then all away-team wins (4-0 → 4-3)
+  return Array.from(map.values()).sort((a, b) => {
+    const aGroup = a.homeWins === 4 ? 0 : 1
+    const bGroup = b.homeWins === 4 ? 0 : 1
+    if (aGroup !== bGroup) return aGroup - bGroup
+    const aLoser = a.homeWins === 4 ? a.awayWins : a.homeWins
+    const bLoser = b.homeWins === 4 ? b.awayWins : b.homeWins
+    return aLoser - bLoser
+  })
 }
 
 function SeriesPieCard({
